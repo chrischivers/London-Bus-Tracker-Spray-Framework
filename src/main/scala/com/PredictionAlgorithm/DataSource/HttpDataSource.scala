@@ -1,20 +1,18 @@
-package com.PredictionAlgorithm.TFL.DataSource
+package com.PredictionAlgorithm.DataSource
 
 import java.io.{BufferedReader, InputStreamReader}
-
-import com.typesafe.scalalogging.Logger
+import com.PredictionAlgorithm.DataSource.TFL.TFLDataSourceVariables
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpGet
-import org.apache.http.impl.client.{BasicCredentialsProvider, HttpClientBuilder, DefaultHttpClient}
-import org.slf4j.LoggerFactory
+import org.apache.http.impl.client.{BasicCredentialsProvider, HttpClientBuilder}
 
 /**
  * Created by chrischivers on 18/06/15.
  */
-object DataSource {
+object HttpDataSource {
 
-  val dsv = DataSourceVariables //The variables file
+  val dsv = TFLDataSourceVariables //The variables file
 
 
   def getDataStream: Stream[String] = {
