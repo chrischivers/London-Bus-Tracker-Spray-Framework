@@ -6,8 +6,12 @@ import com.mongodb.casbah.{MongoClient, MongoCollection, MongoDB}
 
 trait MongoFactory extends DBFactoryInterface[MongoClient, MongoDB, MongoCollection] {
 
+  var mc:MongoClient
 
-  override def getConnection: MongoClient = return MongoClient()
+  override def getConnection: MongoClient = {
+    if (mc == null) { mc = MongoClient() }
+    mc
+  }
 
   override def getDatabase(connection: MongoClient, dbName: Databases): MongoDB = connection(dbName.name)
 

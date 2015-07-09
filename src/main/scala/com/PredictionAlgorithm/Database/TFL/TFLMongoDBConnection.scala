@@ -6,12 +6,13 @@ import com.mongodb.casbah.{MongoCollection, MongoDB, MongoClient}
 
 class TFLMongoDBConnection extends MongoFactory{
 
-  val mc: MongoClient = getConnection
+  override var mc: MongoClient = getConnection
 
   def getDatabase(): MongoDB = getDatabase(mc,PREDICTION_DATABASE)
 
   def getCollection(collectionName: DatabaseCollections): MongoCollection = getCollection(getDatabase(),collectionName)
 
   def closeConnection() = mc.close()
+
 
 }

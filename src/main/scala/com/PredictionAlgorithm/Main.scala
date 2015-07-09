@@ -11,8 +11,8 @@ object Main extends App {
 
 
 
-   val system = ActorSystem("ProcessingSystem")
-  val asActor = system.actorOf(Props[TFLProcessArrivalStream], name = "TFLArrivalStream")
+  implicit val actorSystem = ActorSystem()
+  val asActor = actorSystem.actorOf(Props[TFLProcessArrivalStream], name = "TFLArrivalStream")
    asActor ! StartMessage
 
 

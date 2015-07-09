@@ -10,7 +10,7 @@ import org.apache.http.impl.client.{BasicCredentialsProvider, HttpClientBuilder}
 /**
  * Created by chrischivers on 18/06/15.
  */
-object HttpDataSource {
+object HttpDataSource{
 
   val dsv = TFLDataSourceVariables //The variables file
 
