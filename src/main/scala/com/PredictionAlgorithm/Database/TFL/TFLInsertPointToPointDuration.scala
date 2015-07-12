@@ -2,8 +2,9 @@ package com.PredictionAlgorithm.Database.TFL
 
 
 import com.PredictionAlgorithm.Database.{POINT_TO_POINT_DOCUMENT, DatabaseDocuments, POINT_TO_POINT_COLLECTION, DatabaseModifyInterface}
-import com.mongodb.casbah.commons.MongoDBObject
+import com.mongodb.casbah.commons.{MongoDBList, MongoDBObject}
 import com.mongodb.casbah.commons.ValidBSONType.DBObject
+import com.mongodb.casbah.Imports._
 
 import scala.util.{Failure, Success, Try}
 
@@ -32,12 +33,18 @@ object TFLInsertPointToPointDuration extends DatabaseModifyInterface {
         collection.DIRECTION_ID -> doc.direction_ID,
         collection.FROM_POINT_ID -> doc.from_Point_ID,
         collection.TO_POINT_ID -> doc.to_Point_ID,
-        collection.DAY_TYPE -> doc.day_Type,
-        collection.DEP_TIME -> doc.dep_Time,
-        collection.DURATION -> doc.duration,
-        collection.INSERT_TIMESTAMP -> doc.insert_TimeStamp)
-      dBCollection.insert(newObj)
+        collection.DAY_TYPE -> doc.day_Type)
+        //collection.UPDATED_TIMESTAMP -> System.currentTimeMillis())
+
+        //dBCollection.insert(newObj)
         println("Inserting Point To Point Into DB")
+
+        dBCollection.update(newObj,$push(collection.DURATION_LIST -> (MongoDBObject(collection.DURATION -> doc.duration,collection.OBSERVED_TIME -> doc.observed_Time))),upsert=true)
+
+          //val newDocument: BasicDBObject = new BasicDBObject
+
+
+        /* newLst: com.mongodb.BasicDBList = [ "foo" , "bar" , "x" , "y"] */
   }
 }
 

@@ -1,5 +1,7 @@
 package com.PredictionAlgorithm.Processes.TFL
 
+import java.util.{Calendar, Date, GregorianCalendar}
+
 import com.PredictionAlgorithm.DataDefinitions.TFL.TFLRouteDefinitions
 import com.PredictionAlgorithm.DataSource.SourceLine
 import com.PredictionAlgorithm.DataSource.TFL.{TFLSourceLine, TFLDataSource}
@@ -32,7 +34,8 @@ object TFLProcessSourceLines {
         if (newPointSequence == existingPointSequence + 1) {
           val duration = newLine.arrival_TimeStamp - existingArrivalTimeStamp
           if (duration > 0) {
-            TFLInsertPointToPointDuration.insertDocument(createPointToPointDocument(newLine.route_ID, newLine.direction_ID, existingStopCode, newLine.stop_Code, "DAY", existingValues._2, duration, System.currentTimeMillis))
+            TFLInsertPointToPointDuration.insertDocument(createPointToPointDocument(newLine.route_ID, newLine.direction_ID, existingStopCode, newLine.stop_Code, getDayCode(existingArrivalTimeStamp), existingArrivalTimeStamp, duration))
+            holdingBuffer += ((newLine.route_ID, newLine.vehicle_Reg, newLine.direction_ID) ->(newLine.stop_Code, newLine.arrival_TimeStamp))
           } else {
             // Replace existing values with new values
             holdingBuffer += ((newLine.route_ID, newLine.vehicle_Reg, newLine.direction_ID) ->(newLine.stop_Code, newLine.arrival_TimeStamp))
@@ -51,7 +54,6 @@ object TFLProcessSourceLines {
         println("Line cannot be found in definition file: " + line)
         false
       } else true
-
     }
 
     def isNotFinalStop(line: TFLSourceLine): Boolean = {
@@ -61,6 +63,7 @@ object TFLProcessSourceLines {
     def isWithinTimeThreshold(line: TFLSourceLine): Boolean = {
       (line.arrival_TimeStamp - System.currentTimeMillis) <= TFLProcessVariables.LINE_TOLERANCE_IN_RELATION_TO_CURRENT_TIME
     }
+
 
     if (!inDefinitionFile(line)) return false
     if (!isWithinTimeThreshold(line)) return false
@@ -72,8 +75,19 @@ object TFLProcessSourceLines {
     tflRouteDefinitions(route_ID, direction_ID, stop_Code)._1
   }
 
-  def createPointToPointDocument(route_ID: String, direction_ID: Int, from_Point_ID: String, to_Point_ID: String, day_Type: String, dep_Time: Long, duration: Long, insert_TimeStamp: Long): POINT_TO_POINT_DOCUMENT = {
-    new POINT_TO_POINT_DOCUMENT(route_ID, direction_ID, from_Point_ID, to_Point_ID, day_Type, dep_Time, duration, insert_TimeStamp)
+  def createPointToPointDocument(route_ID: String, direction_ID: Int, from_Point_ID: String, to_Point_ID: String, day_Type: String, observed_Time: Long, duration: Long): POINT_TO_POINT_DOCUMENT = {
+    new POINT_TO_POINT_DOCUMENT(route_ID, direction_ID, from_Point_ID, to_Point_ID, day_Type, observed_Time, duration)
+  }
+
+  def getDayCode(arrivalTime: Long): String = {
+    val cal: Calendar  = new GregorianCalendar();
+
+    cal.setTime(new Date(arrivalTime));
+    cal.get(Calendar.DAY_OF_WEEK) match {
+      case Calendar.SATURDAY => "SAT"
+      case Calendar.SUNDAY => "SUN"
+      case _ => "MON_FRI"
+    }
   }
 
 }

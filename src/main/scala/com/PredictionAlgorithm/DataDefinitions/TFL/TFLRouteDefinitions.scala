@@ -3,13 +3,14 @@ package com.PredictionAlgorithm.DataDefinitions.TFL
 import java.io._
 import java.lang.ArrayIndexOutOfBoundsException
 
+import scala.collection.immutable.ListMap
 import scala.io.Source
 import scala.util.Try
 
 object TFLRouteDefinitions {
 
   // Map format = Route_ID, Direction_ID, BusStopCode, First_Last -> pointsSequence
-  private var TFLsequenceMap: Map[(String, Int, String), (Int, Option[String])] = Map()
+  private var TFLsequenceMap: Map[(String, Int, String), (Int, Option[String])] = ListMap()
   private var definitionsLoaded: Boolean = false
 
   //TODO get these through dependency injection
@@ -20,8 +21,8 @@ object TFLRouteDefinitions {
   def getTFLSequenceMap = {
     if (!definitionsLoaded) {
       //TODO find better way of choosing which
-      // loadDefinitionsFromFile()
-      loadDefinitionsFromWebsite(true)
+       loadDefinitionsFromFile()
+      //loadDefinitionsFromWebsite(true)
     }
     TFLsequenceMap
   }
