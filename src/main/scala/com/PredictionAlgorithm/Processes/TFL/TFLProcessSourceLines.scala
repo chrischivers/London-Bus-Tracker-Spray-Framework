@@ -20,12 +20,9 @@ object TFLProcessSourceLines {
   def getBufferSize: Int = holdingBuffer.size
 
   def apply(newLine: TFLSourceLine) {
-    if (inDefinitionFile(newLine)) {
+    if (validateLine(newLine)) {
       if (!holdingBuffer.contains(newLine.route_ID, newLine.vehicle_Reg, newLine.direction_ID)) {
-
-        if (!isFinalStop(newLine)) {
-          holdingBuffer += ((newLine.route_ID, newLine.vehicle_Reg, newLine.direction_ID) ->(newLine.stop_Code, newLine.arrival_TimeStamp))
-        }
+        holdingBuffer += ((newLine.route_ID, newLine.vehicle_Reg, newLine.direction_ID) ->(newLine.stop_Code, newLine.arrival_TimeStamp))
       } else {
         val existingValues = holdingBuffer(newLine.route_ID, newLine.vehicle_Reg, newLine.direction_ID)
         val existingStopCode = existingValues._1
@@ -43,19 +40,32 @@ object TFLProcessSourceLines {
         }
 
       }
-    } else {
-      //TODO log this
-      println("Line cannot be found in definition file: " + newLine
-      )
     }
   }
 
-  def inDefinitionFile(line: TFLSourceLine): Boolean = {
-    if (tflRouteDefinitions.get(line.route_ID, line.direction_ID, line.stop_Code).isEmpty) false else true
-  }
+  def validateLine(line: TFLSourceLine): Boolean = {
 
-  def isFinalStop(line: TFLSourceLine): Boolean = {
-    tflRouteDefinitions(line.route_ID, line.direction_ID, line.stop_Code)._2 == Some("Last")
+    def inDefinitionFile(line: TFLSourceLine): Boolean = {
+      if (tflRouteDefinitions.get(line.route_ID, line.direction_ID, line.stop_Code).isEmpty) {
+        //TODO log this
+        println("Line cannot be found in definition file: " + line)
+        false
+      } else true
+
+    }
+
+    def isNotFinalStop(line: TFLSourceLine): Boolean = {
+      tflRouteDefinitions(line.route_ID, line.direction_ID, line.stop_Code)._2 != Some("LAST")
+    }
+
+    def isWithinTimeThreshold(line: TFLSourceLine): Boolean = {
+      (line.arrival_TimeStamp - System.currentTimeMillis) <= TFLProcessVariables.LINE_TOLERANCE_IN_RELATION_TO_CURRENT_TIME
+    }
+
+    if (!inDefinitionFile(line)) return false
+    if (!isWithinTimeThreshold(line)) return false
+    if (!isNotFinalStop(line)) return false
+    true
   }
 
   def getPointSequence(route_ID: String, direction_ID: Int, stop_Code: String): Int = {
