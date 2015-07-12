@@ -30,12 +30,13 @@ class TFLIterateOverArrivalStream extends IterateOverArrivalStreamInterface {
         val line = TFLSourceLineFormatter(src.next())
         TFLProcessSourceLines(line)
         numberProccessed += 1
-        if (numberProccessed % 1000 == 0) println(numberProccessed)
+        if (numberProccessed % 10 == 0) println(numberProccessed)
       }
       println("out of while block")
   }
 
   override def start = {
+    println("Here")
     try {
       startIterating(getSourceIterator)
     } catch {

@@ -1,6 +1,9 @@
 package com.PredictionAlgorithm
+
+import java.io.File
 import javax.swing.{SwingUtilities, JFrame}
 import akka.actor.{Props, ActorSystem}
+import com.PredictionAlgorithm.DataDefinitions.TFL.TFLRouteDefinitions
 import com.PredictionAlgorithm.Database.TFL.TFLMongoDBConnection
 import com.PredictionAlgorithm.Processes.StartMessage
 import com.PredictionAlgorithm.Processes.TFL.TFLIterateOverArrivalStream
@@ -10,7 +13,9 @@ import com.PredictionAlgorithm.Processes.TFL.TFLIterateOverArrivalStream
  */
 object Main extends App {
 
+
   implicit val actorSystem = ActorSystem()
+  val routeDefs = TFLRouteDefinitions.getTFLSequenceMap
 
   val streamActor = actorSystem.actorOf(Props[TFLIterateOverArrivalStream], name = "TFLArrivalStream")
   streamActor ! StartMessage

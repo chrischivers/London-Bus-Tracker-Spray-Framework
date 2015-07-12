@@ -21,7 +21,7 @@ object TFLSourceLineFormatter extends SourceLineProcessor{
 
   def checkArrayCorrectLength(array: Array[String]) = {
     if (array.length != TFLDataSource.fieldVector.length) {
-      throw new IllegalArgumentException("Source array has incorrect number of elements")
+      throw new IllegalArgumentException("Source array has incorrect number of elements. Or invalid web page retrieved")
     }
   }
 }

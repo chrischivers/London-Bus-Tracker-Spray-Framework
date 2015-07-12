@@ -24,7 +24,7 @@ object TFLInsertPointToPointDuration extends DatabaseModifyInterface {
     case _ => throw new ClassCastException
   }
 
-      def insert(doc: POINT_TO_POINT_DOCUMENT) = {
+      private def insert(doc: POINT_TO_POINT_DOCUMENT) = {
 
       val collection = doc.collection
       val newObj = MongoDBObject(
@@ -37,6 +37,7 @@ object TFLInsertPointToPointDuration extends DatabaseModifyInterface {
         collection.DURATION -> doc.duration,
         collection.INSERT_TIMESTAMP -> doc.insert_TimeStamp)
       dBCollection.insert(newObj)
+        println("Inserting Point To Point Into DB")
   }
 }
 

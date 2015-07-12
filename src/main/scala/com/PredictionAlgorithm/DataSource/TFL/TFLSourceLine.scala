@@ -13,4 +13,5 @@ class TFLSourceLine(val stop_Code: String, val route_ID: String, val direction_I
       .toMap
   }
 
+  override def toString: String = "Line(" + stop_Code + "," + route_ID + "," + direction_ID + "," + vehicle_Reg + "," + arrival_TimeStamp + ")"
 }
