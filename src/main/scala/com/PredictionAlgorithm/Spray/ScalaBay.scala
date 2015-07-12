@@ -2,7 +2,7 @@ package com.PredictionAlgorithm.Spray
 
 import akka.actor.{Props, ActorSystem}
 import com.PredictionAlgorithm.Processes.StartMessage
-import com.PredictionAlgorithm.Processes.TFL.TFLProcessArrivalStream
+import com.PredictionAlgorithm.Processes.TFL.TFLIterateOverArrivalStream
 import spray.routing.SimpleRoutingApp
 
 // Code based on example provided by Adam Warski
@@ -24,7 +24,7 @@ object ScalaBay extends App with SimpleRoutingApp{
     get {
       path("start") {
         complete {
-          val asActor = actorSystem.actorOf(Props[TFLProcessArrivalStream], name = "TFLArrivalStream")
+          val asActor = actorSystem.actorOf(Props[TFLIterateOverArrivalStream], name = "TFLArrivalStream")
           asActor ! StartMessage
           "Started"
         }

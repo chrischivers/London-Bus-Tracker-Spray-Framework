@@ -1,10 +1,12 @@
 package com.PredictionAlgorithm.Database
 
-import com.PredictionAlgorithm.DataSource.Line
+import com.mongodb.casbah.MongoCollection
 
 trait DatabaseModifyInterface {
 
-  def insertDocument(line: Line)
+  val dBCollection:MongoCollection
+
+  def insertDocument(doc: DatabaseDocuments)
 
 
 }

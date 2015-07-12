@@ -1,7 +1,6 @@
 package com.PredictionAlgorithm.DataSource
 
 import java.io.{BufferedReader, InputStreamReader}
-import com.PredictionAlgorithm.DataSource.TFL.TFLDataSourceVariables
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpGet
@@ -10,31 +9,28 @@ import org.apache.http.impl.client.{BasicCredentialsProvider, HttpClientBuilder}
 /**
  * Created by chrischivers on 18/06/15.
  */
-object HttpDataSource{
+class HttpDataStream(ds: DataSource) extends DataStream{
 
-  val dsv = TFLDataSourceVariables //The variables file
-
-
-  def getDataStream: Stream[String] = {
+  def getStream: Stream[String] = {
 
     def getCredentialsProvider = {
       val credentialsProvider = new BasicCredentialsProvider()
-      val authScope = dsv.AUTHSCOPE
-      val credentials = new UsernamePasswordCredentials(dsv.USERNAME,dsv.PASSWORD)
+      val authScope = ds.AUTHSCOPE
+      val credentials = new UsernamePasswordCredentials(ds.USERNAME,ds.PASSWORD)
       credentialsProvider.setCredentials(authScope,credentials)
       credentialsProvider
     }
 
     def getRequestBuilder = {
       val requestBuilder = RequestConfig.custom()
-      requestBuilder.setConnectionRequestTimeout(dsv.CONNECTION_TIMEOUT)
-      requestBuilder.setConnectTimeout(dsv.CONNECTION_TIMEOUT)
+      requestBuilder.setConnectionRequestTimeout(ds.CONNECTION_TIMEOUT)
+      requestBuilder.setConnectTimeout(ds.CONNECTION_TIMEOUT)
     }
 
     val client = HttpClientBuilder.create()
     client.setDefaultRequestConfig(getRequestBuilder.build())
     client.setDefaultCredentialsProvider(getCredentialsProvider)
-    val httpGet = new HttpGet(dsv.URL)
+    val httpGet = new HttpGet(ds.URL)
     val response = client.build().execute(httpGet)
     if (checkHttpStatusValid(response.getStatusLine.getStatusCode)) {
       val br = new BufferedReader(new InputStreamReader(response.getEntity.getContent))
@@ -48,6 +44,7 @@ object HttpDataSource{
     (httpStatusCode == 200)
   }
 
+  override def getNumberLinesToDisregard: Int = ds.NUMBER_LINES_TO_DISREGARD
 }
 
 

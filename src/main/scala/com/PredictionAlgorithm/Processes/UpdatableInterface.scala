@@ -10,7 +10,7 @@ case object StartMessage
 case object StopMessage
 
 sealed trait ProcessingInterface extends Actor{
-  var numberProccessed: Int
+  var numberProccessed: Int = 0
   def start
 
   def receive = {
@@ -19,16 +19,20 @@ sealed trait ProcessingInterface extends Actor{
   }
 }
 
-trait ProcessArrivalStreamInterface extends ProcessingInterface{
+trait IterateOverArrivalStreamInterface extends ProcessingInterface{
 
-  lazy val dbCollection: MongoCollection = getDBCollection
-
-  def getDBCollection:MongoCollection
 
   def getSourceIterator:Iterator[String]
 
   def startIterating(src: Iterator[String]):Unit
 
+}
 
+trait ProcessLinesInterface extends ProcessingInterface{
+
+  lazy val dbCollection: MongoCollection = getDBCollection
+
+  def getDBCollection:MongoCollection
 
 }
+

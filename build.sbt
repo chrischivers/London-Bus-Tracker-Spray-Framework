@@ -14,6 +14,7 @@ libraryDependencies += "org.mongodb" %% "casbah" % "2.8.1"
 
 libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.3.9"
 
+// Spray dependencies
 libraryDependencies ++= {
   val akkaV = "2.3.9"
   val sprayV = "1.3.3"

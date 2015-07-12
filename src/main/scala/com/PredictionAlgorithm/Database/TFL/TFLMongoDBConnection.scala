@@ -4,7 +4,7 @@ import com.PredictionAlgorithm.Database.{DatabaseCollections, PREDICTION_DATABAS
 import com.PredictionAlgorithm.Database.MongoDB.MongoFactory
 import com.mongodb.casbah.{MongoCollection, MongoDB, MongoClient}
 
-class TFLMongoDBConnection extends MongoFactory{
+object TFLMongoDBConnection extends MongoFactory{
 
   override var mc: MongoClient = getConnection
 

@@ -3,8 +3,8 @@ package com.PredictionAlgorithm.DataSource
 /**
  * Created by chrischivers on 20/06/15.
  */
-trait Line {
+trait SourceLine {
 
- def geFieldValueList():List[(String,String)]
+ def geFieldValueMap():Map[String,Any]
 
 }
