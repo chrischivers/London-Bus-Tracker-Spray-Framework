@@ -1,17 +1,23 @@
 package com.PredictionAlgorithm.Database.TFL
 
 
-import com.PredictionAlgorithm.Database.{POINT_TO_POINT_DOCUMENT, DatabaseDocuments, POINT_TO_POINT_COLLECTION, DatabaseModifyInterface}
+import akka.actor.{ActorRef, Props, ActorSystem, Actor}
+import akka.actor.Actor.Receive
+import com.PredictionAlgorithm.Database._
+import com.PredictionAlgorithm.Processes.TFL.TFLIterateOverArrivalStream
 import com.mongodb.casbah.commons.{MongoDBList, MongoDBObject}
 import com.mongodb.casbah.commons.ValidBSONType.DBObject
 import com.mongodb.casbah.Imports._
 
+import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
 
 /**
  * Created by chrischivers on 20/06/15.
  */
 object TFLInsertPointToPointDuration extends DatabaseModifyInterface {
+
+  override val dbModifyActor: ActorRef = actorSystem.actorOf(Props[TFLInsertPointToPointDuration], name = "TFLInsertPointToPointDurationActor")
 
   override lazy val dBCollection =
     Try(TFLMongoDBConnection.getCollection(POINT_TO_POINT_COLLECTION)) match {
@@ -20,31 +26,36 @@ object TFLInsertPointToPointDuration extends DatabaseModifyInterface {
 
     }
 
-  override def insertDocument(doc: DatabaseDocuments): Unit =  doc match {
-    case d1: POINT_TO_POINT_DOCUMENT => insert(d1)
-    case _ => throw new ClassCastException
+  override def insertDocument(doc: DatabaseDocuments): Unit = {
+    dbModifyActor ! doc
   }
 
-      private def insert(doc: POINT_TO_POINT_DOCUMENT) = {
 
-      val collection = doc.collection
-      val newObj = MongoDBObject(
-        collection.ROUTE_ID -> doc.route_ID,
-        collection.DIRECTION_ID -> doc.direction_ID,
-        collection.FROM_POINT_ID -> doc.from_Point_ID,
-        collection.TO_POINT_ID -> doc.to_Point_ID,
-        collection.DAY_TYPE -> doc.day_Type)
-        //collection.UPDATED_TIMESTAMP -> System.currentTimeMillis())
+}
 
-        //dBCollection.insert(newObj)
-        println("Inserting Point To Point Into DB")
+class TFLInsertPointToPointDuration extends Actor {
 
-        dBCollection.update(newObj,$push(collection.DURATION_LIST -> (MongoDBObject(collection.DURATION -> doc.duration,collection.OBSERVED_TIME -> doc.observed_Time))),upsert=true)
-
-          //val newDocument: BasicDBObject = new BasicDBObject
+  override def receive: Receive = {
+    case doc1: POINT_TO_POINT_DOCUMENT => insertToDB(doc1)
+    case _ => throw new IllegalStateException("TFL Insert Point Actor received unknown message")
+  }
 
 
-        /* newLst: com.mongodb.BasicDBList = [ "foo" , "bar" , "x" , "y"] */
+  private def insertToDB(doc: POINT_TO_POINT_DOCUMENT) = {
+
+    val collection = doc.collection
+    val newObj = MongoDBObject(
+      collection.ROUTE_ID -> doc.route_ID,
+      collection.DIRECTION_ID -> doc.direction_ID,
+      collection.FROM_POINT_ID -> doc.from_Point_ID,
+      collection.TO_POINT_ID -> doc.to_Point_ID,
+      collection.DAY_TYPE -> doc.day_Type)
+
+    // Upsert - pushing Duration and ObservedTime to Array
+    TFLInsertPointToPointDuration.dBCollection.update(newObj,$push(collection.DURATION_LIST -> (MongoDBObject(collection.DURATION -> doc.duration,collection.OBSERVED_TIME -> doc.observed_Time))),upsert=true)
+
+    //Set the last updated timestamp
+    TFLInsertPointToPointDuration.dBCollection.update(newObj,$set(collection.LAST_UPDATED -> System.currentTimeMillis()))
   }
 }
 

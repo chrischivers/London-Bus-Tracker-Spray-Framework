@@ -3,17 +3,19 @@ package com.PredictionAlgorithm.Processes.TFL
 import java.util.{Calendar, Date, GregorianCalendar}
 
 import com.PredictionAlgorithm.DataDefinitions.TFL.TFLRouteDefinitions
-import com.PredictionAlgorithm.DataSource.SourceLine
 import com.PredictionAlgorithm.DataSource.TFL.{TFLSourceLine, TFLDataSource}
-import com.PredictionAlgorithm.Database.POINT_TO_POINT_COLLECTION
 import com.PredictionAlgorithm.Database.POINT_TO_POINT_DOCUMENT
 import com.PredictionAlgorithm.Database.TFL.{TFLMongoDBConnection, TFLInsertPointToPointDuration}
-import com.PredictionAlgorithm.Processes.ProcessLinesInterface
+import grizzled.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import scala.util.{Failure, Success, Try}
 
+class TFLProcessSourceLines
 
 object TFLProcessSourceLines {
+
+  val logger = Logger(classOf[TFLProcessSourceLines])
 
   // Map of (Route ID, Vehicle Reg, Direction ID) -> (Stop ID, Arrival Timestamp)
   private var holdingBuffer: Map[(String, String, Int), (String, Long)] = Map()
@@ -50,8 +52,7 @@ object TFLProcessSourceLines {
 
     def inDefinitionFile(line: TFLSourceLine): Boolean = {
       if (tflRouteDefinitions.get(line.route_ID, line.direction_ID, line.stop_Code).isEmpty) {
-        //TODO log this
-        println("Line cannot be found in definition file: " + line)
+        logger.info("Cannot get definition. Line: " + line)
         false
       } else true
     }

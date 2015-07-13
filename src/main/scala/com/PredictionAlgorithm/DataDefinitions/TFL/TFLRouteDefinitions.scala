@@ -68,7 +68,7 @@ object TFLRouteDefinitions {
         val route_ID = splitLine(0)
         val route_Web_ID = splitLine(1)
         for (direction <- 1 to 2) {
-          getStopList(route_ID, direction).foreach {
+          getStopList(route_Web_ID, direction).foreach {
             case (stopCode, pointSeq, first_last) => TFLsequenceMap += ((route_ID, direction, stopCode) ->(pointSeq, first_last))
           }
         }
@@ -85,14 +85,14 @@ object TFLRouteDefinitions {
 
 
 
-    def getStopList(routeID: String, direction: Int): List[(String, Int, Option[String])] = {
+    def getStopList(webRouteID: String, direction: Int): List[(String, Int, Option[String])] = {
 
       var stopCodeSequenceList: List[(String, Int, Option[String])] = List()
 
       var tflURL: String = if (direction == 1) {
-        "http://m.countdown.tfl.gov.uk/showJourneyPattern/" + routeID + "/Outbound"
+        "http://m.countdown.tfl.gov.uk/showJourneyPattern/" + webRouteID + "/Outbound"
       } else if (direction == 2) {
-        "http://m.countdown.tfl.gov.uk/showJourneyPattern/" + routeID + "/Back"
+        "http://m.countdown.tfl.gov.uk/showJourneyPattern/" + webRouteID + "/Back"
       } else {
         throw new IllegalStateException("Invalid direction ID")
       }

@@ -13,9 +13,6 @@ import scala.util.{Failure, Success, Try}
 
 class TFLIterateOverArrivalStream extends IterateOverArrivalStreamInterface {
 
-  //val logger = Logger(LoggerFactory.getLogger("DataSourceLog"))
-
-
   override def getSourceIterator =
     Try(new SourceIterator(new HttpDataStream(TFLDataSource))) match {
       case Success(src) => src.iterator
@@ -30,13 +27,13 @@ class TFLIterateOverArrivalStream extends IterateOverArrivalStreamInterface {
         val line = TFLSourceLineFormatter(src.next())
         TFLProcessSourceLines(line)
         numberProccessed += 1
-        if (numberProccessed % 10 == 0) println(numberProccessed)
+        if (numberProccessed % 1000 == 0) println(numberProccessed)
       }
       println("out of while block")
   }
 
   override def start = {
-    println("Here")
+    println("Starting Iterating Process")
     try {
       startIterating(getSourceIterator)
     } catch {

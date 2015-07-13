@@ -15,8 +15,6 @@ object Main extends App {
 
 
   implicit val actorSystem = ActorSystem()
-  val routeDefs = TFLRouteDefinitions.getTFLSequenceMap
-
   val streamActor = actorSystem.actorOf(Props[TFLIterateOverArrivalStream], name = "TFLArrivalStream")
   streamActor ! StartMessage
 
