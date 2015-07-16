@@ -14,7 +14,7 @@ object TFLSourceLineFormatter extends SourceLineProcessor{
 
 
   def splitLine(line: String) = line
-    .substring(1,line.length-2) // remove leading and trailing square brackets,
+    .substring(1,line.length-1) // remove leading and trailing square brackets,
     .replaceAll("\"","") //take out double quotations
     .split(",") // split at commas
     .tail // discards the first element (always '1')

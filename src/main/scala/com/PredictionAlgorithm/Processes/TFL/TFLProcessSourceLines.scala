@@ -16,6 +16,7 @@ class TFLProcessSourceLines
 object TFLProcessSourceLines {
 
   val logger = Logger(classOf[TFLProcessSourceLines])
+  val MAXIMUM_AGE_OF_RECORDS_IN_HOLDING_BUFFER = 600000
 
   // Map of (Route ID, Vehicle Reg, Direction ID) -> (Stop ID, Arrival Timestamp)
   private var holdingBuffer: Map[(String, String, Int), (String, Long)] = Map()
@@ -46,6 +47,12 @@ object TFLProcessSourceLines {
 
       }
     }
+    holdingBufferPrune
+  }
+
+  def holdingBufferPrune = {
+    val CUT_OFF:Long = System.currentTimeMillis() - MAXIMUM_AGE_OF_RECORDS_IN_HOLDING_BUFFER
+    holdingBuffer = holdingBuffer.filter{case ((_),(_,time)) => time > CUT_OFF}
   }
 
   def validateLine(line: TFLSourceLine): Boolean = {
