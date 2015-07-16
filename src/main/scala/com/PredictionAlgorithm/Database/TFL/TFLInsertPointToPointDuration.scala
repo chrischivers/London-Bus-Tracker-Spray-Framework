@@ -23,10 +23,10 @@ object TFLInsertPointToPointDuration extends DatabaseModifyInterface {
     Try(TFLMongoDBConnection.getCollection(POINT_TO_POINT_COLLECTION)) match {
       case Success(collection) => collection
       case Failure(fail) => throw new IllegalStateException("Cannot get DB Collection")
-
     }
 
   override def insertDocument(doc: DatabaseDocuments): Unit = {
+    numberDBTransactionsRequested += 1
     dbModifyActor ! doc
   }
 
@@ -53,6 +53,7 @@ class TFLInsertPointToPointDuration extends Actor {
 
     // Upsert - pushing Duration and ObservedTime to Array
     TFLInsertPointToPointDuration.dBCollection.update(newObj,$push(collection.DURATION_LIST -> (MongoDBObject(collection.DURATION -> doc.duration,collection.OBSERVED_TIME -> doc.observed_Time))),upsert=true)
+    TFLInsertPointToPointDuration.numberDBTransactionsExecuted += 1
 
     //Set the last updated timestamp
     TFLInsertPointToPointDuration.dBCollection.update(newObj,$set(collection.LAST_UPDATED -> System.currentTimeMillis()))

@@ -4,7 +4,7 @@ package com.PredictionAlgorithm.Processes.TFL
 import java.net.UnknownHostException
 
 import akka.actor.{Props, Actor}
-import com.PredictionAlgorithm.ControlInterface.DataSourceControlInterface._
+import com.PredictionAlgorithm.ControlInterface.DataReadProcessStoreControlInterface._
 import com.PredictionAlgorithm.DataSource.TFL.{TFLSourceLineFormatter, TFLDataSource, TFLSourceLine}
 import com.PredictionAlgorithm.DataSource._
 import com.PredictionAlgorithm.Database.POINT_TO_POINT_COLLECTION
@@ -37,10 +37,11 @@ class TFLIterateOverArrivalStream extends IterateOverArrivalStreamInterface {
 
 
 object TFLIterateOverArrivalStream {
-  var numberProcessed:Long = 0
+  @volatile var numberProcessed:Long = 0
 
 }
 
+//TODO consider abstracting this to an interface
 class IteratingActor(it: Iterator[String]) extends Actor {
   override def receive: Receive = inactive // Start out as inactive
 
@@ -56,9 +57,6 @@ class IteratingActor(it: Iterator[String]) extends Actor {
       val line = TFLSourceLineFormatter(it.next())
       TFLProcessSourceLines(line)
       TFLIterateOverArrivalStream.numberProcessed += 1
-      if (TFLIterateOverArrivalStream.numberProcessed % 1000 == 0) println(TFLIterateOverArrivalStream.numberProcessed)
       self ! "next"
   }
-
-
 }

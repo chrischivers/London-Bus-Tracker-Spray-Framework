@@ -1,6 +1,6 @@
 package com.PredictionAlgorithm.UI;
 
-import com.PredictionAlgorithm.ControlInterface.ControlInterface;
+import com.PredictionAlgorithm.ControlInterface.StartStopControlInterface;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,6 +23,11 @@ public class MonitoringUI {
 
     private JButton dataSourceReadStartStopButton;
     private JPanel DataSourcePanel;
+    private JPanel DataProcessingPanel;
+    private JLabel sizeHoldingBufferValue;
+    private JLabel dBTransactionsRequestedValue;
+    private JLabel dBTransactionsExecutedValue;
+    private JLabel dBTransactionsOutstandingValue;
 
 
     public MonitoringUI(int refreshIntervalMS) {
@@ -41,13 +46,10 @@ public class MonitoringUI {
 
     }
 
-    public void setDataSourceProcess(ControlInterface dsCI) {
-
-
+    public void setDataSourceProcess(StartStopControlInterface dsCI) {
         dataSourceReadStartStopButton.addActionListener(new ActionListener() {
-
             volatile boolean buttonStarted = false;
-            CounterUpdater cu = new CounterUpdater(dsCI, dataSourceLinesReadValue);
+            CounterUpdater cu = new CounterUpdater(dsCI, dataSourceLinesReadValue,sizeHoldingBufferValue,dBTransactionsRequestedValue, dBTransactionsExecutedValue,dBTransactionsOutstandingValue);
 
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -62,18 +64,18 @@ public class MonitoringUI {
                     dataSourceReadStartStopButton.setText("Start");
                     buttonStarted = false;
                 }
-
             }
         });
     }
 
+
     public class CounterUpdater implements Runnable {
-        private ControlInterface cI;
+        private StartStopControlInterface cI;
         private List<JLabel> valueLabelList = new LinkedList<JLabel>();
         private volatile boolean running = true;
 
 
-        public CounterUpdater(ControlInterface cI, JLabel... valueLabels) {
+        public CounterUpdater(StartStopControlInterface cI, JLabel... valueLabels) {
             this.cI = cI;
             for (int i = 0; i < valueLabels.length; i++) {
                 valueLabelList.add(valueLabels[i]);

@@ -5,12 +5,12 @@ import akka.actor.ActorSystem
 /**
  * Created by chrischivers on 16/07/15.
  */
-trait ControlInterface {
-
+trait StartStopControlInterface  {
   implicit val actorSystem = ActorSystem()
 
+  def getVariableArray:Array[String]
   def start
   def stop
-  def getVariableArray:Array[String]
+
 
 }

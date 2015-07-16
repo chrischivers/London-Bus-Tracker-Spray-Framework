@@ -8,7 +8,6 @@ import scala.concurrent.Future
 
 
 sealed trait ProcessingInterface extends Actor{
-  var numberProcessed: Int = 0
   def start
   def stop
 

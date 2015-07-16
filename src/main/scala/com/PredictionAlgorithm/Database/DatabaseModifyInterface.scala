@@ -10,6 +10,9 @@ trait DatabaseModifyInterface {
 
   val dBCollection:MongoCollection
 
+  @volatile var numberDBTransactionsRequested:Long= 0
+  @volatile var numberDBTransactionsExecuted:Long = 0
+
   def insertDocument(doc: DatabaseDocuments)
 
 }
