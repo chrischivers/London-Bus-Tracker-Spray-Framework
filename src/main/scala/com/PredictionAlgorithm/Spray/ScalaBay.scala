@@ -14,7 +14,7 @@ object ScalaBay extends App with SimpleRoutingApp{
 
   startServer(interface= "localhost", port = 8080) {
     get {
-      path("hello") {
+      path("Fetch Monitor") {
         complete {
           "Welcome to Silicon Valley!"
         }

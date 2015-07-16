@@ -26,8 +26,8 @@ class TFLIterateOverArrivalStream extends IterateOverArrivalStreamInterface {
       while (src.hasNext) {
         val line = TFLSourceLineFormatter(src.next())
         TFLProcessSourceLines(line)
-        numberProccessed += 1
-        if (numberProccessed % 1000 == 0) println(numberProccessed)
+        TFLIterateOverArrivalStream.numberProcessed += 1
+        if (TFLIterateOverArrivalStream.numberProcessed % 1000 == 0) println(TFLIterateOverArrivalStream.numberProcessed)
       }
       println("out of while block")
   }
@@ -50,4 +50,15 @@ class TFLIterateOverArrivalStream extends IterateOverArrivalStreamInterface {
 
   }
 
+
+
+}
+
+
+object TFLIterateOverArrivalStream {
+  var numberProcessed:Int = 0
+
+  def getNumberProcessed: Int = {
+    numberProcessed
+  }
 }

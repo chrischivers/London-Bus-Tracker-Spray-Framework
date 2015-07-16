@@ -10,7 +10,7 @@ case object StartMessage
 case object StopMessage
 
 sealed trait ProcessingInterface extends Actor{
-  var numberProccessed: Int = 0
+  var numberProcessed: Int = 0
   def start
 
   def receive = {
