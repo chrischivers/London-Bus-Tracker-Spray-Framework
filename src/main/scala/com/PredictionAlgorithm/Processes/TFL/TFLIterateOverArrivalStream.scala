@@ -3,62 +3,62 @@ package com.PredictionAlgorithm.Processes.TFL
 
 import java.net.UnknownHostException
 
+import akka.actor.{Props, Actor}
+import com.PredictionAlgorithm.ControlInterface.DataSourceControlInterface._
 import com.PredictionAlgorithm.DataSource.TFL.{TFLSourceLineFormatter, TFLDataSource, TFLSourceLine}
 import com.PredictionAlgorithm.DataSource._
 import com.PredictionAlgorithm.Database.POINT_TO_POINT_COLLECTION
-import com.PredictionAlgorithm.Processes.{StartMessage, IterateOverArrivalStreamInterface}
+import com.PredictionAlgorithm.Processes.{IterateOverArrivalStreamInterface}
 
 import scala.util.{Failure, Success, Try}
 
 
 class TFLIterateOverArrivalStream extends IterateOverArrivalStreamInterface {
 
-  override def getSourceIterator =
+  val iteratingActor = actorSystem.actorOf(Props(new IteratingActor(getSourceIterator)), name = "IteratorStream")
+
+
+  def getSourceIterator =
     Try(new SourceIterator(new HttpDataStream(TFLDataSource))) match {
       case Success(src) => src.iterator
       case Failure(fail) => throw new IllegalStateException("Cannot get Source Iterator")
     }
 
 
-  override def startIterating(src: Iterator[String]) = {
-
-    println("TFL Arrival Stream Starting Iterating")
-      while (src.hasNext) {
-        val line = TFLSourceLineFormatter(src.next())
-        TFLProcessSourceLines(line)
-        TFLIterateOverArrivalStream.numberProcessed += 1
-        if (TFLIterateOverArrivalStream.numberProcessed % 1000 == 0) println(TFLIterateOverArrivalStream.numberProcessed)
-      }
-      println("out of while block")
-  }
-
   override def start = {
-    println("Starting Iterating Process")
-    try {
-      startIterating(getSourceIterator)
-    } catch {
-        case e @ (_ : IllegalStateException | _ : UnknownHostException) => {
-                  println(e.getMessage)
-                  println("Exception thrown in Arrival Stream. Sleeping, before retrying...")
-                  Thread.sleep(TFLProcessVariables.TIMEOUT)
-                  start
-        }
-        case e:Throwable => println("unknown exception thrown in TFL Process Arrival Stream")
-                  e.printStackTrace()
-
-    }
-
+      iteratingActor ! "start"
+      iteratingActor ! "next"
   }
 
-
-
+  override def stop = {
+    iteratingActor ! "stop"
+  }
 }
 
 
 object TFLIterateOverArrivalStream {
-  var numberProcessed:Int = 0
+  var numberProcessed:Long = 0
 
-  def getNumberProcessed: Int = {
-    numberProcessed
+}
+
+class IteratingActor(it: Iterator[String]) extends Actor {
+  override def receive: Receive = inactive // Start out as inactive
+
+  def inactive: Receive = { // This is the behavior when inactive
+    case "start" =>
+      context.become(active)
   }
+
+  def active: Receive = { // This is the behavior when it's active
+    case "stop" =>
+      context.become(inactive)
+    case "next" =>
+      val line = TFLSourceLineFormatter(it.next())
+      TFLProcessSourceLines(line)
+      TFLIterateOverArrivalStream.numberProcessed += 1
+      if (TFLIterateOverArrivalStream.numberProcessed % 1000 == 0) println(TFLIterateOverArrivalStream.numberProcessed)
+      self ! "next"
+  }
+
+
 }

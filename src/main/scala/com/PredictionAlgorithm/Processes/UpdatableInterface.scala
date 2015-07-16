@@ -6,25 +6,24 @@ import com.mongodb.casbah.MongoCollection
 
 import scala.concurrent.Future
 
-case object StartMessage
-case object StopMessage
 
 sealed trait ProcessingInterface extends Actor{
   var numberProcessed: Int = 0
   def start
+  def stop
 
   def receive = {
-    case StartMessage => start
-    case StopMessage => context.stop(self)
+    case "start" => start
+    case "stop" => stop
   }
 }
 
 trait IterateOverArrivalStreamInterface extends ProcessingInterface{
 
 
-  def getSourceIterator:Iterator[String]
+ // def getSourceIterator:Iterator[String]
 
-  def startIterating(src: Iterator[String]):Unit
+ // def startIterating(src: Iterator[String]):Unit
 
 }
 
