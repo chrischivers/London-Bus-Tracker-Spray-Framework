@@ -20,14 +20,16 @@ object TFLProcessSourceLines {
 
   // Map of (Route ID, Vehicle Reg, Direction ID) -> (Stop ID, Arrival Timestamp)
   private var holdingBuffer: Map[(String, String, Int), (String, Long)] = Map()
-  val tflRouteDefinitions = TFLRouteDefinitions.getTFLSequenceMap
+  val tflRouteDefinitions = TFLRouteDefinitions.TFLSequenceMap
+  val stopIgnoreList = TFLRouteDefinitions.StopIgnoreList
+  val routeIgnoreList = TFLRouteDefinitions.RouteIgnoreList
 
   def getBufferSize: Int = holdingBuffer.size
 
   def apply(newLine: TFLSourceLine) {
     if (validateLine(newLine)) {
       if (!holdingBuffer.contains(newLine.route_ID, newLine.vehicle_Reg, newLine.direction_ID)) {
-        holdingBuffer += ((newLine.route_ID, newLine.vehicle_Reg, newLine.direction_ID) ->(newLine.stop_Code, newLine.arrival_TimeStamp))
+        holdingBufferAddAndPrune(newLine)
       } else {
         val existingValues = holdingBuffer(newLine.route_ID, newLine.vehicle_Reg, newLine.direction_ID)
         val existingStopCode = existingValues._1
@@ -38,19 +40,18 @@ object TFLProcessSourceLines {
           val duration = newLine.arrival_TimeStamp - existingArrivalTimeStamp
           if (duration > 0) {
             TFLInsertPointToPointDuration.insertDocument(createPointToPointDocument(newLine.route_ID, newLine.direction_ID, existingStopCode, newLine.stop_Code, getDayCode(existingArrivalTimeStamp), existingArrivalTimeStamp, duration))
-            holdingBuffer += ((newLine.route_ID, newLine.vehicle_Reg, newLine.direction_ID) ->(newLine.stop_Code, newLine.arrival_TimeStamp))
+            holdingBufferAddAndPrune(newLine)
           } else {
             // Replace existing values with new values
-            holdingBuffer += ((newLine.route_ID, newLine.vehicle_Reg, newLine.direction_ID) ->(newLine.stop_Code, newLine.arrival_TimeStamp))
+            holdingBufferAddAndPrune(newLine)
           }
         }
-
       }
     }
-    holdingBufferPrune
   }
 
-  def holdingBufferPrune = {
+  def holdingBufferAddAndPrune(line:TFLSourceLine) = {
+    holdingBuffer += ((line.route_ID, line.vehicle_Reg, line.direction_ID) ->(line.stop_Code, line.arrival_TimeStamp))
     val CUT_OFF:Long = System.currentTimeMillis() - MAXIMUM_AGE_OF_RECORDS_IN_HOLDING_BUFFER
     holdingBuffer = holdingBuffer.filter{case ((_),(_,time)) => time > CUT_OFF}
   }
@@ -72,10 +73,15 @@ object TFLProcessSourceLines {
       (line.arrival_TimeStamp - System.currentTimeMillis) <= TFLProcessVariables.LINE_TOLERANCE_IN_RELATION_TO_CURRENT_TIME
     }
 
+    def isNotOnIgnoreLists(line: TFLSourceLine): Boolean = {
+      if (routeIgnoreList.contains(line.route_ID) || stopIgnoreList.contains(line.stop_Code)) false else true
+    }
+
 
     if (!inDefinitionFile(line)) return false
     if (!isWithinTimeThreshold(line)) return false
     if (!isNotFinalStop(line)) return false
+    if (!isNotOnIgnoreLists(line)) return false
     true
   }
 
