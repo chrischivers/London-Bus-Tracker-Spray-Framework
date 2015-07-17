@@ -77,11 +77,10 @@ object TFLProcessSourceLines {
       if (routeIgnoreList.contains(line.route_ID) || stopIgnoreList.contains(line.stop_Code)) false else true
     }
 
-
+    if (!isNotOnIgnoreLists(line)) return false
     if (!inDefinitionFile(line)) return false
     if (!isWithinTimeThreshold(line)) return false
     if (!isNotFinalStop(line)) return false
-    if (!isNotOnIgnoreLists(line)) return false
     true
   }
 

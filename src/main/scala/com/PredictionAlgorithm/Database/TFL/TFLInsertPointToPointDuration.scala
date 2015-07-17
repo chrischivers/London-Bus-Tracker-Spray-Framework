@@ -8,6 +8,7 @@ import com.PredictionAlgorithm.Processes.TFL.TFLIterateOverArrivalStream
 import com.mongodb.casbah.commons.{MongoDBList, MongoDBObject}
 import com.mongodb.casbah.commons.ValidBSONType.DBObject
 import com.mongodb.casbah.Imports._
+import com.mongodb.casbah.query.Imports
 
 import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
@@ -51,12 +52,14 @@ class TFLInsertPointToPointDuration extends Actor {
       collection.TO_POINT_ID -> doc.to_Point_ID,
       collection.DAY_TYPE -> doc.day_Type)
 
+    val update1 = $push(collection.DURATION_LIST -> (MongoDBObject(collection.DURATION -> doc.duration,collection.OBSERVED_TIME -> doc.observed_Time)))
+    val update2 = $set(collection.LAST_UPDATED -> System.currentTimeMillis())
+
     // Upsert - pushing Duration and ObservedTime to Array
-    TFLInsertPointToPointDuration.dBCollection.update(newObj,$push(collection.DURATION_LIST -> (MongoDBObject(collection.DURATION -> doc.duration,collection.OBSERVED_TIME -> doc.observed_Time))),upsert=true)
+    TFLInsertPointToPointDuration.dBCollection.update(newObj,update1,upsert=true)
+    TFLInsertPointToPointDuration.dBCollection.update(newObj,update2,upsert=true)
     TFLInsertPointToPointDuration.numberDBTransactionsExecuted += 1
 
-    //Set the last updated timestamp
-    TFLInsertPointToPointDuration.dBCollection.update(newObj,$set(collection.LAST_UPDATED -> System.currentTimeMillis()))
   }
 }
 

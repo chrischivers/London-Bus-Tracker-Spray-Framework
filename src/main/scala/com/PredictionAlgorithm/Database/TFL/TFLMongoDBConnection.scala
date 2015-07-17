@@ -1,18 +1,24 @@
 package com.PredictionAlgorithm.Database.TFL
 
-import com.PredictionAlgorithm.Database.{DatabaseCollections, PREDICTION_DATABASE, Databases}
-import com.PredictionAlgorithm.Database.MongoDB.MongoFactory
+import com.PredictionAlgorithm.Database.{POINT_TO_POINT_COLLECTION, DatabaseCollections, PREDICTION_DATABASE, Databases}
+import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.{MongoCollection, MongoDB, MongoClient}
 
-object TFLMongoDBConnection extends MongoFactory{
+object TFLMongoDBConnection {
 
-  override var mc: MongoClient = getConnection
+  lazy val mc: MongoClient = MongoClient()
 
-  def getDatabase(): MongoDB = getDatabase(mc,PREDICTION_DATABASE)
+  lazy val getDatabase = mc(PREDICTION_DATABASE.name)
 
-  def getCollection(collectionName: DatabaseCollections): MongoCollection = getCollection(getDatabase(),collectionName)
+  def getCollection(dbc:DatabaseCollections) = {
+    val x = getDatabase(dbc.name)
+    createIndex(x, dbc)
+    println(x.getIndexInfo)
+    x
+  }
 
   def closeConnection() = mc.close()
 
-
+  def createIndex(mongoCollection: MongoCollection, dbc: DatabaseCollections) = mongoCollection.createIndex(MongoDBObject(dbc.indexKeyList))
+  //TODO make index unique
 }

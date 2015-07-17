@@ -7,6 +7,7 @@ package com.PredictionAlgorithm.Database
 sealed trait DatabaseCollections {
   val name: String
   val fieldsVector: Vector[String]
+  val indexKeyList: List[(String,Int)]
 }
 
 final case object POINT_TO_POINT_COLLECTION extends DatabaseCollections {
@@ -24,5 +25,6 @@ final case object POINT_TO_POINT_COLLECTION extends DatabaseCollections {
 
   override val name: String = "PointToPoint"
   override val fieldsVector = Vector(ROUTE_ID, DIRECTION_ID, FROM_POINT_ID, TO_POINT_ID, DAY_TYPE, OBSERVED_TIME, DURATION, LAST_UPDATED)
+  override val indexKeyList = List((ROUTE_ID, 1),(DIRECTION_ID, 1),(FROM_POINT_ID, 1),(TO_POINT_ID, 1),(DAY_TYPE, 1))
 
 }
