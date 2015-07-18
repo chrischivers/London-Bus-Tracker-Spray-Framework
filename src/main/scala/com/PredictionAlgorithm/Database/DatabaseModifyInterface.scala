@@ -5,10 +5,10 @@ import com.mongodb.casbah.MongoCollection
 
 trait DatabaseModifyInterface {
 
-  implicit val actorSystem = ActorSystem()
-  val dbModifyActor:ActorRef
+  protected implicit val actorSystem = ActorSystem()
+  protected val dbModifyActor:ActorRef
 
-  val dBCollection:MongoCollection
+  protected val dBCollection:MongoCollection
 
   @volatile var numberDBTransactionsRequested:Long= 0
   @volatile var numberDBTransactionsExecuted:Long = 0

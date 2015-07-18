@@ -1,21 +1,14 @@
 package com.PredictionAlgorithm.Database.TFL
 
 
-import akka.actor.{ActorRef, Props, ActorSystem, Actor}
-import akka.actor.Actor.Receive
+import akka.actor.{ActorRef, Props, Actor}
 import com.PredictionAlgorithm.Database._
-import com.PredictionAlgorithm.Processes.TFL.TFLIterateOverArrivalStream
-import com.mongodb.casbah.commons.{MongoDBList, MongoDBObject}
-import com.mongodb.casbah.commons.ValidBSONType.DBObject
+import com.mongodb.casbah.commons.{MongoDBObject}
 import com.mongodb.casbah.Imports._
-import com.mongodb.casbah.query.Imports
 
-import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
 
-/**
- * Created by chrischivers on 20/06/15.
- */
+
 object TFLInsertPointToPointDuration extends DatabaseModifyInterface {
 
   override val dbModifyActor: ActorRef = actorSystem.actorOf(Props[TFLInsertPointToPointDuration], name = "TFLInsertPointToPointDurationActor")
@@ -49,10 +42,11 @@ class TFLInsertPointToPointDuration extends Actor {
       collection.ROUTE_ID -> doc.route_ID,
       collection.DIRECTION_ID -> doc.direction_ID,
       collection.FROM_POINT_ID -> doc.from_Point_ID,
-      collection.TO_POINT_ID -> doc.to_Point_ID
+      collection.TO_POINT_ID -> doc.to_Point_ID,
+      collection.DAY -> doc.day_Of_Week
      )
 
-    val update1 = $push( collection.DAY_DURATIONS -> MongoDBObject(doc.day_Of_Week -> MongoDBObject(collection.DURATION_LIST -> (MongoDBObject(collection.DURATION -> doc.duration,collection.TIME_OFFSET -> doc.timeOffset)))))
+    val update1 = $push(collection.DURATION_LIST -> (MongoDBObject(collection.DURATION -> doc.duration,collection.TIME_OFFSET -> doc.timeOffset)))
     val update2 = $set(collection.LAST_UPDATED -> System.currentTimeMillis())
 
     // Upsert - pushing Duration and ObservedTime to Array

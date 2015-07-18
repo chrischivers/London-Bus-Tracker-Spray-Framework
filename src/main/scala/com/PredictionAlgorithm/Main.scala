@@ -3,7 +3,7 @@ package com.PredictionAlgorithm
 import java.io.File
 import javax.swing.{SwingUtilities, JFrame}
 import akka.actor.{Props, ActorSystem}
-import com.PredictionAlgorithm.ControlInterface.DataReadProcessStoreControlInterface
+import com.PredictionAlgorithm.ControlInterface.{QueryController, DataReadProcessStoreControlInterface}
 import com.PredictionAlgorithm.UI.{MonitoringUI}
 
 /**
@@ -17,6 +17,7 @@ object Main extends App {
     def run {
       val ui = new MonitoringUI(UI_REFRESH_INTERVAL)
       ui.setDataSourceProcess(DataReadProcessStoreControlInterface)
+      ui.setQueryProcessing(new QueryController)//TODO remove class and replace with obect
       ui.createAndDisplayGUI
 
     }

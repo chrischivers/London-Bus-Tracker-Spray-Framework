@@ -1,6 +1,8 @@
 package com.PredictionAlgorithm.UI;
 
+import com.PredictionAlgorithm.ControlInterface.QueryController;
 import com.PredictionAlgorithm.ControlInterface.StartStopControlInterface;
+
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,6 +30,14 @@ public class MonitoringUI {
     private JLabel dBTransactionsRequestedValue;
     private JLabel dBTransactionsExecutedValue;
     private JLabel dBTransactionsOutstandingValue;
+    private JPanel queryingPanel;
+    private JTextField routeInput;
+    private JTextField directionInput;
+    private JTextField fromStopIDInput;
+    private JTextField toStopIDInput;
+    private JTextField dayCodeInput;
+    private JButton runQueryButton;
+    private JLabel queryResultValue;
 
 
     public MonitoringUI(int refreshIntervalMS) {
@@ -49,7 +59,7 @@ public class MonitoringUI {
     public void setDataSourceProcess(StartStopControlInterface dsCI) {
         dataSourceReadStartStopButton.addActionListener(new ActionListener() {
             volatile boolean buttonStarted = false;
-            CounterUpdater cu = new CounterUpdater(dsCI, dataSourceLinesReadValue,sizeHoldingBufferValue,dBTransactionsRequestedValue, dBTransactionsExecutedValue,dBTransactionsOutstandingValue);
+            CounterUpdater cu = new CounterUpdater(dsCI, dataSourceLinesReadValue, sizeHoldingBufferValue, dBTransactionsRequestedValue, dBTransactionsExecutedValue, dBTransactionsOutstandingValue);
 
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -67,6 +77,17 @@ public class MonitoringUI {
             }
         });
     }
+
+    public void setQueryProcessing(QueryController queryController) {
+        runQueryButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String result = queryController.makePrediction(routeInput.getText(), Integer.parseInt(directionInput.getText()), fromStopIDInput.getText(), toStopIDInput.getText(), dayCodeInput.getText(), 30000);
+                queryResultValue.setText(result);
+            }
+        });
+    }
+
 
 
     public class CounterUpdater implements Runnable {
