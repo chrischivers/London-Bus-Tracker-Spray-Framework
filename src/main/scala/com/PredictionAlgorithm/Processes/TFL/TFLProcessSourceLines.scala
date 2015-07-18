@@ -37,9 +37,9 @@ object TFLProcessSourceLines {
         val existingPointSequence = getPointSequence(newLine.route_ID, newLine.direction_ID, existingStopCode)
         val newPointSequence = getPointSequence(newLine.route_ID, newLine.direction_ID, newLine.stop_Code)
         if (newPointSequence == existingPointSequence + 1) {
-          val duration = newLine.arrival_TimeStamp - existingArrivalTimeStamp
+          val duration = (newLine.arrival_TimeStamp - existingArrivalTimeStamp).toInt
           if (duration > 0) {
-            TFLInsertPointToPointDuration.insertDocument(createPointToPointDocument(newLine.route_ID, newLine.direction_ID, existingStopCode, newLine.stop_Code, getDayCode(existingArrivalTimeStamp), existingArrivalTimeStamp, duration))
+            TFLInsertPointToPointDuration.insertDocument(createPointToPointDocument(newLine.route_ID, newLine.direction_ID, existingStopCode, newLine.stop_Code, getDayCode(existingArrivalTimeStamp), getTimeOffset(existingArrivalTimeStamp), duration))
             holdingBufferAddAndPrune(newLine)
           } else {
             // Replace existing values with new values
@@ -88,19 +88,27 @@ object TFLProcessSourceLines {
     tflRouteDefinitions(route_ID, direction_ID, stop_Code)._1
   }
 
-  def createPointToPointDocument(route_ID: String, direction_ID: Int, from_Point_ID: String, to_Point_ID: String, day_Type: String, observed_Time: Long, duration: Long): POINT_TO_POINT_DOCUMENT = {
+  def createPointToPointDocument(route_ID: String, direction_ID: Int, from_Point_ID: String, to_Point_ID: String, day_Type: String, observed_Time: Int, duration: Int): POINT_TO_POINT_DOCUMENT = {
     new POINT_TO_POINT_DOCUMENT(route_ID, direction_ID, from_Point_ID, to_Point_ID, day_Type, observed_Time, duration)
   }
 
   def getDayCode(arrivalTime: Long): String = {
     val cal: Calendar  = new GregorianCalendar();
 
-    cal.setTime(new Date(arrivalTime));
-    cal.get(Calendar.DAY_OF_WEEK) match {
+    cal.setTimeInMillis(arrivalTime);
+    /*cal.get(Calendar.DAY_OF_WEEK) match {
       case Calendar.SATURDAY => "SAT"
       case Calendar.SUNDAY => "SUN"
       case _ => "MON_FRI"
-    }
+    }*/
+    cal.get(Calendar.DAY_OF_WEEK).toString
   }
 
+  def getTimeOffset(existingTimeStamp:Long):Int = {
+    val existingTime: Calendar = new GregorianCalendar();
+    existingTime.setTimeInMillis(existingTimeStamp)
+
+    val beginningOfDayTime: Calendar = new GregorianCalendar(existingTime.get(Calendar.YEAR), existingTime.get(Calendar.MONTH), existingTime.get(Calendar.DAY_OF_MONTH))
+    ((existingTime.getTimeInMillis - beginningOfDayTime.getTimeInMillis)/1000).toInt
+  }
 }

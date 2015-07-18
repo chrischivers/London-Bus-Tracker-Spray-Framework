@@ -49,10 +49,10 @@ class TFLInsertPointToPointDuration extends Actor {
       collection.ROUTE_ID -> doc.route_ID,
       collection.DIRECTION_ID -> doc.direction_ID,
       collection.FROM_POINT_ID -> doc.from_Point_ID,
-      collection.TO_POINT_ID -> doc.to_Point_ID,
-      collection.DAY_TYPE -> doc.day_Type)
+      collection.TO_POINT_ID -> doc.to_Point_ID
+     )
 
-    val update1 = $push(collection.DURATION_LIST -> (MongoDBObject(collection.DURATION -> doc.duration,collection.OBSERVED_TIME -> doc.observed_Time)))
+    val update1 = $push( collection.DAY_DURATIONS -> MongoDBObject(doc.day_Of_Week -> MongoDBObject(collection.DURATION_LIST -> (MongoDBObject(collection.DURATION -> doc.duration,collection.TIME_OFFSET -> doc.timeOffset)))))
     val update2 = $set(collection.LAST_UPDATED -> System.currentTimeMillis())
 
     // Upsert - pushing Duration and ObservedTime to Array
