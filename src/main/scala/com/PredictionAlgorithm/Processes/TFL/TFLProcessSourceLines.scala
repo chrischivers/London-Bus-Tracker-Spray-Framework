@@ -2,6 +2,7 @@ package com.PredictionAlgorithm.Processes.TFL
 
 import java.util.{Calendar, Date, GregorianCalendar}
 
+import com.PredictionAlgorithm.Commons.Commons
 import com.PredictionAlgorithm.DataDefinitions.TFL.TFLRouteDefinitions
 import com.PredictionAlgorithm.DataSource.TFL.{TFLSourceLine, TFLDataSource}
 import com.PredictionAlgorithm.Database.POINT_TO_POINT_DOCUMENT
@@ -16,11 +17,11 @@ class TFLProcessSourceLines
 object TFLProcessSourceLines {
 
   val logger = Logger(classOf[TFLProcessSourceLines])
-  val MAXIMUM_AGE_OF_RECORDS_IN_HOLDING_BUFFER = 600000
+  val MAXIMUM_AGE_OF_RECORDS_IN_HOLDING_BUFFER = 600000 //In Ms
 
   // Map of (Route ID, Vehicle Reg, Direction ID) -> (Stop ID, Arrival Timestamp)
   private var holdingBuffer: Map[(String, String, Int), (String, Long)] = Map()
-  val tflRouteDefinitions = TFLRouteDefinitions.TFLSequenceMap
+  val tflRouteDefinitions = TFLRouteDefinitions.StopToPointSequenceMap
   val stopIgnoreList = TFLRouteDefinitions.StopIgnoreList
   val routeIgnoreList = TFLRouteDefinitions.RouteIgnoreList
 
@@ -37,14 +38,17 @@ object TFLProcessSourceLines {
         val existingPointSequence = getPointSequence(newLine.route_ID, newLine.direction_ID, existingStopCode)
         val newPointSequence = getPointSequence(newLine.route_ID, newLine.direction_ID, newLine.stop_Code)
         if (newPointSequence == existingPointSequence + 1) {
-          val duration = (newLine.arrival_TimeStamp - existingArrivalTimeStamp).toInt
-          if (duration > 0) {
-            TFLInsertPointToPointDuration.insertDocument(createPointToPointDocument(newLine.route_ID, newLine.direction_ID, existingStopCode, newLine.stop_Code, getDayCode(existingArrivalTimeStamp), getTimeOffset(existingArrivalTimeStamp), duration))
+          val durationInSeconds = ((newLine.arrival_TimeStamp - existingArrivalTimeStamp)/1000).toInt
+          if (durationInSeconds > 0) {
+            TFLInsertPointToPointDuration.insertDocument(createPointToPointDocument(newLine.route_ID, newLine.direction_ID, existingStopCode, newLine.stop_Code, Commons.getDayCode(existingArrivalTimeStamp), Commons.getTimeOffset(existingArrivalTimeStamp), durationInSeconds))
             holdingBufferAddAndPrune(newLine)
           } else {
-            // Replace existing values with new values
-            holdingBufferAddAndPrune(newLine)
+            holdingBufferAddAndPrune(newLine)// Replace existing values with new values
           }
+        } else if (newPointSequence >= existingPointSequence) {
+          holdingBufferAddAndPrune(newLine)// Replace existing values with new values
+        } else {
+          // DO Nothing
         }
       }
     }
@@ -70,7 +74,7 @@ object TFLProcessSourceLines {
     }
 
     def isWithinTimeThreshold(line: TFLSourceLine): Boolean = {
-      (line.arrival_TimeStamp - System.currentTimeMillis) <= TFLProcessVariables.LINE_TOLERANCE_IN_RELATION_TO_CURRENT_TIME
+      ((line.arrival_TimeStamp - System.currentTimeMillis)/1000) <= TFLProcessVariables.LINE_TOLERANCE_IN_RELATION_TO_CURRENT_TIME
     }
 
     def isNotOnIgnoreLists(line: TFLSourceLine): Boolean = {
@@ -88,27 +92,9 @@ object TFLProcessSourceLines {
     tflRouteDefinitions(route_ID, direction_ID, stop_Code)._1
   }
 
-  def createPointToPointDocument(route_ID: String, direction_ID: Int, from_Point_ID: String, to_Point_ID: String, day_Type: String, observed_Time: Int, duration: Int): POINT_TO_POINT_DOCUMENT = {
-    new POINT_TO_POINT_DOCUMENT(route_ID, direction_ID, from_Point_ID, to_Point_ID, day_Type, observed_Time, duration)
+  def createPointToPointDocument(route_ID: String, direction_ID: Int, from_Point_ID: String, to_Point_ID: String, day_Type: String, observed_Time: Int, durationSeconds: Int): POINT_TO_POINT_DOCUMENT = {
+    new POINT_TO_POINT_DOCUMENT(route_ID, direction_ID, from_Point_ID, to_Point_ID, day_Type, observed_Time, durationSeconds)
   }
 
-  def getDayCode(arrivalTime: Long): String = {
-    val cal: Calendar  = new GregorianCalendar();
 
-    cal.setTimeInMillis(arrivalTime);
-    /*cal.get(Calendar.DAY_OF_WEEK) match {
-      case Calendar.SATURDAY => "SAT"
-      case Calendar.SUNDAY => "SUN"
-      case _ => "MON_FRI"
-    }*/
-    cal.get(Calendar.DAY_OF_WEEK).toString
-  }
-
-  def getTimeOffset(existingTimeStamp:Long):Int = {
-    val existingTime: Calendar = new GregorianCalendar();
-    existingTime.setTimeInMillis(existingTimeStamp)
-
-    val beginningOfDayTime: Calendar = new GregorianCalendar(existingTime.get(Calendar.YEAR), existingTime.get(Calendar.MONTH), existingTime.get(Calendar.DAY_OF_MONTH))
-    ((existingTime.getTimeInMillis - beginningOfDayTime.getTimeInMillis)/1000).toInt
-  }
 }

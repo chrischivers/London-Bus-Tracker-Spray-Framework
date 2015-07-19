@@ -62,7 +62,7 @@ class IteratingActor extends Actor {
       } catch{
         case iae: IllegalArgumentException=> {
           println("Error reading source. Retrying")
-          self.wait(2000) //TODO make static
+          Thread.sleep(1000)
           context.become(inactive)
           self ! "start"
         }

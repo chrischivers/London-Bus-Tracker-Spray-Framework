@@ -218,7 +218,7 @@
               </grid>
             </constraints>
             <properties>
-              <text value="7"/>
+              <text value="SUN"/>
             </properties>
           </component>
           <component id="87e5b" class="javax.swing.JButton" binding="runQueryButton" default-binding="true">

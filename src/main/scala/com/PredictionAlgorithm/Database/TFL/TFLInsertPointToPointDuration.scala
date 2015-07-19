@@ -46,7 +46,7 @@ class TFLInsertPointToPointDuration extends Actor {
       collection.DAY -> doc.day_Of_Week
      )
 
-    val update1 = $push(collection.DURATION_LIST -> (MongoDBObject(collection.DURATION -> doc.duration,collection.TIME_OFFSET -> doc.timeOffset)))
+    val update1 = $push(collection.DURATION_LIST -> (MongoDBObject(collection.DURATION -> doc.durationSeconds,collection.TIME_OFFSET -> doc.timeOffsetSeconds)))
     val update2 = $set(collection.LAST_UPDATED -> System.currentTimeMillis())
 
     // Upsert - pushing Duration and ObservedTime to Array

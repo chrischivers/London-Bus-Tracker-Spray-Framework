@@ -10,6 +10,6 @@ trait PredictionInterface {
 
   val coll:DatabaseCollections
 
-  def makePrediction(route_ID: String, direction_ID: Int, from_Point_ID: String, to_Point_ID: String, day_Of_Week: String, timeOffset: Int):Option[Double]
+  def makePrediction (route_ID: String, direction_ID: Int, from_Point_ID: String, to_Point_ID: String, day_Of_Week: String, timeOffset: Int):Option[Double]
 
 }

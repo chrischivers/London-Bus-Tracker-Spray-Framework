@@ -9,8 +9,10 @@ trait LoadRouteDefinitionsInterface extends LoadResource{
 
 
   // Map format = Route_ID, Direction_ID, BusStopCode, First_Last -> pointsSequence
-  var sequenceMap: Map[(String, Int, String), (Int, Option[String])] = ListMap()
+  var StopToPointSequenceMap: Map[(String, Int, String), (Int, Option[String])] = ListMap()
+  var PointToStopSequenceMap: Map[(String, Int, Int), (String, Option[String])] = ListMap()
 
-  def getMap:Map[(String, Int, String), (Int, Option[String])] = sequenceMap
+  def getStopToPointSequenceMap:Map[(String, Int, String), (Int, Option[String])] = StopToPointSequenceMap
+  def getPointToStopSequenceMap:Map[(String, Int, Int), (String, Option[String])] = PointToStopSequenceMap
 
 }

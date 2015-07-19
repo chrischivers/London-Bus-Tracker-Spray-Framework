@@ -13,7 +13,8 @@ import scala.io.Source
  */
 object LoadRouteDefinitionsFromWebsite extends LoadRouteDefinitionsInterface{
 
-  sequenceMap = Map() //Empty map
+  StopToPointSequenceMap = Map() //Empty map
+  PointToStopSequenceMap = Map()
 
 
     // RouteName, WebCode
@@ -29,7 +30,10 @@ object LoadRouteDefinitionsFromWebsite extends LoadRouteDefinitionsInterface{
         val route_Web_ID = splitLine(1)
         for (direction <- 1 to 2) {
           getStopList(route_Web_ID, direction).foreach {
-            case (stopCode, pointSeq, first_last) => sequenceMap += ((route_ID, direction, stopCode) ->(pointSeq, first_last))
+            case (stopCode, pointSeq, first_last) => {
+              StopToPointSequenceMap += ((route_ID, direction, stopCode) ->(pointSeq, first_last))
+              PointToStopSequenceMap += ((route_ID, direction, pointSeq) ->(stopCode, first_last))
+            }
           }
         }
       }
@@ -86,7 +90,7 @@ object LoadRouteDefinitionsFromWebsite extends LoadRouteDefinitionsInterface{
       val pw = new PrintWriter(new File(DEFAULT_RESOURCES_LOCATION + DEFAULT_ROUTE_DEFINITIONS_FILE_NAME))
       pw.write("RouteName;Direction;TFLSequence;BusStopCode;FirstLast" + LINE_SEPARATOR) //Headers
 
-      sequenceMap.foreach{
+      StopToPointSequenceMap.foreach{
         case ((route_ID, direction, stop_code),(pointSequence, first_last)) => {
           pw.write(route_ID + ";" + direction + ";" + pointSequence + ";" + stop_code + ";" + first_last.getOrElse("") + LINE_SEPARATOR)
         }
