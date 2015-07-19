@@ -36,7 +36,7 @@ object TFLIterateOverArrivalStream {
 //TODO consider abstracting this to an interface
 class IteratingActor extends Actor {
 
-  val it = getSourceIterator
+  var it = getSourceIterator
 
   // Iterating pattern for this actor based on code snippet posted on StackOverflow
   //http://stackoverflow.com/questions/5626285/pattern-for-interruptible-loops-using-actors
@@ -47,16 +47,29 @@ class IteratingActor extends Actor {
   def inactive: Receive = { // This is the behavior when inactive
     case "start" =>
       context.become(active)
+      it = getSourceIterator
   }
 
   def active: Receive = { // This is the behavior when it's active
     case "stop" =>
       context.become(inactive)
     case "next" =>
-      val line = TFLSourceLineFormatter(it.next())
-      TFLProcessSourceLines(line)
-      TFLIterateOverArrivalStream.numberProcessed += 1
-      self ! "next"
+      try {
+        val line = TFLSourceLineFormatter(it.next())
+        TFLProcessSourceLines(line)
+        TFLIterateOverArrivalStream.numberProcessed += 1
+        self ! "next"
+      } catch{
+        case iae: IllegalArgumentException=> {
+          println("Error reading source. Retrying")
+          self.wait(2000) //TODO make static
+          context.become(inactive)
+          self ! "start"
+        }
+        case e: Exception => println("Error reading line: " + e)
+
+      }
+
   }
 
   def getSourceIterator =
