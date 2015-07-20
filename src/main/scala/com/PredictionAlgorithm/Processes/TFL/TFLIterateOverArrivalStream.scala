@@ -47,7 +47,6 @@ class IteratingActor extends Actor {
   def inactive: Receive = { // This is the behavior when inactive
     case "start" =>
       context.become(active)
-      it = getSourceIterator
   }
 
   def active: Receive = { // This is the behavior when it's active
@@ -62,7 +61,6 @@ class IteratingActor extends Actor {
       } catch{
         case iae: IllegalArgumentException=> {
           println("Error reading source. Retrying")
-          Thread.sleep(1000)
           context.become(inactive)
           self ! "start"
         }

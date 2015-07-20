@@ -2,7 +2,7 @@ package com.PredictionAlgorithm.DataDefinitions.TFL
 
 import java.io.{PrintWriter, File}
 
-import com.PredictionAlgorithm.DataDefinitions.LoadRouteDefinitionsInterface
+import com.PredictionAlgorithm.DataDefinitions.LoadResource
 import com.PredictionAlgorithm.DataDefinitions.TFL.LoadRouteDefinitionsFromFile._
 import com.PredictionAlgorithm.DataDefinitions.TFL.LoadRouteIgnoreListFromFile._
 
@@ -12,11 +12,13 @@ import scala.io.Source
 /**
  * Created by chrischivers on 17/07/15.
  */
-object LoadRouteDefinitionsFromWebsite extends LoadRouteDefinitionsInterface{
+object LoadRouteDefinitionsFromWebsite extends LoadResource {
 
-  StopToPointSequenceMap = Map() //Empty map
-  PointToStopSequenceMap = Map()
+  var StopToPointSequenceMap: Map[(String, Int, String), (Int, Option[String])] = ListMap() //Empty map
+  var PointToStopSequenceMap: Map[(String, Int, Int), (String, Option[String])] = ListMap()
 
+
+  println("Loading Route Definitions From Web...")
 
     // RouteName, WebCode
     private var routeSet: Set[(String, String)] = Set()
@@ -46,11 +48,13 @@ object LoadRouteDefinitionsFromWebsite extends LoadRouteDefinitionsInterface{
     persist
     setUpdateVariable
 
-    println("Definitions from web loaded")
+    println("Route Definitions from web loaded")
 
 
 
     private def getStopList(webRouteID: String, direction: Int): List[(String, Int, Option[String])] = {
+
+
 
       var stopCodeSequenceList: List[(String, Int, Option[String])] = List()
 
@@ -112,6 +116,6 @@ object LoadRouteDefinitionsFromWebsite extends LoadRouteDefinitionsInterface{
     }
     val pw = new PrintWriter(file)
     tempStringArray.foreach(x => pw.write(x))
+    pw.close()
   }
-
 }

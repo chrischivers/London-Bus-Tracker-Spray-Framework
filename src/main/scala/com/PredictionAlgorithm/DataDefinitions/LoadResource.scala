@@ -11,6 +11,7 @@ trait LoadResource {
   val DEFAULT_ROUTE_IGNORE_LIST_FILE_NAME = "routeIgnoreList.csv"
   val DEFAULT_STOP_IGNORE_LIST_FILE_NAME = "stopIgnoreList.csv"
   val DEFAULT_VARIABLES_FILE_NAME = "variables.dat"
+  val DEFAULT_STOP_DEFINITIONS_FILE_NAME = "stopdefinitions.csv"
 
   val TIME_BETWEEN_UPDATES = 604800000
 

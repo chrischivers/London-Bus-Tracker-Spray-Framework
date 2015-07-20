@@ -1,7 +1,7 @@
 package com.PredictionAlgorithm.Prediction
 
 import com.PredictionAlgorithm.Commons.Commons
-import com.PredictionAlgorithm.DataDefinitions.TFL.TFLRouteDefinitions
+import com.PredictionAlgorithm.DataDefinitions.TFL.TFLDefinitions
 import com.PredictionAlgorithm.Database.POINT_TO_POINT_COLLECTION
 import com.PredictionAlgorithm.Database.TFL.TFLGetPointToPointDocument
 import com.mongodb.casbah.MongoCursor

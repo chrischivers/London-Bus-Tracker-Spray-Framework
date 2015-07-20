@@ -3,7 +3,7 @@ package com.PredictionAlgorithm.Processes.TFL
 import java.util.{Calendar, Date, GregorianCalendar}
 
 import com.PredictionAlgorithm.Commons.Commons
-import com.PredictionAlgorithm.DataDefinitions.TFL.TFLRouteDefinitions
+import com.PredictionAlgorithm.DataDefinitions.TFL.TFLDefinitions
 import com.PredictionAlgorithm.DataSource.TFL.{TFLSourceLine, TFLDataSource}
 import com.PredictionAlgorithm.Database.POINT_TO_POINT_DOCUMENT
 import com.PredictionAlgorithm.Database.TFL.{TFLMongoDBConnection, TFLInsertPointToPointDuration}
@@ -21,9 +21,9 @@ object TFLProcessSourceLines {
 
   // Map of (Route ID, Vehicle Reg, Direction ID) -> (Stop ID, Arrival Timestamp)
   private var holdingBuffer: Map[(String, String, Int), (String, Long)] = Map()
-  val tflRouteDefinitions = TFLRouteDefinitions.StopToPointSequenceMap
-  val stopIgnoreList = TFLRouteDefinitions.StopIgnoreList
-  val routeIgnoreList = TFLRouteDefinitions.RouteIgnoreList
+  val tflRouteDefinitions = TFLDefinitions.StopToPointSequenceMap
+  val stopIgnoreList = TFLDefinitions.StopIgnoreList
+  val routeIgnoreList = TFLDefinitions.RouteIgnoreList
 
   def getBufferSize: Int = holdingBuffer.size
 

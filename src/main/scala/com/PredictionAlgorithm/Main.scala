@@ -4,6 +4,7 @@ import java.io.File
 import javax.swing.{SwingUtilities, JFrame}
 import akka.actor.{Props, ActorSystem}
 import com.PredictionAlgorithm.ControlInterface.{QueryController, DataReadProcessStoreControlInterface}
+import com.PredictionAlgorithm.DataDefinitions.TFL.{TFLDefinitions, LoadStopDefinitionsFromWeb}
 import com.PredictionAlgorithm.Spray.Boot
 import com.PredictionAlgorithm.UI.{MonitoringUI}
 
@@ -23,5 +24,7 @@ object Main extends App {
 
     }
   })
+
+  TFLDefinitions.StopDefinitions
 
 }
