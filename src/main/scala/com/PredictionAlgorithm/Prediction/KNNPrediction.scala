@@ -23,12 +23,12 @@ object KNNPrediction extends PredictionInterface {
 
 
   override def makePrediction(route_ID: String, direction_ID: Int, from_Point_ID: String, to_Point_ID: String, day_Of_Week: String, timeOffset: Int): Option[Double] = {
-    val startingPoint = Commons.getPointSequenceFromStopCode(route_ID,direction_ID,from_Point_ID)
-    val endingPoint = Commons.getPointSequenceFromStopCode(route_ID,direction_ID,to_Point_ID)
-    var accumulatedPrediction = 0.0;
+    val startingPoint = Commons.getPointSequenceFromStopCode(route_ID,direction_ID,from_Point_ID).getOrElse(return None)
+    val endingPoint = Commons.getPointSequenceFromStopCode(route_ID,direction_ID,to_Point_ID).getOrElse(return None)
+    var accumulatedPrediction = 0.0
     for (i <- startingPoint until endingPoint) {
-      val fromStopID = Commons.getStopCodeFromPointSequence(route_ID,direction_ID,i)
-      val toStopID = Commons.getStopCodeFromPointSequence(route_ID,direction_ID,i + 1)
+      val fromStopID = Commons.getStopCodeFromPointSequence(route_ID,direction_ID,i).getOrElse(return None)
+      val toStopID = Commons.getStopCodeFromPointSequence(route_ID,direction_ID,i + 1).getOrElse(return None)
       accumulatedPrediction += makePredictionBetweenConsecutivePoints(route_ID,direction_ID,fromStopID,toStopID,day_Of_Week,timeOffset).getOrElse(return None)
     }
     Option(accumulatedPrediction)
@@ -36,7 +36,7 @@ object KNNPrediction extends PredictionInterface {
 
     private def makePredictionBetweenConsecutivePoints(route_ID: String, direction_ID: Int, from_Point_ID: String, to_Point_ID: String, day_Of_Week: String, timeOffset: Int): Option[Double] = {
 
-      assert(Commons.getPointSequenceFromStopCode(route_ID, direction_ID, from_Point_ID) + 1 == Commons.getPointSequenceFromStopCode(route_ID, direction_ID, to_Point_ID))
+      assert(Commons.getPointSequenceFromStopCode(route_ID, direction_ID, from_Point_ID).get + 1 == Commons.getPointSequenceFromStopCode(route_ID, direction_ID, to_Point_ID).get)
 
       val query = MongoDBObject(coll.ROUTE_ID -> route_ID, coll.DIRECTION_ID -> direction_ID, coll.FROM_POINT_ID -> from_Point_ID, coll.TO_POINT_ID -> to_Point_ID)
       val cursor: MongoCursor = TFLGetPointToPointDocument.executeQuery(query)

@@ -4,6 +4,7 @@ import java.io.{PrintWriter, File}
 
 import com.PredictionAlgorithm.DataDefinitions.LoadRouteDefinitionsInterface
 import com.PredictionAlgorithm.DataDefinitions.TFL.LoadRouteDefinitionsFromFile._
+import com.PredictionAlgorithm.DataDefinitions.TFL.LoadRouteIgnoreListFromFile._
 
 import scala.collection.immutable.ListMap
 import scala.io.Source
@@ -43,6 +44,7 @@ object LoadRouteDefinitionsFromWebsite extends LoadRouteDefinitionsInterface{
     })
 
     persist
+    setUpdateVariable
 
     println("Definitions from web loaded")
 
@@ -98,5 +100,18 @@ object LoadRouteDefinitionsFromWebsite extends LoadRouteDefinitionsInterface{
       pw.close
       println("web definitions persisted to file")
     }
+
+  private def setUpdateVariable = {
+    val file = new File(DEFAULT_RESOURCES_LOCATION + DEFAULT_VARIABLES_FILE_NAME)
+    var tempStringArray:Array[String] = Array()
+    val s = Source.fromFile(file)
+    for (line <- s.getLines()) {
+      if (line.startsWith(LAST_UPDATED_VARIABLE_NAME)) {
+        tempStringArray :+ (line.splitAt(LAST_UPDATED_VARIABLE_NAME.length + 1)._2 + System.currentTimeMillis())
+      } else tempStringArray :+ line
+    }
+    val pw = new PrintWriter(file)
+    tempStringArray.foreach(x => pw.write(x))
+  }
 
 }

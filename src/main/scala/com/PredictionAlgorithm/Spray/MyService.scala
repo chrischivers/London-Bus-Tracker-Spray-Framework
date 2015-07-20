@@ -68,7 +68,7 @@ trait MyService extends HttpService {
           formFields('route_ID, 'direction_ID, 'from_ID, 'to_ID, 'day_code) { (route:String, dir:String, from:String, to:String, day:String) =>
           {
             val result = new QueryController().makePrediction(route, dir.toInt, from, to, day, Commons.getTimeOffset(System.currentTimeMillis))
-            complete(<h1>Prediction {result} Created</h1>)
+            complete(<h1>Prediction: {result}</h1>)
           }
         }
         }

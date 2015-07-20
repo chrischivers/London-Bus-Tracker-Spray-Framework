@@ -33,12 +33,16 @@ object Commons {
     ((existingTime.getTimeInMillis - beginningOfDayTime.getTimeInMillis)/1000).toInt
   }
 
-  def getPointSequenceFromStopCode(route_ID: String, direction_ID: Int, stop_Code: String): Int = {
-    TFLRouteDefinitions.StopToPointSequenceMap(route_ID, direction_ID, stop_Code)._1
+  def getPointSequenceFromStopCode(route_ID: String, direction_ID: Int, stop_Code: String): Option[Int] = {
+    val x = TFLRouteDefinitions.StopToPointSequenceMap.get(route_ID, direction_ID, stop_Code)
+    if (x.isEmpty) None
+    else Some(x.get._1)
   }
 
-  def getStopCodeFromPointSequence(route_ID: String, direction_ID: Int, pointSequence: Int): String = {
-    TFLRouteDefinitions.PointToStopSequenceMap(route_ID, direction_ID, pointSequence)._1
+  def getStopCodeFromPointSequence(route_ID: String, direction_ID: Int, pointSequence: Int): Option[String] = {
+    val x = TFLRouteDefinitions.PointToStopSequenceMap.get(route_ID, direction_ID, pointSequence)
+    if (x.isEmpty) None
+    else Some(x.get._1)
   }
 
 }
