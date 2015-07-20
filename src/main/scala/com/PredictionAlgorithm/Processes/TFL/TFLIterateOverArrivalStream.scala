@@ -35,7 +35,6 @@ object TFLIterateOverArrivalStream {
 
 //TODO consider abstracting this to an interface
 class IteratingActor extends Actor {
-
   var it = getSourceIterator
 
   // Iterating pattern for this actor based on code snippet posted on StackOverflow
@@ -60,7 +59,7 @@ class IteratingActor extends Actor {
         self ! "next"
       } catch{
         case iae: IllegalArgumentException=> {
-          println("Error reading source. Retrying")
+          println("Error reading source.")
           context.become(inactive)
           self ! "start"
         }

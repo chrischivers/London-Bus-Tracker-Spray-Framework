@@ -10,7 +10,7 @@ import scala.io.Source
 
 object TFLDefinitions {
 
-  lazy val loadFromWeb: Boolean = if ((System.currentTimeMillis() - getLastUpdatedVariable.getOrElse(0.toLong)) > TIME_BETWEEN_UPDATES) true else false
+  val loadFromWeb: Boolean =  if ((System.currentTimeMillis() - getLastUpdatedVariable.getOrElse(0.toLong)) > TIME_BETWEEN_UPDATES) true else false
 
   //lazy val TFLSequenceMap:Map[(String, Int, String), (Int, Option[String])] = LoadRouteDefinitionsFromWebsite.getMap
   lazy val StopToPointSequenceMap: Map[(String, Int, String), (Int, Option[String])] = if (loadFromWeb) LoadRouteDefinitionsFromWebsite.StopToPointSequenceMap else LoadRouteDefinitionsFromFile.StopToPointSequenceMap

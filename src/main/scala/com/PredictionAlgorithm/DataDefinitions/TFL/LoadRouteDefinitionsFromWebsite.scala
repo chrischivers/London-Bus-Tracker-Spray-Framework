@@ -14,15 +14,19 @@ import scala.io.Source
  */
 object LoadRouteDefinitionsFromWebsite extends LoadResource {
 
-  var StopToPointSequenceMap: Map[(String, Int, String), (Int, Option[String])] = ListMap() //Empty map
-  var PointToStopSequenceMap: Map[(String, Int, Int), (String, Option[String])] = ListMap()
+  val StopToPointSequenceMap: Map[(String, Int, String), (Int, Option[String])] = readStopToPointSequenceMap
+  val PointToStopSequenceMap: Map[(String, Int, Int), (String, Option[String])] = StopToPointSequenceMap.map{case((route,dir,stop),(point,fl)) => ((route,dir,point),(stop,fl))} //swaps point and stop
 
 
-  println("Loading Route Definitions From Web...")
+  private def readStopToPointSequenceMap: Map[(String, Int, String), (Int, Option[String])]  = {
+
+    var tempMap:Map[(String, Int, String), (Int, Option[String])] = Map()
+
+    println("Loading Route Definitions From Web...")
 
     // RouteName, WebCode
-    private var routeSet: Set[(String, String)] = Set()
-    private val routeListFile = new File(DEFAULT_RESOURCES_LOCATION + DEFAULT_ROUTE_LIST_FILE_NAME)
+    var routeSet: Set[(String, String)] = Set()
+    val routeListFile = new File(DEFAULT_RESOURCES_LOCATION + DEFAULT_ROUTE_LIST_FILE_NAME)
 
     val s = Source.fromFile(routeListFile)
     s.getLines.drop(1).foreach((line) => {
@@ -34,8 +38,7 @@ object LoadRouteDefinitionsFromWebsite extends LoadResource {
         for (direction <- 1 to 2) {
           getStopList(route_Web_ID, direction).foreach {
             case (stopCode, pointSeq, first_last) => {
-              StopToPointSequenceMap += ((route_ID, direction, stopCode) ->(pointSeq, first_last))
-              PointToStopSequenceMap += ((route_ID, direction, pointSeq) ->(stopCode, first_last))
+              tempMap += ((route_ID, direction, stopCode) ->(pointSeq, first_last))
             }
           }
         }
@@ -49,7 +52,9 @@ object LoadRouteDefinitionsFromWebsite extends LoadResource {
     setUpdateVariable
 
     println("Route Definitions from web loaded")
+    tempMap
 
+  }
 
 
     private def getStopList(webRouteID: String, direction: Int): List[(String, Int, Option[String])] = {
@@ -102,7 +107,7 @@ object LoadRouteDefinitionsFromWebsite extends LoadResource {
         }
       }
       pw.close
-      println("web definitions persisted to file")
+      println("Route Definitons loaded from webpersisted to file")
     }
 
   private def setUpdateVariable = {
@@ -111,8 +116,8 @@ object LoadRouteDefinitionsFromWebsite extends LoadResource {
     val s = Source.fromFile(file)
     for (line <- s.getLines()) {
       if (line.startsWith(LAST_UPDATED_VARIABLE_NAME)) {
-        tempStringArray :+ (line.splitAt(LAST_UPDATED_VARIABLE_NAME.length + 1)._2 + System.currentTimeMillis())
-      } else tempStringArray :+ line
+        tempStringArray = tempStringArray :+ (line.splitAt(LAST_UPDATED_VARIABLE_NAME.length + 1)._2 + System.currentTimeMillis())
+      } else tempStringArray = tempStringArray :+ line
     }
     val pw = new PrintWriter(file)
     tempStringArray.foreach(x => pw.write(x))

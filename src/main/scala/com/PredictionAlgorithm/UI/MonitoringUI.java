@@ -112,7 +112,7 @@ public class MonitoringUI {
         @Override
         public void run() {
             running = true;
-            System.out.println("started");
+            System.out.println("UI refresh running");
             while (running) {
                 try {
                     Thread.sleep(UI_REFRESH_INTERVAL);

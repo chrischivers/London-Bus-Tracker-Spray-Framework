@@ -30,67 +30,59 @@ class MyServiceActor extends Actor with MyService {
 trait MyService extends HttpService {
 
   val thisRoute = {
-    path("predict") {
 
-      get{
-        respondWithMediaType(`text/html`) {
-          // XML is marshalled to `text/xml` by default, so we simply override here
+    pathPrefix("css") {
+      get {
+
+        getFromResourceDirectory("css")
+      }
+    } ~
+    path("predict") {
+      get {
           complete {
             <html>
+              <link rel="stylesheet" href="css/form.css"/>
               <body>
                 <form method="post">
-                  <br>Route:
+                  <p>
+                    <label for="a">Route:</label>
                     <input type="text" name="route_ID"></input>
-                  </br>
-                  <br>Direction:
+                  </p>
+                  <p>
+                    <label for="a">Direction:</label>
                     <input type="text" name="direction_ID"></input>
-                  </br>
-                  <br>From ID:
+                  </p>
+                  <p>
+                    <label for="a">From ID:</label>
                     <input type="text" name="from_ID"></input>
-                  </br>
-                  <br>To ID:
+                  </p>
+                  <p>
+                    <label for="a">To ID:</label>
                     <input type="text" name="to_ID"></input>
-                  </br>
-                  <br>Day Code:
+                  </p>
+                  <p>
+                    <label for="a">Day Code:</label>
                     <input type="text" name="day_code"></input>
-                  </br>
-                  <input type="submit" value="Submit"></input>
+                  </p>
+                  <p>
+                    <input type="submit" value="Submit"></input>
+                  </p>
                 </form>
               </body>
             </html>
-
-
-          }
-
         }
       } ~
         post {
-          formFields('route_ID, 'direction_ID, 'from_ID, 'to_ID, 'day_code) { (route:String, dir:String, from:String, to:String, day:String) =>
-          {
+          formFields('route_ID, 'direction_ID, 'from_ID, 'to_ID, 'day_code) { (route: String, dir: String, from: String, to: String, day: String) => {
             val result = new QueryController().makePrediction(route, dir.toInt, from, to, day, Commons.getTimeOffset(System.currentTimeMillis))
-            complete(<h1>Prediction: {result}</h1>)
+            complete(<h1>Prediction:
+              {result}
+            </h1>)
           }
-        }
+          }
+
         }
     }
   }
 
 }
-
-
-    /*path("predict") {
-
-
-      }
-
-
-    } ~
-
-    path ("formresponse") {
-
-      post {
-
-        }
-
-      }
-    }*/
