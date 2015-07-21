@@ -7,7 +7,7 @@ import com.mongodb.casbah.MongoCollection
 import scala.concurrent.Future
 
 
-sealed trait ProcessingInterface extends Actor{
+trait ProcessingInterface extends Actor{
   def start
   def stop
 
@@ -15,15 +15,6 @@ sealed trait ProcessingInterface extends Actor{
     case "start" => start
     case "stop" => stop
   }
-}
-
-trait IterateOverArrivalStreamInterface extends ProcessingInterface{
-
-
- // def getSourceIterator:Iterator[String]
-
- // def startIterating(src: Iterator[String]):Unit
-
 }
 
 trait ProcessLinesInterface extends ProcessingInterface{

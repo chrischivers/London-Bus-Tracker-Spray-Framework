@@ -16,77 +16,120 @@ object KNNPrediction extends PredictionInterface {
 
 
   val K = 10
-  val K_TIME_THRESHOLD_LIMIT = 10800 //In Seconds
-  val NEAREST_DAY_SAMPLE_TIMESPAN = 43200 //In Seconds
+  val K_TIME_THRESHOLD_LIMIT = 10800
+  //In Seconds
+  val NEAREST_DAY_SAMPLE_TIMESPAN = 43200
+  //In Seconds
   val NEAREST_DAY_AVG_DISTANCE_THRESHOLD = 15
   val K_ST_DEV_THRESHOLD_LIMIT = 500
 
 
   override def makePrediction(route_ID: String, direction_ID: Int, from_Point_ID: String, to_Point_ID: String, day_Of_Week: String, timeOffset: Int): Option[Double] = {
-    val startingPoint = Commons.getPointSequenceFromStopCode(route_ID,direction_ID,from_Point_ID).getOrElse(return None)
-    val endingPoint = Commons.getPointSequenceFromStopCode(route_ID,direction_ID,to_Point_ID).getOrElse(return None)
+    val startingPoint = Commons.getPointSequenceFromStopCode(route_ID, direction_ID, from_Point_ID).getOrElse(return None)
+    val endingPoint = Commons.getPointSequenceFromStopCode(route_ID, direction_ID, to_Point_ID).getOrElse(return None)
     var accumulatedPrediction = 0.0
     for (i <- startingPoint until endingPoint) {
-      val fromStopID = Commons.getStopCodeFromPointSequence(route_ID,direction_ID,i).getOrElse(return None)
-      val toStopID = Commons.getStopCodeFromPointSequence(route_ID,direction_ID,i + 1).getOrElse(return None)
-      accumulatedPrediction += makePredictionBetweenConsecutivePoints(route_ID,direction_ID,fromStopID,toStopID,day_Of_Week,timeOffset).getOrElse(return None)
+      val fromStopID = Commons.getStopCodeFromPointSequence(route_ID, direction_ID, i).getOrElse(return None)
+      val toStopID = Commons.getStopCodeFromPointSequence(route_ID, direction_ID, i + 1).getOrElse(return None)
+      accumulatedPrediction += makePredictionBetweenConsecutivePoints(route_ID, direction_ID, fromStopID, toStopID, day_Of_Week, timeOffset).getOrElse(return None)
     }
     Option(accumulatedPrediction)
   }
 
-    private def makePredictionBetweenConsecutivePoints(route_ID: String, direction_ID: Int, from_Point_ID: String, to_Point_ID: String, day_Of_Week: String, timeOffset: Int): Option[Double] = {
+  private def makePredictionBetweenConsecutivePoints(route_ID: String, direction_ID: Int, from_Point_ID: String, to_Point_ID: String, day_Of_Week: String, timeOffset: Int): Option[Double] = {
 
-      assert(Commons.getPointSequenceFromStopCode(route_ID, direction_ID, from_Point_ID).get + 1 == Commons.getPointSequenceFromStopCode(route_ID, direction_ID, to_Point_ID).get)
+    assert(Commons.getPointSequenceFromStopCode(route_ID, direction_ID, from_Point_ID).get + 1 == Commons.getPointSequenceFromStopCode(route_ID, direction_ID, to_Point_ID).get)
 
-      val query = MongoDBObject(coll.ROUTE_ID -> route_ID, coll.DIRECTION_ID -> direction_ID, coll.FROM_POINT_ID -> from_Point_ID, coll.TO_POINT_ID -> to_Point_ID)
-      val cursor: MongoCursor = TFLGetPointToPointDocument.executeQuery(query)
+    val query = MongoDBObject(coll.ROUTE_ID -> route_ID, coll.DIRECTION_ID -> direction_ID, coll.FROM_POINT_ID -> from_Point_ID, coll.TO_POINT_ID -> to_Point_ID)
+    val cursor: MongoCursor = TFLGetPointToPointDocument.executeQuery(query)
 
-      if (cursor.size == 0) return None //If no entry in DB with route, direction, fromPoint and toPoint... return Nothing
-      else {
-        val dayDurMap = getMapFromCursor(cursor) // Map is Day of Week -> Vector of Duration, TimeOffset
-        var KNNList: Vector[(Int, Int)] = getKNNForDay(dayDurMap, day_Of_Week, timeOffset)
-        println("KNNList Before closestDays applied: " + KNNList)
 
-        if (KNNList.size < K) {
-          val closestDaysList = getClosestDaysByAverage(dayDurMap, timeOffset, day_Of_Week)
-          if (!closestDaysList.isEmpty) {
-            closestDaysList.get.foreach(x => {
-              if (KNNList.size < K) {
-                KNNList :+ getKNNForDay(dayDurMap, x._1, timeOffset)
-              }
-            })
+
+    if (cursor.size == 0) return None //If no entry in DB with route, direction, fromPoint and toPoint... return Nothing
+    else {
+      val dayDurTimeOffsetMap = getDayDurMapFromCursor(cursor) // Map is rDay of Week -> Vector of Duration, TimeOffset
+      println("full dayDurTimeOffsetMap map: " + dayDurTimeOffsetMap)
+
+      val dayDurTimeDifSortedMap = setTimeOffsetsToTimeAbsDifferencesAndSort(dayDurTimeOffsetMap, timeOffset)
+      println("dayDurTimeDifSortedMap map: " + dayDurTimeDifSortedMap)
+
+      val kNNListForThisDay: Vector[(Int, Int)] = getKNNForDay(dayDurTimeOffsetMap, day_Of_Week)
+      println("K nearest neighbours for day of week (" + day_Of_Week + "): " + kNNListForThisDay)
+
+      val averageDuration = calculateAverageforKNNList(kNNListForThisDay)
+
+      averageDuration
+    }
+
+
+
+
+
+  }
+
+  private def getDayDurMapFromCursor(cursor: MongoCursor): Map[String, Vector[(Int, Int)]] = {
+    // Map is Day of Week -> Vector of Duration, TimeOffset
+    cursor.toList.map(x => {
+      x.get(coll.DAY).asInstanceOf[String] -> {
+        var vector: Vector[(Int, Int)] = Vector()
+        x.get(coll.DURATION_LIST).asInstanceOf[Imports.BasicDBList].foreach(y => {
+          vector = vector :+(y.asInstanceOf[Imports.BasicDBObject].getInt(coll.DURATION),
+            y.asInstanceOf[Imports.BasicDBObject].getInt(coll.TIME_OFFSET))
+        })
+        vector.sortBy(_._2)
+      }
+    }).toMap
+  }
+
+  private def setTimeOffsetsToTimeAbsDifferencesAndSort(inMap: Map[String, Vector[(Int, Int)]], timeOffset: Int): Map[String, Vector[(Int, Int)]] = {
+    // Map is Day of Week -> Vector of Duration, TimeOffset
+    inMap.map(day => (day._1, day._2.map { case (dur, time) => (dur, math.abs(timeOffset - time)) }.sortBy(_._2)))
+  }
+
+  private def getKNNForDay(dayDurTimeDifSortedMap: Map[String, Vector[(Int, Int)]], dayOfWeek: String): Vector[(Int, Int)] = {
+    // Map is Day of Week -> Vector of Duration, Time Difference
+    val thisDayVector = dayDurTimeDifSortedMap.getOrElse(dayOfWeek, return Vector()) //Vector of Duration, TimeOffset. Returns empty vector if day does not exist
+    val kNearestNeighbours = thisDayVector.take(K) // TODO check K not too small
+    kNearestNeighbours
+  }
+
+
+  private def calculateAverageforKNNList(kNNList: Vector[(Int, Int)]): Option[Double] = {
+    if (!kNNList.isEmpty) {
+      val averageDuration = kNNList.foldLeft(0.0)((acc, value) => acc + value._1) / kNNList.foldLeft(0.0)((acc, value) => acc + 1)
+      Option(averageDuration)
+    } else None
+  }
+}
+
+
+/*
+
+        val KNNwithClosestDaysApplied: Vector[(Int, Int)] = {
+          var tempKNNList = KNNList
+          if (tempKNNList.size < K) {
+            val closestDaysList = getClosestDaysByAverage(dayDurTimeOffsetMap, timeOffset, day_Of_Week)
+            if (!closestDaysList.isEmpty) {
+              closestDaysList.get.foreach(x => {
+                if (tempKNNList.size < K) {
+                  tempKNNList :+ getDurationTimeDifferenceVector(getKNNForDay(dayDurTimeOffsetMap, x._1, timeOffset),timeOffset)
+                }
+              })
+            }
           }
-          println("KNNList After closestDays applied: " + KNNList)
+          tempKNNList
         }
+          println("KNNList After closestDays applied: " + KNNwithClosestDaysApplied)
+
 
         //val sTDevOfDurations = getStandardDeviation(KNNList) //TODO check this is within threshold
 
-        if (!KNNList.isEmpty) {
-          val averageDuration = KNNList.foldLeft(0.0)((acc, value) => acc + value._1) / KNNList.foldLeft(0.0)((acc, value) => acc + 1)
-          Option(averageDuration)
-        } else None
+
       }
     }
+    */
 
-      def getMapFromCursor(cursor: MongoCursor): Map[String, Vector[(Int, Int)]] = {
-        // Map is Day of Week -> Vector of Duration, TimeOffset
-        var map: Map[String, Vector[(Int, Int)]] = Map()
-
-        cursor.toList.foreach(x => {
-          map += (x.get(coll.DAY).asInstanceOf[String] -> {
-
-            //TODO see if this can be done with FoldLeft
-            var vector: Vector[(Int, Int)] = Vector()
-            x.get(coll.DURATION_LIST).asInstanceOf[Imports.BasicDBList].foreach(y => {
-              vector = vector :+(y.asInstanceOf[Imports.BasicDBObject].getInt(coll.DURATION),
-                y.asInstanceOf[Imports.BasicDBObject].getInt(coll.TIME_OFFSET))
-            })
-            println("full vector: " + x.get(coll.DAY) + " - " + vector)
-            vector.sortBy(_._2)
-          })
-        })
-        map
-      }
+/*
 
       // Looks for clossest days by average (based on TIMESPAN constant) and returns list of (Day, Distance)
       def getClosestDaysByAverage(dayDurMap: Map[String, Vector[(Int, Int)]], timeOffset: Int, dayOfWeek: String): Option[List[(String, Double)]] = {
@@ -118,23 +161,12 @@ object KNNPrediction extends PredictionInterface {
 
       }
 
-      def getSortedNeighbours(thisDayVector: Vector[(Int, Int)], timeOffset: Int): Vector[(Int, Int)] = {
-        //Vector of Duration, TimeOffset => Sorted Vector of Duration, Time Difference
-        thisDayVector.map { case (dur, time) => (dur, math.abs(timeOffset - time)) }.filter(x => x._2 <= K_TIME_THRESHOLD_LIMIT).sortBy(_._2)
-      }
+     
 
       def getStandardDeviation(durationTimeDifVector: Vector[(Int, Int)]): Double = {
         val acc = new SummaryStatistics()
         durationTimeDifVector.foreach(x => acc.addValue(x._1))
         acc.getStandardDeviation
       }
+*/
 
-      def getKNNForDay(dayDurMap: Map[String, Vector[(Int, Int)]], dayOfWeek: String, timeOffset: Int): Vector[(Int, Int)] = {
-
-        val thisDayVector = dayDurMap.getOrElse(dayOfWeek, return Vector()) //Vector of Duration, TimeOffset. Returns empty vector if day does not exist
-        val sortedNeighboursDifferences = getSortedNeighbours(thisDayVector, timeOffset)
-        val kNearestNeighbours = sortedNeighboursDifferences.take(K) // TODO check K not too small
-        kNearestNeighbours
-      }
-
-}

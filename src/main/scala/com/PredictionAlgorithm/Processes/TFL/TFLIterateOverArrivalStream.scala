@@ -3,19 +3,23 @@ package com.PredictionAlgorithm.Processes.TFL
 
 import java.net.UnknownHostException
 
-import akka.actor.{Props, Actor}
+import akka.actor.SupervisorStrategy._
+import akka.actor.{ActorInitializationException, OneForOneStrategy, Props, Actor}
 import com.PredictionAlgorithm.ControlInterface.DataReadProcessStoreControlInterface._
 import com.PredictionAlgorithm.DataSource.TFL.{TFLSourceLineFormatter, TFLDataSource, TFLSourceLine}
 import com.PredictionAlgorithm.DataSource._
 import com.PredictionAlgorithm.Database.POINT_TO_POINT_COLLECTION
-import com.PredictionAlgorithm.Processes.{IterateOverArrivalStreamInterface}
+import com.PredictionAlgorithm.Processes.ProcessingInterface
+import scala.concurrent.{ExecutionContext, Await, Future}
+import scala.concurrent.duration._
+import ExecutionContext.Implicits.global
 
 import scala.util.{Failure, Success, Try}
 
 
-class TFLIterateOverArrivalStream extends IterateOverArrivalStreamInterface {
+class TFLIterateOverArrivalStream extends ProcessingInterface {
 
-  val iteratingActor = actorSystem.actorOf(Props[IteratingActor], name = "IteratorStream")
+  val iteratingActor = context.actorOf(Props[IteratingActor])
 
   override def start = {
       iteratingActor ! "start"
@@ -25,6 +29,18 @@ class TFLIterateOverArrivalStream extends IterateOverArrivalStreamInterface {
   override def stop = {
     iteratingActor ! "stop"
   }
+
+  override val supervisorStrategy =
+    OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
+      case _: Exception => {
+                    println("actor exception. Restarting...")
+                    Thread.sleep(5000)
+                    Restart
+      }
+      case t =>
+        super.supervisorStrategy.decider.applyOrElse(t, (_: Any) => Escalate)
+    }
+
 }
 
 
@@ -52,27 +68,18 @@ class IteratingActor extends Actor {
     case "stop" =>
       context.become(inactive)
     case "next" =>
-      try {
-        val line = TFLSourceLineFormatter(it.next())
+        val lineFuture = Future(TFLSourceLineFormatter(it.next()))
+        val line = Await.result(lineFuture, 3 seconds);
         TFLProcessSourceLines(line)
         TFLIterateOverArrivalStream.numberProcessed += 1
         self ! "next"
-      } catch{
-        case iae: IllegalArgumentException=> {
-          println("Error reading source.")
-          context.become(inactive)
-          self ! "start"
-        }
-        case e: Exception => println("Error reading line: " + e)
-
       }
 
+  override def postRestart(reason: Throwable): Unit = {
+    self ! "start"
+    self ! "next"
   }
 
   def getSourceIterator =
-    Try(new SourceIterator(new HttpDataStream(TFLDataSource))) match {
-      case Success(src) => src.iterator
-      case Failure(fail) => throw new IllegalStateException("Cannot get Source Iterator")
-    }
-
+   new SourceIterator(new HttpDataStream(TFLDataSource)).iterator
 }
