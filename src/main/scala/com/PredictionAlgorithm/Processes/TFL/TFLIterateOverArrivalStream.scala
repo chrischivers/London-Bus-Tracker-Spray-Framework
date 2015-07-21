@@ -51,7 +51,7 @@ object TFLIterateOverArrivalStream {
 
 //TODO consider abstracting this to an interface
 class IteratingActor extends Actor {
-  var it = getSourceIterator
+  lazy val it = getSourceIterator
 
   // Iterating pattern for this actor based on code snippet posted on StackOverflow
   //http://stackoverflow.com/questions/5626285/pattern-for-interruptible-loops-using-actors

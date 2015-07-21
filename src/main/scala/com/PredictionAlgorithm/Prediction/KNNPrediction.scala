@@ -53,10 +53,39 @@ object KNNPrediction extends PredictionInterface {
       val dayDurTimeDifSortedMap = setTimeOffsetsToTimeAbsDifferencesAndSort(dayDurTimeOffsetMap, timeOffset)
       println("dayDurTimeDifSortedMap map: " + dayDurTimeDifSortedMap)
 
-      val kNNListForThisDay: Vector[(Int, Int)] = getKNNForDay(dayDurTimeOffsetMap, day_Of_Week)
-      println("K nearest neighbours for day of week (" + day_Of_Week + "): " + kNNListForThisDay)
+      val kNNListForAllDays = getKNNAllDays(dayDurTimeOffsetMap)
+      println("K nearest neighbours for all days :" + kNNListForAllDays)
 
-      val averageDuration = calculateAverageforKNNList(kNNListForThisDay)
+      val kNNAverageForEachDay = getAverageDurationForEachDay(kNNListForAllDays)
+      println("Average duration for KNN of each day :" + kNNAverageForEachDay)
+
+      val kNNSortedAverageDiferenceForEachDay = getSortedAverageDiferenceForEachDay(kNNAverageForEachDay,day_Of_Week)
+      if (!kNNSortedAverageDiferenceForEachDay.isEmpty) assert(kNNSortedAverageDiferenceForEachDay.get(0)._1.equals(day_Of_Week))
+
+      val kNNForThisDay = kNNListForAllDays.get(day_Of_Week)
+      println("K nearest neighbours for this day (" + day_Of_Week + ") :" + kNNForThisDay)
+
+      def expandFromOtherDays(KNNMap:Option[Vector[(Int, Int)]]):Option[Vector[(Int, Int)]] = {
+        def recursiveHelper(expandedKNNMap: Vector[(Int, Int)], acc: Int):Vector[(Int,Int)] = {
+          if (expandedKNNMap.length >= K || acc >= 6) expandedKNNMap
+          else {
+            val daysNeeded = K - expandedKNNMap.length
+            val kNNForThisDay = kNNListForAllDays.getOrElse(kNNSortedAverageDiferenceForEachDay.get(acc)._1, Vector()).take(daysNeeded)
+            recursiveHelper(expandedKNNMap ++ kNNForThisDay, acc + 1)
+          }
+        }
+        if (KNNMap.isEmpty) None
+        else Option(recursiveHelper(KNNMap.get, 1))
+      }
+
+      val kNNExpandedFromOtherDays = expandFromOtherDays(kNNForThisDay)
+      println("K nearest neighbours expand from other days: " + kNNExpandedFromOtherDays)
+      //TODO what to do if KNN still not enough
+      //TODO factor in degree of accuracy
+
+
+      val averageDuration = getAverageForKNNVector(kNNExpandedFromOtherDays)
+      println("Average Duration: " + averageDuration)
 
       averageDuration
     }
@@ -83,86 +112,38 @@ object KNNPrediction extends PredictionInterface {
 
   private def setTimeOffsetsToTimeAbsDifferencesAndSort(inMap: Map[String, Vector[(Int, Int)]], timeOffset: Int): Map[String, Vector[(Int, Int)]] = {
     // Map is Day of Week -> Vector of Duration, TimeOffset
-    inMap.map(day => (day._1, day._2.map { case (dur, time) => (dur, math.abs(timeOffset - time)) }.sortBy(_._2)))
+    inMap.map(kv => (kv._1, kv._2.map { case (dur, time) => (dur, math.abs(timeOffset - time)) }.sortBy(_._2)))
   }
 
-  private def getKNNForDay(dayDurTimeDifSortedMap: Map[String, Vector[(Int, Int)]], dayOfWeek: String): Vector[(Int, Int)] = {
+  private def getKNNAllDays(dayDurTimeDifSortedMap: Map[String, Vector[(Int, Int)]]): Map[String, Vector[(Int, Int)]] = {
     // Map is Day of Week -> Vector of Duration, Time Difference
-    val thisDayVector = dayDurTimeDifSortedMap.getOrElse(dayOfWeek, return Vector()) //Vector of Duration, TimeOffset. Returns empty vector if day does not exist
-    val kNearestNeighbours = thisDayVector.take(K) // TODO check K not too small
-    kNearestNeighbours
+    dayDurTimeDifSortedMap.map(kv => (kv._1, kv._2.take(K)))
   }
 
-
-  private def calculateAverageforKNNList(kNNList: Vector[(Int, Int)]): Option[Double] = {
-    if (!kNNList.isEmpty) {
-      val averageDuration = kNNList.foldLeft(0.0)((acc, value) => acc + value._1) / kNNList.foldLeft(0.0)((acc, value) => acc + 1)
-      Option(averageDuration)
-    } else None
+  private def getAverageDurationForEachDay(kNNAllDays: Map[String, Vector[(Int, Int)]]): Map[String, Double] = {
+    // Map is Day of Week -> Vector of Duration, Time Difference
+    kNNAllDays.map(kv => (kv._1, (kv._2.foldLeft(0.0)((acc,vec) => acc + vec._1)/kv._2.foldLeft(0.0)((acc,vec) => acc + 1))))
+    //val averageForThisDayOfWeek = allDaysMap.get(dayOfWeek)
+    //val allDaysMapS
   }
+
+  private def getSortedAverageDiferenceForEachDay(kNNAllDaysAvgDur: Map[String, Double],dayOfWeek:String):Option[List[(String,Double)]] = {
+    val dayOfWeekAvg = kNNAllDaysAvgDur.getOrElse(dayOfWeek,return None)
+    Option(kNNAllDaysAvgDur.map(x => (x._1, math.abs(x._2 - dayOfWeekAvg))).toList.sortBy(_._2))
+  }
+
+  private def getAverageForKNNVector(knnVector:Option[Vector[(Int,Int)]]):Option[Double] = {
+    //Vector of Duration, Time Difference
+    if (knnVector.isEmpty) None
+    else Some(knnVector.get.foldLeft(0.0)((acc,vec) => acc + vec._1)/knnVector.get.foldLeft(0.0)((acc,vec) => acc + 1))
+  }
+
 }
 
 
-/*
-
-        val KNNwithClosestDaysApplied: Vector[(Int, Int)] = {
-          var tempKNNList = KNNList
-          if (tempKNNList.size < K) {
-            val closestDaysList = getClosestDaysByAverage(dayDurTimeOffsetMap, timeOffset, day_Of_Week)
-            if (!closestDaysList.isEmpty) {
-              closestDaysList.get.foreach(x => {
-                if (tempKNNList.size < K) {
-                  tempKNNList :+ getDurationTimeDifferenceVector(getKNNForDay(dayDurTimeOffsetMap, x._1, timeOffset),timeOffset)
-                }
-              })
-            }
-          }
-          tempKNNList
-        }
-          println("KNNList After closestDays applied: " + KNNwithClosestDaysApplied)
-
-
-        //val sTDevOfDurations = getStandardDeviation(KNNList) //TODO check this is within threshold
-
-
-      }
-    }
-    */
-
-/*
-
-      // Looks for clossest days by average (based on TIMESPAN constant) and returns list of (Day, Distance)
-      def getClosestDaysByAverage(dayDurMap: Map[String, Vector[(Int, Int)]], timeOffset: Int, dayOfWeek: String): Option[List[(String, Double)]] = {
-        val lowerThreshold = timeOffset - (NEAREST_DAY_SAMPLE_TIMESPAN / 2) //TODO could be zero...
-        val upperthreshold = timeOffset + (NEAREST_DAY_SAMPLE_TIMESPAN / 2)
-        val dayAverageMap = dayDurMap.map(x => {
-          val durTimeOffsetVector: Vector[(Int, Int)] = x._2.filter(y => y._2 <= upperthreshold && y._2 >= lowerThreshold)
-          println("durTimeOffsetVector vector:" + x._1 + " - " + durTimeOffsetVector)
-          val averageDuration = durTimeOffsetVector.foldLeft(0.0)((acc, value) => acc + value._1) / durTimeOffsetVector.foldLeft(0.0)((acc, value) => acc + 1)
-          (x._1, averageDuration)
-        })
-          .filter(_._2 > 0) // Filter out those days without any numeric values (or Not a Number values)
-        println("day average map: " + dayAverageMap)
-        if (dayAverageMap.contains(dayOfWeek)) {
-
-          val dayDistanceMap = dayAverageMap.map { case (day, average) => (day, math.abs(dayAverageMap(dayOfWeek) - average)) }
-          println("day distance map: " + dayDistanceMap)
-
-          val sortedDayDistanceList = dayDistanceMap.toList.sortBy(_._2)
-          assert(sortedDayDistanceList.get(0)._1.equals(dayOfWeek) && sortedDayDistanceList.get(0)._2 == 0.0)
-          println("Sorted Day Distance List: " + sortedDayDistanceList)
-
-          val filteredSortedDayDistanceList = sortedDayDistanceList.filter(x => x._2 < NEAREST_DAY_AVG_DISTANCE_THRESHOLD)
-          assert(filteredSortedDayDistanceList.get(0)._1.equals(dayOfWeek) && filteredSortedDayDistanceList.get(0)._2 == 0.0)
-          println("Filtered Sorted Day Distance List : " + filteredSortedDayDistanceList)
-
-          Option(filteredSortedDayDistanceList)
-        } else None
-
-      }
 
      
-
+/*
       def getStandardDeviation(durationTimeDifVector: Vector[(Int, Int)]): Double = {
         val acc = new SummaryStatistics()
         durationTimeDifVector.foreach(x => acc.addValue(x._1))
