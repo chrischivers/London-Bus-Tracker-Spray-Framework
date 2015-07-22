@@ -37,6 +37,9 @@ trait MyService extends HttpService {
         getFromResourceDirectory("css")
       }
     } ~
+      path("maps") {
+        getFromResource("html/mapstest.html")
+      } ~
     path("predict") {
       get {
           complete {

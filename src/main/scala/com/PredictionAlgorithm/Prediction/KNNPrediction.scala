@@ -7,6 +7,7 @@ import com.PredictionAlgorithm.Database.TFL.TFLGetPointToPointDocument
 import com.mongodb.casbah.MongoCursor
 import com.mongodb.casbah.commons.{MongoDBList, Imports, MongoDBObject}
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics
+import scala.annotation.tailrec
 import scala.collection.JavaConversions._
 
 
@@ -66,6 +67,7 @@ object KNNPrediction extends PredictionInterface {
       println("K nearest neighbours for this day (" + day_Of_Week + ") :" + kNNForThisDay)
 
       def expandFromOtherDays(KNNMap:Option[Vector[(Int, Int)]]):Option[Vector[(Int, Int)]] = {
+       @tailrec
         def recursiveHelper(expandedKNNMap: Vector[(Int, Int)], acc: Int):Vector[(Int,Int)] = {
           if (expandedKNNMap.length >= K || acc >= 6) expandedKNNMap
           else {
@@ -89,11 +91,6 @@ object KNNPrediction extends PredictionInterface {
 
       averageDuration
     }
-
-
-
-
-
   }
 
   private def getDayDurMapFromCursor(cursor: MongoCursor): Map[String, Vector[(Int, Int)]] = {
