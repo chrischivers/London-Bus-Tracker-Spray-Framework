@@ -15,9 +15,9 @@ object Commons {
     cal.setTimeInMillis(arrivalTime);
     cal.get(Calendar.DAY_OF_WEEK) match {
       case Calendar.MONDAY => "MON"
-      case Calendar.TUESDAY=> "TUES"
+      case Calendar.TUESDAY=> "TUE"
       case Calendar.WEDNESDAY => "WED"
-      case Calendar.THURSDAY=> "THUR"
+      case Calendar.THURSDAY=> "THU"
       case Calendar.FRIDAY => "FRI"
       case Calendar.SATURDAY => "SAT"
       case Calendar.SUNDAY => "SUN"

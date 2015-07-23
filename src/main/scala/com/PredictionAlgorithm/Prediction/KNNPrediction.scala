@@ -17,12 +17,10 @@ object KNNPrediction extends PredictionInterface {
 
 
   val K = 10
-  val K_TIME_THRESHOLD_LIMIT = 10800
+  val K_TIME_DIFFERENCE_THRESHOLD_LIMIT = 10800
+  val MINIMUM_K_TO_MAKE_PREDICTION = 1
   //In Seconds
-  val NEAREST_DAY_SAMPLE_TIMESPAN = 43200
-  //In Seconds
-  val NEAREST_DAY_AVG_DISTANCE_THRESHOLD = 15
-  val K_ST_DEV_THRESHOLD_LIMIT = 500
+
 
 
   override def makePrediction(route_ID: String, direction_ID: Int, from_Point_ID: String, to_Point_ID: String, day_Of_Week: String, timeOffset: Int): Option[Double] = {
@@ -82,14 +80,15 @@ object KNNPrediction extends PredictionInterface {
 
       val kNNExpandedFromOtherDays = expandFromOtherDays(kNNForThisDay)
       println("K nearest neighbours expand from other days: " + kNNExpandedFromOtherDays)
-      //TODO what to do if KNN still not enough
-      //TODO factor in degree of accuracy
 
-
-      val averageDuration = getAverageForKNNVector(kNNExpandedFromOtherDays)
-      println("Average Duration: " + averageDuration)
-
-      averageDuration
+       println("knn expanded size: " + kNNExpandedFromOtherDays.size)
+      if (kNNExpandedFromOtherDays.size > MINIMUM_K_TO_MAKE_PREDICTION) {
+        val averageDuration = getAverageForKNNVector(kNNExpandedFromOtherDays)
+        println("Average Duration: " + averageDuration)
+        averageDuration
+      } else {
+        None
+      }
     }
   }
 
@@ -114,7 +113,8 @@ object KNNPrediction extends PredictionInterface {
 
   private def getKNNAllDays(dayDurTimeDifSortedMap: Map[String, Vector[(Int, Int)]]): Map[String, Vector[(Int, Int)]] = {
     // Map is Day of Week -> Vector of Duration, Time Difference
-    dayDurTimeDifSortedMap.map(kv => (kv._1, kv._2.take(K)))
+    dayDurTimeDifSortedMap.map(kv => (kv._1, kv._2.filter(_._2 <= K_TIME_DIFFERENCE_THRESHOLD_LIMIT).take(K)))
+      .filter(kv => kv._2.length > 0) //Remove empty entries
   }
 
   private def getAverageDurationForEachDay(kNNAllDays: Map[String, Vector[(Int, Int)]]): Map[String, Double] = {

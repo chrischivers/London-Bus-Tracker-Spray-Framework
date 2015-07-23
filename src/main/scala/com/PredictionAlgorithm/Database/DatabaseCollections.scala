@@ -21,10 +21,10 @@ final case object POINT_TO_POINT_COLLECTION extends DatabaseCollections {
   val DURATION_LIST = "DURATION_LIST"
   val TIME_OFFSET = "TIME_OFFSET"
   val DURATION = "DURATION"
-  val LAST_UPDATED = "LAST_UPDATED"
+  val TIME_STAMP = "TIME_STAMP"
 
   override val name: String = "PointToPoint"
-  override val fieldsVector = Vector(ROUTE_ID, DIRECTION_ID, FROM_POINT_ID, TO_POINT_ID, DAY, TIME_OFFSET, DURATION, LAST_UPDATED)
+  override val fieldsVector = Vector(ROUTE_ID, DIRECTION_ID, FROM_POINT_ID, TO_POINT_ID, DAY, TIME_OFFSET, DURATION, TIME_STAMP)
   override val indexKeyList = List((ROUTE_ID, 1),(DIRECTION_ID, 1),(FROM_POINT_ID, 1),(TO_POINT_ID, 1), (DAY, 1))
 
 }
