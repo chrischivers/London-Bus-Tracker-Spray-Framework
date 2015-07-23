@@ -33,7 +33,7 @@ class TFLInsertPointToPointDuration extends Actor {
   val collection = POINT_TO_POINT_COLLECTION
 
   val PRUNE_THRESHOLD_K_LIMIT = 10
-  val PRUNE_THRESHOLD_TIME_LIMIT = 3600
+  val PRUNE_THRESHOLD_TIME_LIMIT = 1800
 
   override def receive: Receive = {
     case doc1: POINT_TO_POINT_DOCUMENT => insertToDB(doc1)
@@ -72,7 +72,6 @@ class TFLInsertPointToPointDuration extends Actor {
           val entryToDelete = vecWithKNNTimeFiltering.minBy(_._3) //Gets the oldest record in the vector
           val updatePull = $pull(collection.DURATION_LIST -> (MongoDBObject(collection.DURATION-> entryToDelete._1,collection.TIME_OFFSET -> entryToDelete._2, collection.TIME_STAMP -> entryToDelete._3)))
           TFLInsertPointToPointDuration.dBCollection.update(newObj, updatePull)
-          println("pruning conducted")
         }
       }
     }

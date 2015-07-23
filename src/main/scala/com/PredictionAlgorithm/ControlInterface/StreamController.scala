@@ -1,9 +1,9 @@
 package com.PredictionAlgorithm.ControlInterface
 
-import com.PredictionAlgorithm.Prediction.{PredictionInterface, KNNPrediction}
+import com.PredictionAlgorithm.Prediction.{KNNPrediction, PredictionInterface}
 
 
-class QueryController {
+class StreamController {
 
   //TODO get this by dependency injection
   val predictionAlgorithm:PredictionInterface = KNNPrediction

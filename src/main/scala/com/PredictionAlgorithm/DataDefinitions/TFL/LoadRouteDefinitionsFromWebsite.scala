@@ -16,6 +16,7 @@ object LoadRouteDefinitionsFromWebsite extends LoadResource {
 
   val StopToPointSequenceMap: Map[(String, Int, String), (Int, Option[String])] = readStopToPointSequenceMap
   val PointToStopSequenceMap: Map[(String, Int, Int), (String, Option[String])] = StopToPointSequenceMap.map{case((route,dir,stop),(point,fl)) => ((route,dir,point),(stop,fl))} //swaps point and stop
+  val RouteDirSequenceList: List[(String, Int, Int, String, Option[String])] = StopToPointSequenceMap.toList.map{case((route,dir,stop),(point,fl)) => ((route,dir, point, stop,fl))}
 
 
   private def readStopToPointSequenceMap: Map[(String, Int, String), (Int, Option[String])]  = {

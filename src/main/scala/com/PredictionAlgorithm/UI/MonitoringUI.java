@@ -39,6 +39,12 @@ public class MonitoringUI {
     private JTextField dayCodeInput;
     private JButton runQueryButton;
     private JLabel queryResultValue;
+    private JButton runStreamButton;
+    private JTextField streamRouteID;
+    private JTextField streamDirectionID;
+    private JLabel streamTimeElapsed;
+    private JLabel streamNextStop;
+    private JLabel streamTimeToNextStop;
 
 
     public MonitoringUI(int refreshIntervalMS) {
@@ -88,6 +94,18 @@ public class MonitoringUI {
             }
         });
     }
+
+/*
+    public void setStreamProcessong(QueryController queryController) {
+        runQueryButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String result = queryController.makePrediction(routeInput.getText(), Integer.parseInt(directionInput.getText()), fromStopIDInput.getText(), toStopIDInput.getText(), dayCodeInput.getText(), Commons.getTimeOffset(System.currentTimeMillis()));
+                queryResultValue.setText(result);
+            }
+        });
+    }*/
+
 
 
 
