@@ -3,28 +3,28 @@ package com.PredictionAlgorithm.Prediction
 import com.PredictionAlgorithm.ControlInterface.QueryController
 import com.PredictionAlgorithm.DataDefinitions.TFL.TFLDefinitions
 
-/**
- * Created by chrischivers on 23/07/15.
- */
+case class PredictionRequest(route_ID: String, direction_ID: Int, from_Point_ID: String, to_Point_ID: String, day_Of_Week: String, timeOffset: Int)
+case class RouteListVariables(pointSeq: Int, fromStop:String, toStop:String, duration:Double)
+
 object RoutePredictionMapping {
 
   private val predictionAlgorithm:PredictionInterface = KNNPrediction
 
-  def getRoutePredictionMap(routeID: String, direction: Int, dayOfWeeK: String, timeOffset: Int):Option[List[(Int,String, String, Double)]] = {
+  def getRoutePredictionMap(routeID: String, direction: Int, dayOfWeeK: String, timeOffset: Int):Option[List[RouteListVariables]] = {
 
     val routeList = getRouteList(routeID,direction)
     if (routeList.isEmpty) return None
 
     else {
       val rl = routeList.get
-      var tempList = List[(Int,String, String, Double)]()
+      var tempList = List[RouteListVariables]()
       var cumulativeTimeOffset= timeOffset.toDouble
       for (a <- 0 until rl.length - 2) {
         val point = a + 1
         val from = rl(a)._2
         val to = rl(a + 1)._2
-        val duration = KNNPrediction.makePredictionBetweenConsecutivePoints(routeID,direction,from,to,dayOfWeeK,cumulativeTimeOffset.toInt)
-        tempList = tempList :+ (point,from,to,duration.getOrElse(return None))
+        val duration = KNNPrediction.makePredictionBetweenConsecutivePoints(new PredictionRequest(routeID,direction,from,to,dayOfWeeK,cumulativeTimeOffset.toInt))
+        tempList = tempList :+ new RouteListVariables(point,from,to,duration.getOrElse(return None))
         cumulativeTimeOffset += duration.get
       }
       Some(tempList)

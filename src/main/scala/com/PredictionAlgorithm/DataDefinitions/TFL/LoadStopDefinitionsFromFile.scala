@@ -15,12 +15,12 @@ object LoadStopDefinitionsFromFile extends LoadResource{
 
   private val stopDefFile = new File(DEFAULT_RESOURCES_LOCATION + DEFAULT_STOP_DEFINITIONS_FILE_NAME)
   // Maps StopCode -> (StopPointName;StopPointType;Towards;Bearing;StopPointIndicator;StopPointState;Latitude;Longitude)
-  val stopDefinitionMap:Map[String,(String,String,String,Int,String,Int,Double,Double)] = readStopDefinitions
+  val stopDefinitionMap:Map[String, StopDefinitionFields] = readStopDefinitions
 
 
-  private def readStopDefinitions: Map[String,(String,String,String,Int,String,Int,Double,Double)]  = {
+  private def readStopDefinitions: Map[String,StopDefinitionFields]  = {
 
-    var tempMap:Map[String,(String,String,String,Int,String,Int,Double,Double)] = Map()
+    var tempMap:Map[String,StopDefinitionFields] = Map()
 
      val s = Source.fromFile(stopDefFile)
     s.getLines.drop(1).foreach((line) => {
@@ -37,7 +37,7 @@ object LoadStopDefinitionsFromFile extends LoadResource{
         val lat = splitLine(7).toDouble
         val long = splitLine(8).toDouble
 
-        tempMap += (stopCode ->(stopName, stopType, towards, bearing, indicator, state, lat, long))
+        tempMap += (stopCode ->new StopDefinitionFields(stopName, stopType, towards, bearing, indicator, state, lat, long))
       }
       catch {
         case e: Exception => throw new Exception("Error reading stop definition file. Error on line: " + line)

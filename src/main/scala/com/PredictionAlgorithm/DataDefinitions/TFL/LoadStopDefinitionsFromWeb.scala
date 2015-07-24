@@ -15,12 +15,12 @@ object LoadStopDefinitionsFromWeb extends LoadResource{
 
 
   // Maps StopCode -> (StopPointName;StopPointType;Towards;Bearing;StopPointIndicator;StopPointState;Latitude;Longitude)
-  val stopDefinitionMap:Map[String,(String,String,String,Int,String,Int,Double,Double)] = Map()
+  val stopDefinitionMap:Map[String,StopDefinitionFields] = Map()
 
-  private def readStopDefinitions: Map[String,(String,String,String,Int,String,Int,Double,Double)]  = {
+  private def readStopDefinitions: Map[String,StopDefinitionFields]  = {
 
     lazy val stopList:Set[String] = TFLDefinitions.StopToPointSequenceMap.keySet.map {case(_,_,x) => x}
-    var tempMap:Map[String,(String,String,String,Int,String,Int,Double,Double)] = Map()
+    var tempMap:Map[String,StopDefinitionFields] = Map()
     def tflURL(stopCode:String):String = "http://countdown.api.tfl.gov.uk/interfaces/ura/instant_V1?StopCode1=" + stopCode + "&ReturnList=StopPointName,StopPointType,Towards,Bearing,StopPointIndicator,StopPointState,Latitude,Longitude"
 
     println("Loading Stop Definitions From Web...")
@@ -29,7 +29,7 @@ object LoadStopDefinitionsFromWeb extends LoadResource{
       val s = Source.fromURL(tflURL(x))
       s.getLines.drop(1).foreach(line => {
         val split = splitLine(line)
-        tempMap += (x ->(split(0), split(1), split(2), split(3).toInt, split(4), split(5).toInt, split(6).toDouble, split(7).toDouble))
+        tempMap += (x -> new StopDefinitionFields(split(0), split(1), split(2), split(3).toInt, split(4), split(5).toInt, split(6).toDouble, split(7).toDouble))
       }
       )
     }
@@ -57,8 +57,8 @@ object LoadStopDefinitionsFromWeb extends LoadResource{
     pw.write("BusStopCode;StopPointName;StopPointType;Towards;Bearing;StopPointIndicator;StopPointState;Latitude;Longitude"+ LINE_SEPARATOR) //Headers
 
     stopDefinitionMap.foreach{
-      case ((stop_code),(stopName, stopType, towards, bearing, indicator, state, lat, long)) => {
-        pw.write(stop_code + ";" + stopName+ ";" + stopType+ ";" + towards+ ";" + bearing + ";" + indicator + ";" + state+ ";" + lat+ ";" + long + LINE_SEPARATOR)
+      case ((stop_code),sdf: StopDefinitionFields) => {
+        pw.write(stop_code + ";" + sdf.stopPointName+ ";" + sdf.stopPointType+ ";" + sdf.towards + ";" + sdf.bearing + ";" + sdf.stopPointIndicator + ";" + sdf.stopPointState + ";" + sdf.latitude + ";" + sdf.longitude + LINE_SEPARATOR)
       }
     }
     pw.close

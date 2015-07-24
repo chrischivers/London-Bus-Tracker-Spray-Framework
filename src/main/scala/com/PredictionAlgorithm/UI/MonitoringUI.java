@@ -3,6 +3,8 @@ package com.PredictionAlgorithm.UI;
 import com.PredictionAlgorithm.Commons.Commons;
 import com.PredictionAlgorithm.ControlInterface.QueryController;
 import com.PredictionAlgorithm.ControlInterface.StartStopControlInterface;
+import com.PredictionAlgorithm.ControlInterface.StreamController;
+import com.PredictionAlgorithm.Streaming.StreamResult;
 
 
 import javax.swing.*;
@@ -19,7 +21,7 @@ public class MonitoringUI {
     private JLabel dataSourceLinesReadValue;
     private JPanel mainPanel;
 
-    private int WINDOW_H_SIZE = 500;
+    private int WINDOW_H_SIZE = 700;
     private int WINDOW_V_SIZE = 500;
 
     private int UI_REFRESH_INTERVAL;
@@ -45,6 +47,7 @@ public class MonitoringUI {
     private JLabel streamTimeElapsed;
     private JLabel streamNextStop;
     private JLabel streamTimeToNextStop;
+    private JLabel streamPreviousStop;
 
 
     public MonitoringUI(int refreshIntervalMS) {
@@ -95,16 +98,16 @@ public class MonitoringUI {
         });
     }
 
-/*
-    public void setStreamProcessong(QueryController queryController) {
-        runQueryButton.addActionListener(new ActionListener() {
+
+    public void setStreamProcessing(StreamController streamController) {
+        runStreamButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String result = queryController.makePrediction(routeInput.getText(), Integer.parseInt(directionInput.getText()), fromStopIDInput.getText(), toStopIDInput.getText(), dayCodeInput.getText(), Commons.getTimeOffset(System.currentTimeMillis()));
-                queryResultValue.setText(result);
+                streamController.setUpNewStream(streamRouteID.getText(), Integer.parseInt(streamDirectionID.getText()));
+                new Thread(new StreamUpdater(streamController)).start();
             }
         });
-    }*/
+    }
 
 
 
@@ -145,6 +148,40 @@ public class MonitoringUI {
                     valueLabelList.get(i).setText(variableArray[i]);
                 }
 
+            }
+
+
+        }
+    }
+
+    public class StreamUpdater implements Runnable {
+        private volatile boolean running = true;
+        private StreamController sc;
+
+        public StreamUpdater(StreamController sc) {
+            this.sc = sc;
+        }
+
+        public void terminate() {
+            running = false;
+        }
+
+
+        @Override
+        public void run() {
+            running = true;
+            System.out.println("Stream refresh running");
+            while (running) {
+                try {
+                    Thread.sleep(UI_REFRESH_INTERVAL);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                StreamResult nextValues = ((StreamResult) sc.getCurrentPosition());   //returns timeSinceStart, pointSeq, Stop Code, and Time until
+                streamTimeElapsed.setText(((Integer) nextValues.timeSinceStart()).toString());
+                streamPreviousStop.setText(((String) nextValues.prevStopCode()) + " - " + nextValues.prevStopName());
+                streamNextStop.setText(((String) nextValues.nextStopCode()) + " - " + nextValues.nextStopName());
+                streamTimeToNextStop.setText(((Integer) nextValues.timeTilNextStop()).toString());
             }
 
 

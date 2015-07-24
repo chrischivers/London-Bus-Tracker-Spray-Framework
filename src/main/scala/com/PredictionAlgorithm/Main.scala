@@ -3,7 +3,7 @@ package com.PredictionAlgorithm
 import java.io.File
 import javax.swing.{SwingUtilities, JFrame}
 import akka.actor.{Props, ActorSystem}
-import com.PredictionAlgorithm.ControlInterface.{QueryController, DataReadProcessStoreControlInterface}
+import com.PredictionAlgorithm.ControlInterface.{StreamController, QueryController, DataReadProcessStoreControlInterface}
 import com.PredictionAlgorithm.DataDefinitions.TFL.{TFLDefinitions, LoadStopDefinitionsFromWeb}
 import com.PredictionAlgorithm.Prediction.RoutePredictionMapping
 import com.PredictionAlgorithm.Spray.Boot
@@ -21,11 +21,12 @@ object Main extends App {
       val ui = new MonitoringUI(UI_REFRESH_INTERVAL)
       ui.setDataSourceProcess(DataReadProcessStoreControlInterface)
       ui.setQueryProcessing(new QueryController)//TODO remove class and replace with obect
+      ui.setStreamProcessing(new StreamController)
       ui.createAndDisplayGUI
 
     }
   })
 
-  println(RoutePredictionMapping.getRoutePredictionMap("3",1,"THU",75600))
+  //println(RoutePredictionMapping.getRoutePredictionMap("3",1,"THU",75600))
 
 }

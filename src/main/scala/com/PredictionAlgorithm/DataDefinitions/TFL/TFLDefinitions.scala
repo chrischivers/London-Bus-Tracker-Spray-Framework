@@ -7,6 +7,7 @@ import com.PredictionAlgorithm.DataDefinitions.TFL.LoadRouteIgnoreListFromFile._
 
 import scala.io.Source
 
+case class StopDefinitionFields(stopPointName:String, stopPointType:String, towards:String, bearing:Int, stopPointIndicator:String, stopPointState:Int, latitude:Double, longitude:Double)
 
 object TFLDefinitions {
 
@@ -16,7 +17,7 @@ object TFLDefinitions {
   lazy val StopToPointSequenceMap: Map[(String, Int, String), (Int, Option[String])] = if (loadFromWeb) LoadRouteDefinitionsFromWebsite.StopToPointSequenceMap else LoadRouteDefinitionsFromFile.StopToPointSequenceMap
   lazy val PointToStopSequenceMap: Map[(String, Int, Int), (String, Option[String])] = if (loadFromWeb) LoadRouteDefinitionsFromWebsite.PointToStopSequenceMap else LoadRouteDefinitionsFromFile.PointToStopSequenceMap
   lazy val RouteDirSequenceList: List[(String, Int, Int, String, Option[String])] = if (loadFromWeb) LoadRouteDefinitionsFromWebsite.RouteDirSequenceList else LoadRouteDefinitionsFromFile.RouteDirSequenceList
-  lazy val StopDefinitions: Map[String,(String,String,String,Int,String,Int,Double,Double)] = if (loadFromWeb) LoadStopDefinitionsFromWeb.stopDefinitionMap else LoadStopDefinitionsFromFile.stopDefinitionMap
+  lazy val StopDefinitions: Map[String,StopDefinitionFields] = if (loadFromWeb) LoadStopDefinitionsFromWeb.stopDefinitionMap else LoadStopDefinitionsFromFile.stopDefinitionMap
   lazy val RouteIgnoreList: Set[String] = LoadRouteIgnoreListFromFile.routeIgnoreSet
   lazy val StopIgnoreList: Set[String] = LoadStopIgnoreListFromFile.stopIgnoreSet
 

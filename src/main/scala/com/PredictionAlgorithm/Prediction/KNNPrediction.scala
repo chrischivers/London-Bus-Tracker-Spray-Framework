@@ -23,26 +23,26 @@ object KNNPrediction extends PredictionInterface {
 
 
 
-  override def makePrediction(route_ID: String, direction_ID: Int, from_Point_ID: String, to_Point_ID: String, day_Of_Week: String, timeOffset: Int): Option[Double] = {
-    val startingPoint = Commons.getPointSequenceFromStopCode(route_ID, direction_ID, from_Point_ID).getOrElse(return None)
-    val endingPoint = Commons.getPointSequenceFromStopCode(route_ID, direction_ID, to_Point_ID).getOrElse(return None)
+  override def makePrediction(pr:PredictionRequest): Option[Double] = {
+    val startingPoint = Commons.getPointSequenceFromStopCode(pr.route_ID, pr.direction_ID, pr.from_Point_ID).getOrElse(return None)
+    val endingPoint = Commons.getPointSequenceFromStopCode(pr.route_ID, pr.direction_ID, pr.to_Point_ID).getOrElse(return None)
     var accumulatedPrediction = 0.0
-    var cumulativeDuration = timeOffset
+    var cumulativeDuration = pr.timeOffset.toDouble
     for (i <- startingPoint until endingPoint) {
-      val fromStopID = Commons.getStopCodeFromPointSequence(route_ID, direction_ID, i).getOrElse(return None)
-      val toStopID = Commons.getStopCodeFromPointSequence(route_ID, direction_ID, i + 1).getOrElse(return None)
-      val duration = makePredictionBetweenConsecutivePoints(route_ID, direction_ID, fromStopID, toStopID, day_Of_Week, cumulativeDuration).getOrElse(return None)
+      val fromStopID = Commons.getStopCodeFromPointSequence(pr.route_ID, pr.direction_ID, i).getOrElse(return None)
+      val toStopID = Commons.getStopCodeFromPointSequence(pr.route_ID, pr.direction_ID, i + 1).getOrElse(return None)
+      val duration = makePredictionBetweenConsecutivePoints(new PredictionRequest(pr.route_ID, pr.direction_ID, fromStopID, toStopID, pr.day_Of_Week, cumulativeDuration.toInt)).getOrElse(return None)
       accumulatedPrediction += duration
       cumulativeDuration += duration
     }
     Some(accumulatedPrediction)
   }
 
-  def makePredictionBetweenConsecutivePoints(route_ID: String, direction_ID: Int, from_Point_ID: String, to_Point_ID: String, day_Of_Week: String, timeOffset: Int): Option[Double] = {
+  def makePredictionBetweenConsecutivePoints(pr: PredictionRequest): Option[Double] = {
 
-    assert(Commons.getPointSequenceFromStopCode(route_ID, direction_ID, from_Point_ID).get + 1 == Commons.getPointSequenceFromStopCode(route_ID, direction_ID, to_Point_ID).get)
+    assert(Commons.getPointSequenceFromStopCode(pr.route_ID, pr.direction_ID, pr.from_Point_ID).get + 1 == Commons.getPointSequenceFromStopCode(pr.route_ID, pr.direction_ID, pr.to_Point_ID).get)
 
-    val query = MongoDBObject(coll.ROUTE_ID -> route_ID, coll.DIRECTION_ID -> direction_ID, coll.FROM_POINT_ID -> from_Point_ID, coll.TO_POINT_ID -> to_Point_ID)
+    val query = MongoDBObject(coll.ROUTE_ID -> pr.route_ID, coll.DIRECTION_ID -> pr.direction_ID, coll.FROM_POINT_ID -> pr.from_Point_ID, coll.TO_POINT_ID -> pr.to_Point_ID)
     val cursor: MongoCursor = TFLGetPointToPointDocument.executeQuery(query)
 
 
@@ -52,7 +52,7 @@ object KNNPrediction extends PredictionInterface {
       val dayDurTimeOffsetMap = getDayDurMapFromCursor(cursor) // Map is rDay of Week -> Vector of Duration, TimeOffset
       println("full dayDurTimeOffsetMap map: " + dayDurTimeOffsetMap)
 
-      val dayDurTimeDifSortedMap = setTimeOffsetsToTimeAbsDifferencesAndSort(dayDurTimeOffsetMap, timeOffset)
+      val dayDurTimeDifSortedMap = setTimeOffsetsToTimeAbsDifferencesAndSort(dayDurTimeOffsetMap, pr.timeOffset)
       println("dayDurTimeDifSortedMap map: " + dayDurTimeDifSortedMap)
 
       val kNNListForAllDays = getKNNAllDays(dayDurTimeDifSortedMap)
@@ -61,16 +61,16 @@ object KNNPrediction extends PredictionInterface {
       val kNNAverageForEachDay = getAverageDurationForEachDay(kNNListForAllDays)
       println("Average duration for KNN of each day :" + kNNAverageForEachDay)
 
-      val kNNSortedAverageDiferenceForEachDay = getSortedAverageDiferenceForEachDay(kNNAverageForEachDay,day_Of_Week)
-      if (!kNNSortedAverageDiferenceForEachDay.isEmpty) assert(kNNSortedAverageDiferenceForEachDay.get(0)._1.equals(day_Of_Week))
+      val kNNSortedAverageDiferenceForEachDay = getSortedAverageDiferenceForEachDay(kNNAverageForEachDay,pr.day_Of_Week)
+      if (!kNNSortedAverageDiferenceForEachDay.isEmpty) assert(kNNSortedAverageDiferenceForEachDay.get(0)._1.equals(pr.day_Of_Week))
 
-      val kNNForThisDay = kNNListForAllDays.get(day_Of_Week)
-      println("K nearest neighbours for this day (" + day_Of_Week + ") :" + kNNForThisDay)
+      val kNNForThisDay = kNNListForAllDays.get(pr.day_Of_Week)
+      println("K nearest neighbours for this day (" + pr.day_Of_Week + ") :" + kNNForThisDay)
 
       def expandFromOtherDays(KNNMap:Option[Vector[(Int, Int)]]):Option[Vector[(Int, Int)]] = {
        @tailrec
         def recursiveHelper(expandedKNNMap: Vector[(Int, Int)], acc: Int):Vector[(Int,Int)] = {
-          if (expandedKNNMap.length >= K || acc >= kNNSortedAverageDiferenceForEachDay.size) expandedKNNMap
+          if (expandedKNNMap.length >= K || acc >= kNNSortedAverageDiferenceForEachDay.get.length) expandedKNNMap
           else {
             val daysNeeded = K - expandedKNNMap.length
             val kNNForThisDay = kNNListForAllDays.getOrElse(kNNSortedAverageDiferenceForEachDay.get(acc)._1, Vector()).take(daysNeeded)
@@ -84,8 +84,8 @@ object KNNPrediction extends PredictionInterface {
       val kNNExpandedFromOtherDays = expandFromOtherDays(kNNForThisDay)
       println("K nearest neighbours expand from other days: " + kNNExpandedFromOtherDays)
 
-       println("knn expanded size: " + kNNExpandedFromOtherDays.size)
-      if (kNNExpandedFromOtherDays.size >= MINIMUM_K_TO_MAKE_PREDICTION) {
+       println("knn expanded length: " + kNNExpandedFromOtherDays.getOrElse(Vector()).length)
+      if (kNNExpandedFromOtherDays.get.length >= MINIMUM_K_TO_MAKE_PREDICTION) {
         val averageDuration = getAverageForKNNVector(kNNExpandedFromOtherDays)
         println("Average Duration: " + averageDuration)
         averageDuration

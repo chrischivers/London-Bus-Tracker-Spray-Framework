@@ -1,16 +1,19 @@
 package com.PredictionAlgorithm.ControlInterface
 
 import com.PredictionAlgorithm.Prediction.{KNNPrediction, PredictionInterface}
+import com.PredictionAlgorithm.Streaming.StreamObject
 
 
 class StreamController {
 
-  //TODO get this by dependency injection
-  val predictionAlgorithm:PredictionInterface = KNNPrediction
+  var stream:StreamObject = _
 
-  def makePrediction(route_ID: String, direction_ID: Int, from_Point_ID: String, to_Point_ID: String, day_Of_Week: String, timeOffset: Int):String = {
-    val option:Option[Double] = predictionAlgorithm.makePrediction(route_ID,direction_ID,from_Point_ID,to_Point_ID,day_Of_Week,timeOffset)
-    option.getOrElse("No predction available for these parameters").toString
+  def setUpNewStream(routeID: String, direction:Int) = {
+    stream = new StreamObject(routeID,direction,"1",System.currentTimeMillis())
+  }
+
+  def getCurrentPosition = {
+    stream.next()
   }
 
 }
