@@ -27,11 +27,16 @@ class StreamObject(val routeID: String, val direction:Int, val startPoint:String
 
   //returns time since start, pointSeq, Stop Code, and Time until
   override def next(): StreamResult = {
-    val timeSinceStart = (Commons.getTimeOffset(System.currentTimeMillis()) - startTimeOffset)
-    val nextListEntry = cumulativeRouteList.filter(x => x.duration >= timeSinceStart)(0) //Filter the routeList to remove entries already passed before the current time. Get the first entry
-    val timeTilNextStop = nextListEntry.duration - timeSinceStart
-    val nextStopName = TFLDefinitions.StopDefinitions(nextListEntry.toStop).stopPointName
-    val prevStopName = TFLDefinitions.StopDefinitions(nextListEntry.fromStop).stopPointName
-    new StreamResult(timeSinceStart, nextListEntry.pointSeq,nextListEntry.fromStop, prevStopName, nextListEntry.toStop,nextStopName, timeTilNextStop.toInt)
+      val timeSinceStart = (Commons.getTimeOffset(System.currentTimeMillis()) - startTimeOffset)
+    try {
+      val nextListEntry = cumulativeRouteList.filter(x => x.duration >= timeSinceStart)(0) //Filter the routeList to remove entries already passed before the current time. Get the first entry
+      val timeTilNextStop = nextListEntry.duration - timeSinceStart
+      val nextStopName = TFLDefinitions.StopDefinitions(nextListEntry.toStop).stopPointName
+      val prevStopName = TFLDefinitions.StopDefinitions(nextListEntry.fromStop).stopPointName
+      new StreamResult(timeSinceStart, nextListEntry.pointSeq,nextListEntry.fromStop, prevStopName, nextListEntry.toStop,nextStopName, timeTilNextStop.toInt)
+    } catch {
+      case e: IndexOutOfBoundsException => println("Error on streaming. Index out of bounds. Map printing: \n" + routeList);
+        new StreamResult(timeSinceStart, 0,"Error", "Error", "Error","Error", 0)
+    }
   }
 }
