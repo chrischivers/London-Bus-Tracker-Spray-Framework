@@ -12,6 +12,7 @@ trait DatabaseModifyInterface {
 
   @volatile var numberDBTransactionsRequested:Long= 0
   @volatile var numberDBTransactionsExecuted:Long = 0
+  @volatile var numberDBPullTransactionsExecuted:Long = 0
 
   def insertDocument(doc: DatabaseDocuments)
 

@@ -72,6 +72,7 @@ class TFLInsertPointToPointDuration extends Actor {
           val entryToDelete = vecWithKNNTimeFiltering.minBy(_._3) //Gets the oldest record in the vector
           val updatePull = $pull(collection.DURATION_LIST -> (MongoDBObject(collection.DURATION-> entryToDelete._1,collection.TIME_OFFSET -> entryToDelete._2, collection.TIME_STAMP -> entryToDelete._3)))
           TFLInsertPointToPointDuration.dBCollection.update(newObj, updatePull)
+          TFLInsertPointToPointDuration.numberDBPullTransactionsExecuted += 1
         }
       }
     }

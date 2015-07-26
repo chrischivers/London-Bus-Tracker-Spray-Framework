@@ -25,7 +25,8 @@ object DataReadProcessStoreControlInterface extends StartStopControlInterface {
     val numberDBTransactionsRequested = TFLInsertPointToPointDuration.numberDBTransactionsRequested.toString
     val numberDBTransactionsExecuted = TFLInsertPointToPointDuration.numberDBTransactionsExecuted.toString
     val numberDBTransactionsOutstanding = (TFLInsertPointToPointDuration.numberDBTransactionsRequested - TFLInsertPointToPointDuration.numberDBTransactionsExecuted).toString
-    Array(numberLinesRead, numberInHoldingBuffer, numberDBTransactionsRequested, numberDBTransactionsExecuted, numberDBTransactionsOutstanding)
+    val numberDBPullTransactionsExecuted = TFLInsertPointToPointDuration.numberDBPullTransactionsExecuted.toString
+    Array(numberLinesRead, numberInHoldingBuffer, numberDBTransactionsRequested, numberDBTransactionsExecuted, numberDBTransactionsOutstanding, numberDBPullTransactionsExecuted)
   }
 
 

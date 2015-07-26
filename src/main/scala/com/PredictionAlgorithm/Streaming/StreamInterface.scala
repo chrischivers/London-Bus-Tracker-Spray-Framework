@@ -1,7 +1,8 @@
 package com.PredictionAlgorithm.Streaming
 
 
-case class StreamResult(val timeSinceStart:Int, val pointSeq: Int, val prevStopCode: String,val prevStopName: String,val nextStopCode: String, val nextStopName:String,val timeTilNextStop:Int)
+case class StreamResult(timeSinceStart:Int, pointSeq: Int, prevStopCode: String,prevStopName: String,nextStopCode: String, nextStopName:String,timeTilNextStop:Int)
+case class LiveStreamResult(routeID: String, directionID: Int, nextPointSeq: Int,nextStopCode: String, nextStopName:String, nextStopLat:Double, nextStopLng: Double, arrivalTimeStamp:Long)
 
 
 trait StreamInterface extends Iterator[StreamResult]

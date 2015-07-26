@@ -21,7 +21,7 @@ libraryDependencies ++= {
     "io.spray"            %%  "spray-can"     % sprayV,
     "io.spray"            %%  "spray-routing" % sprayV,
     "io.spray"            %%  "spray-testkit" % sprayV  % "test",
-    "io.spray"            %%  "spray-json"    % "1.3.2",
+  //  "io.spray"            %%  "spray-json"    % "1.3.2",
     "com.typesafe.akka"   %%  "akka-actor"    % akkaV,
     "com.typesafe.akka"   %%  "akka-testkit"  % akkaV   % "test",
     "org.specs2"          %%  "specs2-core"   % "2.3.11" % "test"
@@ -31,3 +31,5 @@ libraryDependencies ++= {
 libraryDependencies ++= Seq("org.slf4j" % "slf4j-api" % "1.7.5",
   "org.slf4j" % "slf4j-simple" % "1.7.5",
   "org.clapper" %% "grizzled-slf4j" % "1.0.2")
+
+libraryDependencies += "org.json4s" %% "json4s-native" % "3.2.10"

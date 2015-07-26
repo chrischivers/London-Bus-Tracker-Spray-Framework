@@ -24,7 +24,8 @@
 
     <script>
         //SlidingMarker.initializeGlobally();
-        var marker, map;
+        var map;
+        var markerArray = {};
         function initialize() {
             var myLatlng = new google.maps.LatLng(32.520204, 34.937258);
             var mapOptions = {
@@ -36,12 +37,12 @@
 
 
             //marker = new google.maps.Marker({
-            marker = new SlidingMarker({
+          /*  marker = new SlidingMarker({
                 position: myLatlng,
                 map: map,
                 title: 'I\m sliding marker',
                 duration: 2000
-            });
+            });*/
 
         }
         $(function () {
@@ -50,11 +51,29 @@
         });
 
 
-        function setNewLocation(lat, lng, duration) {
+        function setNewLocation(reg, lat, lng, duration) {
             var newLatlng = new google.maps.LatLng(lat, lng);
-            var newduration = (parse);
-            marker.setDuration(newduration);
-            marker.setPosition(newLatlng)
+            var currentTimeMillis = new Date().getTime();
+           // var timeToArrival = (parseInt(duration) - currentTimeMillis);
+            var timeToArrival = 1;
+            //alert(timeToArrival)
+            if (timeToArrival > 0) {
+                if(reg in markerArray) {
+                    markerArray[reg].setPosition(newLatlng)
+                } else {
+                    var marker = new SlidingMarker({
+                        position: newLatlng,
+                        map: map,
+                        id: reg
+                    });
+                    markerArray[reg] = marker;
+                }
+
+
+
+               // marker.setDuration(timeToArrival);
+               // marker.setPosition(newLatlng);
+            }
         }
 
         $(document).ready(function () {
@@ -64,10 +83,11 @@
                             name: "bus_reg"
                         },
                         function (data, status) {
-                            if (data != "NA") {
-                                var res = data.split(",");
-                                setNewLocation(res[1], res[2], res[3]);
-                            }
+                            var parsedJson = JSON.parse(data);
+
+                            for (x in parsedJson) {
+                                setNewLocation(parsedJson[x].reg, parsedJson[x].lat,parsedJson[x].lng, parsedJson[x].arrivalTime);
+                           }
 
                         });
                 // setTimeout(arguments.callee, 1000);

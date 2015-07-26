@@ -7,6 +7,7 @@ import com.PredictionAlgorithm.DataDefinitions.TFL.TFLDefinitions
 import com.PredictionAlgorithm.DataSource.TFL.{TFLSourceLine, TFLDataSource}
 import com.PredictionAlgorithm.Database.POINT_TO_POINT_DOCUMENT
 import com.PredictionAlgorithm.Database.TFL.{TFLMongoDBConnection, TFLInsertPointToPointDuration}
+import com.PredictionAlgorithm.Streaming.LiveStreamingCoordinator
 import grizzled.slf4j.Logger
 
 import scala.util.{Failure, Success, Try}
@@ -20,6 +21,7 @@ object TFLProcessSourceLines {
 
   // Map of (Route ID, Vehicle Reg, Direction ID) -> (Stop ID, Arrival Timestamp)
   private var holdingBuffer: Map[(String, String, Int), (String, Long)] = Map()
+  private var liveStreamCollectionEnabled:Boolean = false
   val tflRouteDefinitions = TFLDefinitions.StopToPointSequenceMap
   val stopIgnoreList = TFLDefinitions.StopIgnoreList
   val routeIgnoreList = TFLDefinitions.RouteIgnoreList
@@ -28,26 +30,30 @@ object TFLProcessSourceLines {
 
   def apply(newLine: TFLSourceLine) {
     if (validateLine(newLine)) {
-      if (!holdingBuffer.contains(newLine.route_ID, newLine.vehicle_Reg, newLine.direction_ID)) {
-        holdingBufferAddAndPrune(newLine)
-      } else {
-        val existingValues = holdingBuffer(newLine.route_ID, newLine.vehicle_Reg, newLine.direction_ID)
-        val existingStopCode = existingValues._1
-        val existingArrivalTimeStamp = existingValues._2
-        val existingPointSequence = getPointSequence(newLine.route_ID, newLine.direction_ID, existingStopCode)
-        val newPointSequence = getPointSequence(newLine.route_ID, newLine.direction_ID, newLine.stop_Code)
-        if (newPointSequence == existingPointSequence + 1) {
-          val durationInSeconds = ((newLine.arrival_TimeStamp - existingArrivalTimeStamp)/1000).toInt
-          if (durationInSeconds > 0) {
-            TFLInsertPointToPointDuration.insertDocument(createPointToPointDocument(newLine.route_ID, newLine.direction_ID, existingStopCode, newLine.stop_Code, Commons.getDayCode(existingArrivalTimeStamp), Commons.getTimeOffset(existingArrivalTimeStamp), durationInSeconds))
-            holdingBufferAddAndPrune(newLine)
-          } else {
-            holdingBufferAddAndPrune(newLine)// Replace existing values with new values
-          }
-        } else if (newPointSequence >= existingPointSequence) {
-          holdingBufferAddAndPrune(newLine)// Replace existing values with new values
+      // Send to Live Streaming Coordinator if Enabled
+      if (liveStreamCollectionEnabled) LiveStreamingCoordinator.setObjectPosition(newLine)
+      if (!isFinalStop(newLine)) {
+        if (!holdingBuffer.contains(newLine.route_ID, newLine.vehicle_Reg, newLine.direction_ID)) {
+          holdingBufferAddAndPrune(newLine)
         } else {
-          // DO Nothing
+          val existingValues = holdingBuffer(newLine.route_ID, newLine.vehicle_Reg, newLine.direction_ID)
+          val existingStopCode = existingValues._1
+          val existingArrivalTimeStamp = existingValues._2
+          val existingPointSequence = getPointSequence(newLine.route_ID, newLine.direction_ID, existingStopCode)
+          val newPointSequence = getPointSequence(newLine.route_ID, newLine.direction_ID, newLine.stop_Code)
+          if (newPointSequence == existingPointSequence + 1) {
+            val durationInSeconds = ((newLine.arrival_TimeStamp - existingArrivalTimeStamp) / 1000).toInt
+            if (durationInSeconds > 0) {
+              TFLInsertPointToPointDuration.insertDocument(createPointToPointDocument(newLine.route_ID, newLine.direction_ID, existingStopCode, newLine.stop_Code, Commons.getDayCode(existingArrivalTimeStamp), Commons.getTimeOffset(existingArrivalTimeStamp), durationInSeconds))
+              holdingBufferAddAndPrune(newLine)
+            } else {
+              holdingBufferAddAndPrune(newLine) // Replace existing values with new values
+            }
+          } else if (newPointSequence >= existingPointSequence) {
+            holdingBufferAddAndPrune(newLine) // Replace existing values with new values
+          } else {
+            // DO Nothing
+          }
         }
       }
     }
@@ -68,10 +74,6 @@ object TFLProcessSourceLines {
       } else true
     }
 
-    def isNotFinalStop(line: TFLSourceLine): Boolean = {
-      tflRouteDefinitions(line.route_ID, line.direction_ID, line.stop_Code)._2 != Some("LAST")
-    }
-
     def isWithinTimeThreshold(line: TFLSourceLine): Boolean = {
       ((line.arrival_TimeStamp - System.currentTimeMillis)/1000) <= TFLProcessVariables.LINE_TOLERANCE_IN_RELATION_TO_CURRENT_TIME
     }
@@ -83,8 +85,11 @@ object TFLProcessSourceLines {
     if (!isNotOnIgnoreLists(line)) return false
     if (!inDefinitionFile(line)) return false
     if (!isWithinTimeThreshold(line)) return false
-    if (!isNotFinalStop(line)) return false
     true
+  }
+
+  def isFinalStop(line: TFLSourceLine): Boolean = {
+    tflRouteDefinitions(line.route_ID, line.direction_ID, line.stop_Code)._2 == Some("LAST")
   }
 
   def getPointSequence(route_ID: String, direction_ID: Int, stop_Code: String): Int = {
@@ -93,6 +98,10 @@ object TFLProcessSourceLines {
 
   def createPointToPointDocument(route_ID: String, direction_ID: Int, from_Point_ID: String, to_Point_ID: String, day_Type: String, observed_Time: Int, durationSeconds: Int): POINT_TO_POINT_DOCUMENT = {
     new POINT_TO_POINT_DOCUMENT(route_ID, direction_ID, from_Point_ID, to_Point_ID, day_Type, observed_Time, durationSeconds)
+  }
+
+  def setLiveStreamCollection(enabled: Boolean) = {
+    liveStreamCollectionEnabled = enabled
   }
 
 

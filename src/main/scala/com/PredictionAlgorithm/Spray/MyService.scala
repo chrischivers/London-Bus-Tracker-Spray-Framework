@@ -5,12 +5,14 @@ import akka.actor.Actor
 import com.PredictionAlgorithm.Commons.Commons
 import com.PredictionAlgorithm.ControlInterface.{StreamController, QueryController}
 import com.PredictionAlgorithm.DataDefinitions.TFL.TFLDefinitions
+import com.PredictionAlgorithm.Streaming.LiveStreamingCoordinator
 import spray.routing._
 import spray.http._
 import MediaTypes._
-import spray.json._
-import spray.httpx.SprayJsonSupport._
-import DefaultJsonProtocol._ // if you don't supply your own Protocol (see below)
+import org.json4s._
+import org.json4s.native.JsonMethods._
+import org.json4s.JsonDSL._
+
 
 // we don't implement our route structure directly in the service actor because
 // we want to be able to test it independently, without having to spin up an actor
@@ -101,15 +103,30 @@ trait MyService extends HttpService {
     } ~
       path("getPosition.asp") {
           post {
-            entity(as[String]) { reg_ID => {
+            entity(as[String]) { returned => {
+              val routeID = "3"
+              val directionID = 1
               try {
-                val stopCode = sc.getCurrentPosition.nextStopCode
+                val json = compact(render(sc.getPositionSnapshotsForRoute(routeID,directionID).map(x => {
+                  Map("reg" -> x._1,
+                    "route" -> x._2.routeID,
+                  "dir" -> x._2.directionID.toString,
+                  "point" -> x._2.nextPointSeq.toString,
+                  "stopCode" -> x._2.nextStopCode,
+                  "stopName" -> x._2.nextStopName,
+                  "lat" -> x._2.nextStopLat.toString,
+                  "lng" -> x._2.nextStopLng.toString,
+                  "arrivalTime" -> x._2.arrivalTimeStamp.toString)
+                }).toList))
+                println(json)
+                complete(json)
+                /*val stopCode = sc.getCurrentPosition.nextStopCode
                 println("TIME TILL NEXT STOP: " + sc.getCurrentPosition.timeTilNextStop)
                 val result = TFLDefinitions.StopDefinitions(stopCode)
                 val conString = stopCode + "," + result.latitude + "," + result.longitude + "," + sc.getCurrentPosition.timeTilNextStop
                 complete({
                   conString
-                })
+                })*/
               } catch {
                 case e: InstantiationError => {
                   println("Error: cannot get route: " + e)

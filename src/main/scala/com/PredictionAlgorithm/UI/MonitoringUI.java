@@ -4,6 +4,7 @@ import com.PredictionAlgorithm.Commons.Commons;
 import com.PredictionAlgorithm.ControlInterface.QueryController;
 import com.PredictionAlgorithm.ControlInterface.StartStopControlInterface;
 import com.PredictionAlgorithm.ControlInterface.StreamController;
+import com.PredictionAlgorithm.Streaming.LiveStreamingCoordinator;
 import com.PredictionAlgorithm.Streaming.StreamResult;
 
 
@@ -41,13 +42,9 @@ public class MonitoringUI {
     private JTextField dayCodeInput;
     private JButton runQueryButton;
     private JLabel queryResultValue;
-    private JButton runStreamButton;
-    private JTextField streamRouteID;
-    private JTextField streamDirectionID;
-    private JLabel streamTimeElapsed;
-    private JLabel streamNextStop;
-    private JLabel streamTimeToNextStop;
-    private JLabel streamPreviousStop;
+    private JLabel dBPullTransactionsRequestedValue;
+    private JLabel liveStreamingMapSizeValue;
+    private JButton enableLiveStreamingCollectionButton;
 
 
     public MonitoringUI(int refreshIntervalMS) {
@@ -69,7 +66,7 @@ public class MonitoringUI {
     public void setDataSourceProcess(StartStopControlInterface dsCI) {
         dataSourceReadStartStopButton.addActionListener(new ActionListener() {
             volatile boolean buttonStarted = false;
-            CounterUpdater cu = new CounterUpdater(dsCI, dataSourceLinesReadValue, sizeHoldingBufferValue, dBTransactionsRequestedValue, dBTransactionsExecutedValue, dBTransactionsOutstandingValue);
+            CounterUpdater cu = new CounterUpdater(dsCI, dataSourceLinesReadValue, sizeHoldingBufferValue, dBTransactionsRequestedValue, dBTransactionsExecutedValue, dBTransactionsOutstandingValue, dBPullTransactionsRequestedValue);
 
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -100,15 +97,24 @@ public class MonitoringUI {
 
 
     public void setStreamProcessing(StreamController streamController) {
-        runStreamButton.addActionListener(new ActionListener() {
+        enableLiveStreamingCollectionButton.addActionListener(new ActionListener() {
+            volatile boolean buttonStarted = false;
+            StreamUpdater su = new StreamUpdater(streamController);
             @Override
             public void actionPerformed(ActionEvent e) {
-                try {
-                    streamController.setUpNewStream(streamRouteID.getText(), Integer.parseInt(streamDirectionID.getText()));
-                    new Thread(new StreamUpdater(streamController)).start();
-                } catch (InstantiationError ie){
-                    streamTimeElapsed.setText("Unable to set up stream. May be wrong input values or historical data not available");
+                if (!buttonStarted) {
+                    streamController.enableLiveStreamCollection(true);
+                    new Thread(su).start();
+                    enableLiveStreamingCollectionButton.setText("Stop Live Stream Collection");
+                    buttonStarted = true;
+                } else {
+                    streamController.enableLiveStreamCollection(false);
+                    su.terminate();
+                    enableLiveStreamingCollectionButton.setText("Start Live Stream Collection");
+                    buttonStarted = false;
                 }
+
+
             }
         });
     }
@@ -161,11 +167,9 @@ public class MonitoringUI {
     public class StreamUpdater implements Runnable {
         private volatile boolean running = true;
         private StreamController sc;
-
         public StreamUpdater(StreamController sc) {
             this.sc = sc;
         }
-
         public void terminate() {
             running = false;
         }
@@ -181,11 +185,7 @@ public class MonitoringUI {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                StreamResult nextValues = ((StreamResult) sc.getCurrentPosition());   //returns timeSinceStart, pointSeq, Stop Code, and Time until
-                streamTimeElapsed.setText(((Integer) nextValues.timeSinceStart()).toString());
-                streamPreviousStop.setText(((String) nextValues.prevStopCode()) + " - " + nextValues.prevStopName());
-                streamNextStop.setText(((String) nextValues.nextStopCode()) + " - " + nextValues.nextStopName());
-                streamTimeToNextStop.setText(((Integer) nextValues.timeTilNextStop()).toString());
+                liveStreamingMapSizeValue.setText(Integer.toString(LiveStreamingCoordinator.getPositionMapSize()));
             }
 
 

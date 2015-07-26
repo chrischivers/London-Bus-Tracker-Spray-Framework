@@ -44,7 +44,6 @@ object Main extends App {
   IO(Http) ? Http.Bind(service, interface = "localhost", port = 8080)
 
 
-
   //println(RoutePredictionMapping.getRoutePredictionMap("3",1,"THU",75600))
 
 }
