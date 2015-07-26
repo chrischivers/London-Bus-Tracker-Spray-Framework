@@ -17,8 +17,12 @@ class StreamController {
     LiveStreamingCoordinator.getObjectPositionsMap
   }
 
-  def getPositionSnapshotsForRoute(routeID:String, directionID:Int) = {
-    LiveStreamingCoordinator.getObjectPositionsMap.filter(x=> x._2.routeID == routeID && x._2.directionID == directionID)
+  def getPositionSnapshotsForRoute(routeID:String) = {
+    LiveStreamingCoordinator.getObjectPositionsMap.filter(x=> x._2.routeID == routeID)
+  }
+
+  def getStream = {
+    LiveStreamingCoordinator.getStream.iterator
   }
 
   /*var stream:StreamObject = _
