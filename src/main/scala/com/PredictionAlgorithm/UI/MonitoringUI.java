@@ -21,7 +21,7 @@ public class MonitoringUI {
     private JLabel dataSourceLinesReadValue;
     private JPanel mainPanel;
 
-    private int WINDOW_H_SIZE = 700;
+    private int WINDOW_H_SIZE = 900;
     private int WINDOW_V_SIZE = 500;
 
     private int UI_REFRESH_INTERVAL;
@@ -103,8 +103,12 @@ public class MonitoringUI {
         runStreamButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                streamController.setUpNewStream(streamRouteID.getText(), Integer.parseInt(streamDirectionID.getText()));
-                new Thread(new StreamUpdater(streamController)).start();
+                try {
+                    streamController.setUpNewStream(streamRouteID.getText(), Integer.parseInt(streamDirectionID.getText()));
+                    new Thread(new StreamUpdater(streamController)).start();
+                } catch (InstantiationError ie){
+                    streamTimeElapsed.setText("Unable to set up stream. May be wrong input values or historical data not available");
+                }
             }
         });
     }

@@ -3,7 +3,7 @@
 <head>
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
     <meta charset="utf-8">
-    <title>Google Maps Sliding Marker Move Demo</title>
+    <title>Bus Route UI</title>
 
     <style type="text/css">
         html, body, #map_canvas {
@@ -15,7 +15,8 @@
 
     </style>
 
-    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBxCYp9RWcbhuPg0nLWFzJhuPbECQYOqBw">    </script>
+    <script type="text/javascript"
+            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBxCYp9RWcbhuPg0nLWFzJhuPbECQYOqBw"></script>
     <script src="https://code.jquery.com/jquery.min.js"></script>
     <script src="js/jquery.easing.1.3.js"></script>
     <script src="js/markerAnimate.js"></script>
@@ -38,25 +39,44 @@
             marker = new SlidingMarker({
                 position: myLatlng,
                 map: map,
-                title: 'I\m sliding marker'
+                title: 'I\m sliding marker',
+                duration: 2000
             });
 
         }
-        ///////////////////////////////////////////////////
         $(function () {
             initialize();
 
         });
 
-        function setNewLocation() {
-            var newLatlng = new google.maps.LatLng(0, 0);
-            marker.setDuration(10000)
+
+        function setNewLocation(lat, lng, duration) {
+            var newLatlng = new google.maps.LatLng(lat, lng);
+            var newduration = (parse);
+            marker.setDuration(newduration);
             marker.setPosition(newLatlng)
         }
+
+        $(document).ready(function () {
+            $("button").click(function () {
+                $.post("getPosition.asp",
+                        {
+                            name: "bus_reg"
+                        },
+                        function (data, status) {
+                            if (data != "NA") {
+                                var res = data.split(",");
+                                setNewLocation(res[1], res[2], res[3]);
+                            }
+
+                        });
+                // setTimeout(arguments.callee, 1000);
+            });
+        });
     </script>
 </head>
 <body>
 <div id="map_canvas"></div>
-<input type="button" id="setNewLocation" value="setNewLocation" onclick="setNewLocation();"/>
+<button>Send an HTTP POST request to a page and get the result back</button>
 </body>
 </html>

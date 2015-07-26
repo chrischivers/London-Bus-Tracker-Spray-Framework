@@ -3,10 +3,14 @@ package com.PredictionAlgorithm.Spray
 
 import akka.actor.Actor
 import com.PredictionAlgorithm.Commons.Commons
-import com.PredictionAlgorithm.ControlInterface.QueryController
+import com.PredictionAlgorithm.ControlInterface.{StreamController, QueryController}
+import com.PredictionAlgorithm.DataDefinitions.TFL.TFLDefinitions
 import spray.routing._
 import spray.http._
 import MediaTypes._
+import spray.json._
+import spray.httpx.SprayJsonSupport._
+import DefaultJsonProtocol._ // if you don't supply your own Protocol (see below)
 
 // we don't implement our route structure directly in the service actor because
 // we want to be able to test it independently, without having to spin up an actor
@@ -28,6 +32,9 @@ class MyServiceActor extends Actor with MyService {
 
 // this trait defines our service behavior independently from the service actor
 trait MyService extends HttpService {
+
+  val sc = new StreamController
+
 
   val thisRoute = {
 
@@ -91,7 +98,31 @@ trait MyService extends HttpService {
           }
 
         }
-    }
+    } ~
+      path("getPosition.asp") {
+          post {
+            entity(as[String]) { reg_ID => {
+              try {
+                val stopCode = sc.getCurrentPosition.nextStopCode
+                println("TIME TILL NEXT STOP: " + sc.getCurrentPosition.timeTilNextStop)
+                val result = TFLDefinitions.StopDefinitions(stopCode)
+                val conString = stopCode + "," + result.latitude + "," + result.longitude + "," + sc.getCurrentPosition.timeTilNextStop
+                complete({
+                  conString
+                })
+              } catch {
+                case e: InstantiationError => {
+                  println("Error: cannot get route: " + e)
+                  complete({
+                    "NA"
+                  })
+                }
+              }
+              }
+            }
+
+          }
+      }
   }
 
 }

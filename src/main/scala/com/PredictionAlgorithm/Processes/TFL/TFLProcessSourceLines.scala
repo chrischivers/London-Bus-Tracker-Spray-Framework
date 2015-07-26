@@ -8,7 +8,6 @@ import com.PredictionAlgorithm.DataSource.TFL.{TFLSourceLine, TFLDataSource}
 import com.PredictionAlgorithm.Database.POINT_TO_POINT_DOCUMENT
 import com.PredictionAlgorithm.Database.TFL.{TFLMongoDBConnection, TFLInsertPointToPointDuration}
 import grizzled.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 import scala.util.{Failure, Success, Try}
 
@@ -64,7 +63,7 @@ object TFLProcessSourceLines {
 
     def inDefinitionFile(line: TFLSourceLine): Boolean = {
       if (tflRouteDefinitions.get(line.route_ID, line.direction_ID, line.stop_Code).isEmpty) {
-        logger.info("Cannot get definition. Line: " + line)
+        //logger.info("Cannot get definition. Line: " + line) //TODO Fix this
         false
       } else true
     }

@@ -13,7 +13,11 @@ class StreamController {
   }
 
   def getCurrentPosition = {
+    if (stream == null) {
+        setUpNewStream("3",2)
+    }
     stream.next()
   }
+
 
 }
