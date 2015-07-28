@@ -1,17 +1,23 @@
 package com.PredictionAlgorithm.Spray
 
 
-import akka.actor.Actor
+import akka.actor.{ActorSystem, ActorLogging, Props, Actor}
+import akka.io.Tcp
 import com.PredictionAlgorithm.Commons.Commons
 import com.PredictionAlgorithm.ControlInterface.{StreamController, QueryController}
 import com.PredictionAlgorithm.DataDefinitions.TFL.TFLDefinitions
 import com.PredictionAlgorithm.Streaming.LiveStreamingCoordinator
+import spray.http.CacheDirectives.`no-cache`
+import spray.http.HttpHeaders.`Cache-Control`
 import spray.routing._
 import spray.http._
 import MediaTypes._
 import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.json4s.JsonDSL._
+import spray.http.HttpHeaders.{`Content-Type`, Connection, `Cache-Control`}
+
+import scala.concurrent.duration._
 
 
 // we don't implement our route structure directly in the service actor because
@@ -35,7 +41,11 @@ class MyServiceActor extends Actor with MyService {
 // this trait defines our service behavior independently from the service actor
 trait MyService extends HttpService {
 
+  implicit def executionContext = actorRefFactory.dispatcher
+
   val sc = new StreamController
+  val `text/event-stream` = MediaType.custom("text/event-stream")
+  MediaTypes.register(`text/event-stream`)
 
 
   val thisRoute = {
@@ -141,11 +151,8 @@ trait MyService extends HttpService {
           }
       } ~
       path("stream") {
-        // we detach in order to move the blocking code inside the simpleStringStream into a future
-        detach() {
-          respondWithMediaType(`text/html`) { // normally Strings are rendered to text/plain, we simply override here
-            complete(stringStream)
-          }
+        respondAsEventStream {
+          sendSSE
         }
       }
   }
@@ -162,12 +169,52 @@ trait MyService extends HttpService {
     val secondStream = Stream.continually {
       // CAUTION: we block here to delay the stream generation for you to be able to follow it in your browser,
       // this is only done for the purpose of this demo, blocking in actor code should otherwise be avoided
-      Thread.sleep(10)
-      "<li>" + sc.getStream.next() + "</li>"
+      Thread.sleep(250)
+      DateTime.now.toIsoDateTimeString
     }
     streamStart #:: secondStream #::: streamEnd #:: Stream.empty
   }
 
+  case class Ok(remaining: Int)
 
+  def sendSSE(ctx: RequestContext): Unit = {
+    actorRefFactory.actorOf {
+      Props {
+        new Actor with ActorLogging {
+          // we use the successful sending of a chunk as trigger for scheduling the next chunk
+          val responseStart = HttpResponse(entity = HttpEntity(`text/event-stream`, "data: start\n\n"))
+          log.info(" start chunk response  with 10 iterations")
+          ctx.responder ! ChunkedResponseStart(responseStart).withAck(Ok(10))
+
+          def receive = {
+            case Ok(0) =>
+              log.info(" going to stop it ")
+              ctx.responder ! MessageChunk("data: " + 100 + "\n\n")
+              ctx.responder ! MessageChunk("data: Finished.\n\n")
+              ctx.responder ! ChunkedMessageEnd
+              context.stop(self)
+            case Ok(remaining) =>
+              log.info(" got ok remaining " + remaining)
+              in(Duration(500, MILLISECONDS)) {
+                val nextChunk = MessageChunk("data: " + (10 - remaining) * 10 + "\n\n")
+                ctx.responder ! nextChunk.withAck(Ok(remaining - 1))
+              }
+
+            case ev: Tcp.ConnectionClosed =>
+              log.warning("Stopping response streaming due to {}", ev)
+          }
+        }
+      }
+    }
+  }
+
+  def respondAsEventStream =
+    respondWithHeader(`Cache-Control`(`no-cache`)) &
+      respondWithHeader(`Connection`("Keep-Alive")) &
+      respondWithMediaType(`text/event-stream`)
+
+  def in[U](duration: FiniteDuration)(body: => U): Unit =
+    ActorSystem().scheduler.scheduleOnce(duration)(body)
 
 }
+
