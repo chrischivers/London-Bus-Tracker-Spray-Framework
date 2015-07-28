@@ -1,60 +1,109 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>SSE Test</title>
-    <meta charset="utf-8" />
-    <script language="JavaScript">
-        function init() {
-            if(typeof(EventSource)!=="undefined") {
-                var log = document.getElementById('log');
-                if (log) {
-                    log.innerHTML = "EventSource() testing begins..<br>";
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>Bus Route UI</title>
+
+    <style type="text/css">
+        html, body, #map_canvas {
+            width: 100%;
+            height: 98%;
+            margin: 0;
+            padding: 0;
+        }
+
+    </style>
+
+    <script type="text/javascript"
+            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBxCYp9RWcbhuPg0nLWFzJhuPbECQYOqBw"></script>
+    <script src="https://code.jquery.com/jquery.min.js"></script>
+    <script src="js/jquery.easing.1.3.js"></script>
+    <script src="js/markerAnimate.js"></script>
+    <script src="js/SlidingMarker.min.js"></script>
+
+    <script>
+        //SlidingMarker.initializeGlobally();
+        var map;
+        var markerArray = {};
+        function initialize() {
+            var myLatlng = new google.maps.LatLng(32.520204, 34.937258);
+            var mapOptions = {
+                zoom: 4,
+                center: myLatlng,
+                mapTypeId: google.maps.MapTypeId.ROADMAP
+            }
+            map = new google.maps.Map(document.getElementById('map_canvas'), mapOptions);
+
+
+            //marker = new google.maps.Marker({
+          /*  marker = new SlidingMarker({
+                position: myLatlng,
+                map: map,
+                title: 'I\m sliding marker',
+                duration: 2000
+            });*/
+
+        }
+        $(function () {
+            initialize();
+
+        });
+
+
+        function setNewLocation(reg, lat, lng, duration) {
+            var newLatlng = new google.maps.LatLng(lat, lng);
+            var currentTimeMillis = new Date().getTime();
+           // var timeToArrival = (parseInt(duration) - currentTimeMillis);
+            var timeToArrival = 1;
+            //alert(timeToArrival)
+            if (timeToArrival > 0) {
+                if(reg in markerArray) {
+                    markerArray[reg].setPosition(newLatlng)
+                } else {
+                    var marker = new SlidingMarker({
+                        position: newLatlng,
+                        map: map,
+                        id: reg,
+                        duration: 5000
+                    });
+                    markerArray[reg] = marker;
                 }
 
-                var svrEvents = new EventSource('/stream');
 
-                svrEvents.onopen = function() {
-                    connectionOpen(true);
-                }
 
-                svrEvents.onerror = function() {
-                    connectionOpen(false);
-                }
-
-                svrEvents.addEventListener('poll', displayPoll, false);             // display multi choice and send back answer
-
-                svrEvents.onmessage = function(event) {
-                    var log = document.getElementById('log');
-                    if (log) {
-                        log.innerHTML += 'message: ' + event.data + "<br>";
-                    }
-                    // absorb any other messages
-                }
-            } else {
-                var log = document.getElementById('log');
-                if (log) {
-                    log.innerHTML = "EventSource() not supported<br>";
-                }
+               // marker.setDuration(timeToArrival);
+               // marker.setPosition(newLatlng);
             }
         }
 
-        function connectionOpen(status) {
-            var log = document.getElementById('log');
-            if (log) {
-                log.innerHTML += 'connected: ' + status + "<br>";
-            }
-        }
+        $(document).ready(function () {
+            $("button").click(function () {
+               /* $.post("getPosition.asp",
+                        {
+                            name: "bus_reg"
+                        },
+                        function (data, status) {
+                            var parsedJson = JSON.parse(data);
 
-        function displayPoll(event) {
-            var html = event.data;
-            var log = document.getElementById('log');
-            if (log) {
-                log.innerHTML += 'poll: ' + html + "<br>";
-            }
-        }
+                            for (x in parsedJson) {
+                                setNewLocation(parsedJson[x].reg, parsedJson[x].lat,parsedJson[x].lng, parsedJson[x].arrivalTime);
+                           }
+
+                        });*/
+
+                var source = new EventSource("/stream");
+                source.onmessage = function(event) {
+                    var parsedJson = JSON.parse(event.data);
+                    setNewLocation(parsedJson.reg, parsedJson.lat, parsedJson.lng, parsedJson.arrivalTime);
+
+                };
+            });
+        });
     </script>
 </head>
-<body onLoad="init()">
-<div id="log">testing...</div>
+<body>
+<div id="map_canvas"></div>
+<button>Send an HTTP POST request to a page and get the result back</button>
 </body>
 </html>

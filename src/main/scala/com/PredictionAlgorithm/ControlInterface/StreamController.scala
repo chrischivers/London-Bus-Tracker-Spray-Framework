@@ -2,7 +2,7 @@ package com.PredictionAlgorithm.ControlInterface
 
 import com.PredictionAlgorithm.Prediction.{KNNPrediction, PredictionInterface}
 import com.PredictionAlgorithm.Processes.TFL.{TFLProcessSourceLines, TFLIterateOverArrivalStream}
-import com.PredictionAlgorithm.Streaming.{LiveStreamingCoordinator, StreamObject}
+import com.PredictionAlgorithm.Streaming.{LiveStreamResult, LiveStreamingCoordinator, StreamObject}
 
 
 class StreamController {
@@ -21,7 +21,7 @@ class StreamController {
     LiveStreamingCoordinator.getObjectPositionsMap.filter(x=> x._2.routeID == routeID)
   }
 
-  def getStream = {
+  def getStream: Iterator[(String, LiveStreamResult)] = {
     LiveStreamingCoordinator.getStream.iterator
   }
 

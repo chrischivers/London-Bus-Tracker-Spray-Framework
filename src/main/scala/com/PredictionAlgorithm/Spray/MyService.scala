@@ -6,7 +6,7 @@ import akka.io.Tcp
 import com.PredictionAlgorithm.Commons.Commons
 import com.PredictionAlgorithm.ControlInterface.{StreamController, QueryController}
 import com.PredictionAlgorithm.DataDefinitions.TFL.TFLDefinitions
-import com.PredictionAlgorithm.Streaming.LiveStreamingCoordinator
+import com.PredictionAlgorithm.Streaming.{LiveStreamResult, LiveStreamingCoordinator}
 import spray.http.CacheDirectives.`no-cache`
 import spray.http.HttpHeaders.`Cache-Control`
 import spray.routing._
@@ -44,6 +44,7 @@ trait MyService extends HttpService {
   implicit def executionContext = actorRefFactory.dispatcher
 
   val sc = new StreamController
+  val stream: Iterator[(String, LiveStreamResult)] = sc.getStream
   val `text/event-stream` = MediaType.custom("text/event-stream")
   MediaTypes.register(`text/event-stream`)
 
@@ -157,51 +158,38 @@ trait MyService extends HttpService {
       }
   }
 
-  // Some Streaming Code taken from Demo on GitHub:
-  //https://github.com/spray/spray/blob/release/1.1/examples/spray-routing/on-spray-can/src/main/scala/spray/examples/DemoService.scala
+  case class Ok()
 
-  // we prepend 2048 "empty" bytes to push the browser to immediately start displaying the incoming chunks
-  lazy val streamStart = " " * 2048 + "<html><body><h2>A streaming response</h2><p>(for 15 seconds)<ul>"
-  lazy val streamEnd = "</ul><p>Finished.</p></body></html>"
-
-
-  def stringStream: Stream[String] = {
-    val secondStream = Stream.continually {
-      // CAUTION: we block here to delay the stream generation for you to be able to follow it in your browser,
-      // this is only done for the purpose of this demo, blocking in actor code should otherwise be avoided
-      Thread.sleep(250)
-      DateTime.now.toIsoDateTimeString
-    }
-    streamStart #:: secondStream #::: streamEnd #:: Stream.empty
-  }
-
-  case class Ok(remaining: Int)
-
+  // This streaming method has been adapted from a demo at https://github.com/chesterxgchen/sse-demo
   def sendSSE(ctx: RequestContext): Unit = {
     actorRefFactory.actorOf {
       Props {
-        new Actor with ActorLogging {
+        new Actor {
           // we use the successful sending of a chunk as trigger for scheduling the next chunk
           val responseStart = HttpResponse(entity = HttpEntity(`text/event-stream`, "data: start\n\n"))
-          log.info(" start chunk response  with 10 iterations")
-          ctx.responder ! ChunkedResponseStart(responseStart).withAck(Ok(10))
+          ctx.responder ! ChunkedResponseStart(responseStart).withAck(Ok)
 
           def receive = {
-            case Ok(0) =>
-              log.info(" going to stop it ")
-              ctx.responder ! MessageChunk("data: " + 100 + "\n\n")
-              ctx.responder ! MessageChunk("data: Finished.\n\n")
-              ctx.responder ! ChunkedMessageEnd
-              context.stop(self)
-            case Ok(remaining) =>
-              log.info(" got ok remaining " + remaining)
-              in(Duration(500, MILLISECONDS)) {
-                val nextChunk = MessageChunk("data: " + (10 - remaining) * 10 + "\n\n")
-                ctx.responder ! nextChunk.withAck(Ok(remaining - 1))
+            case Ok =>
+             // in(Duration(500, MILLISECONDS))
+              {
+                val next = stream.next()
+                val nextList = Map("reg" -> next._1,
+                  "route" -> next._2.routeID,
+                  "dir" -> next._2.directionID.toString,
+                  "point" -> next._2.nextPointSeq.toString,
+                  "stopCode" -> next._2.nextStopCode,
+                  "stopName" -> next._2.nextStopName,
+                  "lat" -> next._2.nextStopLat.toString,
+                  "lng" -> next._2.nextStopLng.toString,
+                  "arrivalTime" -> next._2.arrivalTimeStamp.toString)
+                val json = compact(render(nextList))
+
+                val nextChunk = MessageChunk("data: " + json +"\n\n")
+                ctx.responder ! nextChunk.withAck(Ok)
               }
 
-            case ev: Tcp.ConnectionClosed =>
-              log.warning("Stopping response streaming due to {}", ev)
+            case ev: Tcp.ConnectionClosed => //
           }
         }
       }
