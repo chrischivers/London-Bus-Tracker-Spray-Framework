@@ -1,32 +1,29 @@
 package com.PredictionAlgorithm.ControlInterface
 
-import akka.actor.{Props, ActorSystem}
+import akka.actor.Props
 import com.PredictionAlgorithm.Database.TFL.TFLInsertPointToPointDuration
-import com.PredictionAlgorithm.Processes.TFL.{TFLProcessSourceLines, TFLIterateOverArrivalStream}
+import com.PredictionAlgorithm.Processes.TFL.{TFLIterateOverArrivalStream, TFLProcessSourceLines}
 
 
-object DataReadProcessStoreControlInterface extends StartStopControlInterface {
-
-  val streamActor = actorSystem.actorOf(Props[TFLIterateOverArrivalStream], name = "TFLArrivalStream")
+object HistoricalDataCollectionControlInterface extends StartStopControlInterface {
 
 
   override def start: Unit = {
-    streamActor ! "start"
+TFLProcessSourceLines.setHistoricalDataStoring(true)
 
   }
 
   override def stop: Unit = {
-    streamActor ! "stop"
+    TFLProcessSourceLines.setHistoricalDataStoring(false)
   }
 
   override def getVariableArray: Array[String] = {
-    val numberLinesRead = TFLIterateOverArrivalStream.numberProcessed.toString
     val numberInHoldingBuffer = TFLProcessSourceLines.getBufferSize.toString
     val numberDBTransactionsRequested = TFLInsertPointToPointDuration.numberDBTransactionsRequested.toString
     val numberDBTransactionsExecuted = TFLInsertPointToPointDuration.numberDBTransactionsExecuted.toString
     val numberDBTransactionsOutstanding = (TFLInsertPointToPointDuration.numberDBTransactionsRequested - TFLInsertPointToPointDuration.numberDBTransactionsExecuted).toString
     val numberDBPullTransactionsExecuted = TFLInsertPointToPointDuration.numberDBPullTransactionsExecuted.toString
-    Array(numberLinesRead, numberInHoldingBuffer, numberDBTransactionsRequested, numberDBTransactionsExecuted, numberDBTransactionsOutstanding, numberDBPullTransactionsExecuted)
+    Array(numberInHoldingBuffer, numberDBTransactionsRequested, numberDBTransactionsExecuted, numberDBTransactionsOutstanding, numberDBPullTransactionsExecuted)
   }
 
 

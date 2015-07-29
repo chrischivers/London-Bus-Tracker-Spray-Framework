@@ -2,51 +2,97 @@ package com.PredictionAlgorithm.Streaming
 
 import java.util.concurrent.{LinkedBlockingQueue, BlockingQueue}
 
+import akka.actor.Status.{Failure, Success}
+import akka.actor._
+import akka.actor.Actor.Receive
 import com.PredictionAlgorithm.DataDefinitions.TFL.TFLDefinitions
 import com.PredictionAlgorithm.DataSource.TFL.TFLSourceLine
+
+import scala.collection.mutable
+import scala.concurrent.duration._
 
 //case class LiveStreamResult(nextPointSeq: Int,nextStopCode: String, nextStopName:String, nextStopLate:Double, nextStopLng: Double, timeTilNextStop:Int)
 
 
-object LiveStreamingCoordinator extends LiveStreamingCoordinatorInterface{
+object LiveStreamingCoordinator {
 
-  val DELETE_TIME_THRESHOLD_MS = 120000
+  implicit val actorSystem = ActorSystem("live_streaming")
+  implicit val timeout = 1000
+
   val x = new FIFOStream
-  val definitions = TFLDefinitions.StopDefinitions
+  var liveActors = Map[String, ActorRef]()
 
-  override var livePositionMap: Map[String, livePositionData] = Map()
+  def setObjectPosition(liveSourceLine: TFLSourceLine): Unit = {
+    val vehicleReg = liveSourceLine.vehicle_Reg
+      if (liveActors.contains(vehicleReg)) {
+          liveActors(vehicleReg) ! liveSourceLine
+      } else {
 
-  // Map of RegNumber (Unique vehicle identifier) to Stream Result
-  override def getObjectPositionsMap: Map[String, LiveStreamResult] = {
-    livePositionMap.map(x=> x._1 -> {
-      val stopDefinition = TFLDefinitions.StopDefinitions(x._2.nextStopID)
-      new LiveStreamResult(x._2.routeID, x._2.directionID ,x._2.pointSequence,x._2.nextStopID, stopDefinition.stopPointName, stopDefinition.latitude, stopDefinition.longitude, x._2.arrivalTime, x._2.firstLast)
-    })
+        val newActor:ActorRef = actorSystem.actorOf(Props(new VehicleActor(vehicleReg, liveSourceLine.route_ID, liveSourceLine.direction_ID)), vehicleReg)
+        liveActors = liveActors + (vehicleReg -> newActor)
+        newActor ! liveSourceLine //Start it off
+    }
   }
 
-  override def setObjectPosition(liveSourceLine: TFLSourceLine): Unit = {
-    val pointSequenceFirstLast = TFLDefinitions.StopToPointSequenceMap.get(liveSourceLine.route_ID,liveSourceLine.direction_ID,liveSourceLine.stop_Code)
-    val pointSequence = pointSequenceFirstLast.get._1
-    val firstLast = pointSequenceFirstLast.get._2
-    livePositionMap += (liveSourceLine.vehicle_Reg -> new livePositionData(liveSourceLine.route_ID,liveSourceLine.direction_ID,pointSequence,liveSourceLine.stop_Code,liveSourceLine.arrival_TimeStamp,firstLast))
-    livePositionMap = livePositionMap.filter(x => System.currentTimeMillis() - x._2.arrivalTime < DELETE_TIME_THRESHOLD_MS) //TODO this will change once prediction Algorithm introduced
-
-    x.enqueue((liveSourceLine.vehicle_Reg -> new LiveStreamResult(liveSourceLine.route_ID,liveSourceLine.direction_ID,pointSequence,liveSourceLine.stop_Code,definitions(liveSourceLine.stop_Code).stopPointName, definitions(liveSourceLine.stop_Code).latitude, definitions(liveSourceLine.stop_Code).longitude, liveSourceLine.arrival_TimeStamp,firstLast)))
-  }
+  def getNumberLiveActors = liveActors.size
 
   def getStream = x.toStream
+
+
 
 }
 
 // Implementation adapted from Stack Overflow article:
 //http://stackoverflow.com/questions/7553270/is-there-a-fifo-stream-in-scala
 class FIFOStream {
-  private val queue = new LinkedBlockingQueue[Option[(String, LiveStreamResult)]]
+  private val queue = new LinkedBlockingQueue[Option[(String, Double, Double)]]
 
-  def toStream: Stream[(String, LiveStreamResult)] = queue take match {
-    case Some((a:String,b:LiveStreamResult)) => Stream cons ( (a,b), toStream )
+  def toStream: Stream[(String, Double, Double)] = queue take match {
+    case Some((a:String,b:Double, c:Double)) => Stream cons ( (a,b,c), toStream )
     case None => Stream empty
   }
   def close() = queue add None
-  def enqueue( as: (String, LiveStreamResult) ) = queue add (Some(as) )
+  def enqueue(as:(String, Double, Double)) = queue add Some(as)
+}
+
+class VehicleActor(vehicle_ID: String, routeID: String, directionID: Int) extends Actor{
+
+  import context.dispatcher
+
+  var currentPosition:(Double,Double) = (0.0, 0.0)
+  var predictedPositionQueue: mutable.Queue[(Long, Double, Double)] = mutable.Queue()
+  val definitions = TFLDefinitions.StopDefinitions
+
+  override def receive: Receive = {
+    case sourceLine:TFLSourceLine => processNewLine(sourceLine)
+    case "next" =>
+      if (predictedPositionQueue.nonEmpty) {
+        val head = predictedPositionQueue.dequeue
+        in(Duration(System.currentTimeMillis() - head._1, MILLISECONDS)) {
+          val lat = head._2
+          val lng = head._3
+          currentPosition = (lat, lng)
+          LiveStreamingCoordinator.x.enqueue(vehicle_ID, lat, lng)
+          self ! "next"
+          //TODO KILL if last
+
+        }
+      }
+
+  }
+
+  def processNewLine(sourceLine:TFLSourceLine) = {
+    val lat = definitions(sourceLine.stop_Code).latitude
+    val lng = definitions(sourceLine.stop_Code).longitude
+   // predictedPositionQueue = predictedPositionQueue.filter(_._1 < sourceLine.arrival_TimeStamp) //remove anythign in the queue ahead of the stream input (redundant)
+    addToPredictedPositionQueue(sourceLine.arrival_TimeStamp,lat, lng) //TODO this is where the subpoints are fetched... AND where more paramaters may need to be passed
+    self ! "next"
+  }
+
+  def addToPredictedPositionQueue(timestamp:Long, latitude: Double, longitude: Double) = {
+    predictedPositionQueue.enqueue((timestamp,latitude,longitude))
+  }
+
+  def in[U](duration: FiniteDuration)(body: => U): Unit =
+    LiveStreamingCoordinator.actorSystem.scheduler.scheduleOnce(duration)(body)
 }

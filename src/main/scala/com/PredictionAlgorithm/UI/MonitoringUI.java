@@ -3,9 +3,6 @@ package com.PredictionAlgorithm.UI;
 import com.PredictionAlgorithm.Commons.Commons;
 import com.PredictionAlgorithm.ControlInterface.QueryController;
 import com.PredictionAlgorithm.ControlInterface.StartStopControlInterface;
-import com.PredictionAlgorithm.ControlInterface.StreamController;
-import com.PredictionAlgorithm.Streaming.LiveStreamingCoordinator;
-import com.PredictionAlgorithm.Streaming.StreamResult;
 
 
 import javax.swing.*;
@@ -15,9 +12,7 @@ import java.awt.event.ActionListener;
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * Created by chrischivers on 14/07/15.
- */
+
 public class MonitoringUI {
     private JLabel dataSourceLinesReadValue;
     private JPanel mainPanel;
@@ -27,7 +22,7 @@ public class MonitoringUI {
 
     private int UI_REFRESH_INTERVAL;
 
-    private JButton dataSourceReadStartStopButton;
+    private JButton startStopStreamProcessingButton;
     private JPanel DataSourcePanel;
     private JPanel DataProcessingPanel;
     private JLabel sizeHoldingBufferValue;
@@ -43,8 +38,9 @@ public class MonitoringUI {
     private JButton runQueryButton;
     private JLabel queryResultValue;
     private JLabel dBPullTransactionsRequestedValue;
-    private JLabel liveStreamingMapSizeValue;
-    private JButton enableLiveStreamingCollectionButton;
+    private JLabel numberLiveActorsValue;
+    private JButton startStopLiveStreamingButton;
+    private JButton startStopHistoricalDataCollectionButton;
 
 
     public MonitoringUI(int refreshIntervalMS) {
@@ -63,22 +59,44 @@ public class MonitoringUI {
 
     }
 
-    public void setDataSourceProcess(StartStopControlInterface dsCI) {
-        dataSourceReadStartStopButton.addActionListener(new ActionListener() {
+    public void setStreamProcessing(StartStopControlInterface sSCI) {
+        startStopStreamProcessingButton.addActionListener(new ActionListener() {
             volatile boolean buttonStarted = false;
-            CounterUpdater cu = new CounterUpdater(dsCI, dataSourceLinesReadValue, sizeHoldingBufferValue, dBTransactionsRequestedValue, dBTransactionsExecutedValue, dBTransactionsOutstandingValue, dBPullTransactionsRequestedValue);
+            CounterUpdater cu = new CounterUpdater(sSCI, dataSourceLinesReadValue);
 
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (!buttonStarted) {
-                    dsCI.start();
+                    sSCI.start();
                     new Thread(cu).start();
-                    dataSourceReadStartStopButton.setText("Stop");
+                    startStopStreamProcessingButton.setText("Stop Stream Processing");
                     buttonStarted = true;
                 } else {
-                    dsCI.stop();
+                    sSCI.stop();
                     cu.terminate();
-                    dataSourceReadStartStopButton.setText("Start");
+                    startStopStreamProcessingButton.setText("Start Stream Processing");
+                    buttonStarted = false;
+                }
+            }
+        });
+    }
+
+    public void setHistoricalDataCollection(StartStopControlInterface sSCI) {
+        startStopHistoricalDataCollectionButton.addActionListener(new ActionListener() {
+            volatile boolean buttonStarted = false;
+            CounterUpdater cu = new CounterUpdater(sSCI,sizeHoldingBufferValue, dBTransactionsRequestedValue, dBTransactionsExecutedValue, dBTransactionsOutstandingValue, dBPullTransactionsRequestedValue);
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (!buttonStarted) {
+                    sSCI.start();
+                    new Thread(cu).start();
+                    startStopHistoricalDataCollectionButton.setText("Disable Historical Data Collection");
+                    buttonStarted = true;
+                } else {
+                    sSCI.stop();
+                    cu.terminate();
+                    startStopHistoricalDataCollectionButton.setText("Enable Historical Data Collection");
                     buttonStarted = false;
                 }
             }
@@ -96,21 +114,21 @@ public class MonitoringUI {
     }
 
 
-    public void setStreamProcessing(StreamController streamController) {
-        enableLiveStreamingCollectionButton.addActionListener(new ActionListener() {
+    public void setLiveStreaming(StartStopControlInterface sSCI) {
+        startStopLiveStreamingButton.addActionListener(new ActionListener() {
             volatile boolean buttonStarted = false;
-            StreamUpdater su = new StreamUpdater(streamController);
+            CounterUpdater cu = new CounterUpdater(sSCI, numberLiveActorsValue);
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (!buttonStarted) {
-                    streamController.enableLiveStreamCollection(true);
-                    new Thread(su).start();
-                    enableLiveStreamingCollectionButton.setText("Stop Live Stream Collection");
+                    sSCI.start();
+                    new Thread(cu).start();
+                    startStopLiveStreamingButton.setText("Disable Live Streaming");
                     buttonStarted = true;
                 } else {
-                    streamController.enableLiveStreamCollection(false);
-                    su.terminate();
-                    enableLiveStreamingCollectionButton.setText("Start Live Stream Collection");
+                    sSCI.stop();
+                    cu.terminate();
+                    startStopLiveStreamingButton.setText("Enable Live Streaming");
                     buttonStarted = false;
                 }
 
@@ -164,10 +182,10 @@ public class MonitoringUI {
         }
     }
 
-    public class StreamUpdater implements Runnable {
+  /*  public class StreamUpdater implements Runnable {
         private volatile boolean running = true;
-        private StreamController sc;
-        public StreamUpdater(StreamController sc) {
+        private StreamControlInterface sc;
+        public StreamUpdater(StreamControlInterface sc) {
             this.sc = sc;
         }
         public void terminate() {
@@ -185,10 +203,10 @@ public class MonitoringUI {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                liveStreamingMapSizeValue.setText(Integer.toString(LiveStreamingCoordinator.getPositionMapSize()));
+                numberLiveActorsValue.setText(Integer.toString(sc.getNumberLiveActors()));
             }
 
 
         }
-    }
+    }*/
 }

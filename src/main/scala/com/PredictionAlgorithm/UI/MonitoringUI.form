@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.PredictionAlgorithm.UI.MonitoringUI">
-  <grid id="27dc6" binding="mainPanel" layout-manager="GridLayoutManager" row-count="4" column-count="11" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="27dc6" binding="mainPanel" layout-manager="GridLayoutManager" row-count="6" column-count="11" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="754" height="524"/>
+      <xy x="20" y="20" width="877" height="580"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
       <vspacer id="9e4e3">
         <constraints>
-          <grid row="3" column="7" row-span="1" col-span="2" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+          <grid row="5" column="7" row-span="1" col-span="2" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
       </vspacer>
       <grid id="15d59" binding="DataSourcePanel" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="5" left="5" bottom="5" right="5"/>
         <constraints>
-          <grid row="1" column="0" row-span="1" col-span="11" vsize-policy="3" hsize-policy="3" anchor="8" fill="2" indent="0" use-parent-layout="false"/>
+          <grid row="3" column="0" row-span="1" col-span="11" vsize-policy="3" hsize-policy="3" anchor="8" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="bevel-raised" title="Data Source Reading"/>
@@ -39,20 +39,20 @@
           </component>
         </children>
       </grid>
-      <component id="78c51" class="javax.swing.JButton" binding="dataSourceReadStartStopButton">
+      <component id="78c51" class="javax.swing.JButton" binding="startStopStreamProcessingButton">
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="8" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false">
             <maximum-size width="200" height="-1"/>
           </grid>
         </constraints>
         <properties>
-          <text value="Start"/>
+          <text value="Start Stream Processing"/>
         </properties>
       </component>
       <grid id="33526" binding="DataProcessingPanel" layout-manager="GridLayoutManager" row-count="5" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="5" left="5" bottom="5" right="5"/>
         <constraints>
-          <grid row="2" column="0" row-span="1" col-span="11" vsize-policy="3" hsize-policy="3" anchor="8" fill="2" indent="0" use-parent-layout="false"/>
+          <grid row="4" column="0" row-span="1" col-span="11" vsize-policy="3" hsize-policy="3" anchor="8" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="bevel-raised" title="Data Processing"/>
@@ -142,7 +142,7 @@
       <grid id="b7a44" binding="queryingPanel" layout-manager="GridLayoutManager" row-count="6" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="5" left="5" bottom="5" right="5"/>
         <constraints>
-          <grid row="3" column="0" row-span="1" col-span="4" vsize-policy="3" hsize-policy="3" anchor="8" fill="2" indent="0" use-parent-layout="false"/>
+          <grid row="5" column="0" row-span="1" col-span="4" vsize-policy="3" hsize-policy="3" anchor="8" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="bevel-raised" title="Querying"/>
@@ -255,17 +255,17 @@
           </component>
         </children>
       </grid>
-      <grid id="a282c" layout-manager="GridLayoutManager" row-count="3" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="a282c" layout-manager="GridLayoutManager" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <grid row="3" column="4" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="5" column="4" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="bevel-raised" title="Live Streaming"/>
         <children>
           <vspacer id="fca6d">
             <constraints>
-              <grid row="2" column="1" row-span="1" col-span="2" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+              <grid row="1" column="1" row-span="1" col-span="2" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
             </constraints>
           </vspacer>
           <component id="7e53a" class="javax.swing.JLabel">
@@ -273,10 +273,10 @@
               <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Size Of Live Streaming Map"/>
+              <text value="Number of Live Actors"/>
             </properties>
           </component>
-          <component id="750f9" class="javax.swing.JLabel" binding="liveStreamingMapSizeValue">
+          <component id="750f9" class="javax.swing.JLabel" binding="numberLiveActorsValue">
             <constraints>
               <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -285,16 +285,24 @@
               <text value=""/>
             </properties>
           </component>
-          <component id="ce6d4" class="javax.swing.JButton" binding="enableLiveStreamingCollectionButton">
-            <constraints>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value="Enable Live Streaming Collection"/>
-            </properties>
-          </component>
         </children>
       </grid>
+      <component id="ce6d4" class="javax.swing.JButton" binding="startStopLiveStreamingButton">
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Enable Live Streaming"/>
+        </properties>
+      </component>
+      <component id="295f7" class="javax.swing.JButton" binding="startStopHistoricalDataCollectionButton">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Enable Historical Data Collection"/>
+        </properties>
+      </component>
     </children>
   </grid>
 </form>

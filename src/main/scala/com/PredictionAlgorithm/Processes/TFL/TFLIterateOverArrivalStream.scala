@@ -5,7 +5,7 @@ import java.net.UnknownHostException
 
 import akka.actor.SupervisorStrategy._
 import akka.actor.{ActorInitializationException, OneForOneStrategy, Props, Actor}
-import com.PredictionAlgorithm.ControlInterface.DataReadProcessStoreControlInterface._
+import com.PredictionAlgorithm.ControlInterface.StreamProcessingControlInterface._
 import com.PredictionAlgorithm.DataSource.TFL.{TFLSourceLineFormatter, TFLDataSource, TFLSourceLine}
 import com.PredictionAlgorithm.DataSource._
 import com.PredictionAlgorithm.Database.POINT_TO_POINT_COLLECTION

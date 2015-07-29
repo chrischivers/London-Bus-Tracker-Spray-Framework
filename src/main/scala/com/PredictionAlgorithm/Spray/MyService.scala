@@ -4,7 +4,7 @@ package com.PredictionAlgorithm.Spray
 import akka.actor.{ActorSystem, ActorLogging, Props, Actor}
 import akka.io.Tcp
 import com.PredictionAlgorithm.Commons.Commons
-import com.PredictionAlgorithm.ControlInterface.{StreamController, QueryController}
+import com.PredictionAlgorithm.ControlInterface.{LiveStreamControlInterface, QueryController}
 import com.PredictionAlgorithm.DataDefinitions.TFL.TFLDefinitions
 import com.PredictionAlgorithm.Streaming.{LiveStreamResult, LiveStreamingCoordinator}
 import spray.http.CacheDirectives.`no-cache`
@@ -43,8 +43,8 @@ trait MyService extends HttpService {
 
   implicit def executionContext = actorRefFactory.dispatcher
 
-  val sc = new StreamController
-  val stream: Iterator[(String, LiveStreamResult)] = sc.getStream
+  val sc = LiveStreamControlInterface
+  val stream: Iterator[(String, Double, Double)] = sc.getStream
   val `text/event-stream` = MediaType.custom("text/event-stream")
   MediaTypes.register(`text/event-stream`)
 
@@ -111,45 +111,6 @@ trait MyService extends HttpService {
           }
 
         }
-    } ~
-      path("getPosition.asp") {
-          post {
-            entity(as[String]) { returned => {
-              val routeID = "3"
-              val directionID = 1
-              try {
-                val json = compact(render(sc.getPositionSnapshotsForRoute(routeID).map(x => {
-                  Map("reg" -> x._1,
-                    "route" -> x._2.routeID,
-                  "dir" -> x._2.directionID.toString,
-                  "point" -> x._2.nextPointSeq.toString,
-                  "stopCode" -> x._2.nextStopCode,
-                  "stopName" -> x._2.nextStopName,
-                  "lat" -> x._2.nextStopLat.toString,
-                  "lng" -> x._2.nextStopLng.toString,
-                  "arrivalTime" -> x._2.arrivalTimeStamp.toString)
-                }).toList))
-                println(json)
-                complete(json)
-                /*val stopCode = sc.getCurrentPosition.nextStopCode
-                println("TIME TILL NEXT STOP: " + sc.getCurrentPosition.timeTilNextStop)
-                val result = TFLDefinitions.StopDefinitions(stopCode)
-                val conString = stopCode + "," + result.latitude + "," + result.longitude + "," + sc.getCurrentPosition.timeTilNextStop
-                complete({
-                  conString
-                })*/
-              } catch {
-                case e: InstantiationError => {
-                  println("Error: cannot get route: " + e)
-                  complete({
-                    "NA"
-                  })
-                }
-              }
-              }
-            }
-
-          }
       } ~
       path("stream") {
         respondAsEventStream {
@@ -175,14 +136,14 @@ trait MyService extends HttpService {
               {
                 val next = stream.next()
                 val nextList = Map("reg" -> next._1,
-                  "route" -> next._2.routeID,
-                  "dir" -> next._2.directionID.toString,
-                  "point" -> next._2.nextPointSeq.toString,
-                  "stopCode" -> next._2.nextStopCode,
-                  "stopName" -> next._2.nextStopName,
-                  "lat" -> next._2.nextStopLat.toString,
-                  "lng" -> next._2.nextStopLng.toString,
-                  "arrivalTime" -> next._2.arrivalTimeStamp.toString)
+               //   "route" -> next._2.routeID,
+                //  "dir" -> next._2.directionID.toString,
+                //  "point" -> next._2.nextPointSeq.toString,
+                //  "stopCode" -> next._2.nextStopCode,
+                //  "stopName" -> next._2.nextStopName,
+                  "lat" -> next._2.toString,
+                  "lng" -> next._3.toString)
+                 // "arrivalTime" -> next._2.arrivalTimeStamp.toString)
                 val json = compact(render(nextList))
 
                 val nextChunk = MessageChunk("data: " + json +"\n\n")
