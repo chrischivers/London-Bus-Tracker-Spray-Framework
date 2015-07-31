@@ -12,20 +12,13 @@ import scala.util.{Failure, Success, Try}
 
 object TFLInsertPointToPointDuration extends DatabaseModifyInterface {
 
+  @volatile var numberDBTransactionsRequested:Long= 0
+  @volatile var numberDBTransactionsExecuted:Long = 0
+  @volatile var numberDBPullTransactionsExecuted:Long = 0
+
   override val dbModifyActor: ActorRef = actorSystem.actorOf(Props[TFLInsertPointToPointDuration], name = "TFLInsertPointToPointDurationActor")
 
-  override lazy val dBCollection =
-    Try(TFLMongoDBConnection.getCollection(POINT_TO_POINT_COLLECTION)) match {
-      case Success(collection) => collection
-      case Failure(fail) => throw new IllegalStateException("Cannot get DB Collection")
-    }
-
-  override def insertDocument(doc: DatabaseDocuments): Unit = {
-    numberDBTransactionsRequested += 1
-    dbModifyActor ! doc
-  }
-
-
+  override protected val collection: DatabaseCollections = POINT_TO_POINT_COLLECTION
 }
 
 class TFLInsertPointToPointDuration extends Actor {

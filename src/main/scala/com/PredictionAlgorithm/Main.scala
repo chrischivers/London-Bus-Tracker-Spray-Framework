@@ -5,8 +5,8 @@ import javax.swing.{SwingUtilities, JFrame}
 import akka.actor.{Props, ActorSystem}
 import akka.io.IO
 import akka.util.Timeout
-import com.PredictionAlgorithm.ControlInterface.{HistoricalDataCollectionControlInterface, LiveStreamControlInterface, QueryController, StreamProcessingControlInterface}
-import com.PredictionAlgorithm.DataDefinitions.TFL.{TFLDefinitions, LoadStopDefinitionsFromWeb}
+import com.PredictionAlgorithm.ControlInterface._
+import com.PredictionAlgorithm.DataDefinitions.TFL.{TFLDefinitions, LoadStopDefinitions}
 import com.PredictionAlgorithm.Prediction.RoutePredictionMapping
 import com.PredictionAlgorithm.Spray.{MyServiceActor, Boot}
 import com.PredictionAlgorithm.UI.{MonitoringUI}
@@ -28,6 +28,8 @@ object Main extends App {
       ui.setHistoricalDataCollection(HistoricalDataCollectionControlInterface)
       ui.setLiveStreaming(LiveStreamControlInterface)
       ui.setQueryProcessing(new QueryController)//TODO remove class and replace with obect
+      ui.setUpdateRouteDefinitions(UpdateRouteDefinitionsControlInterface)
+      ui.setUpdateStopDefinitions(UpdateStopDefinitionsControlInterface)
       ui.createAndDisplayGUI
 
     }

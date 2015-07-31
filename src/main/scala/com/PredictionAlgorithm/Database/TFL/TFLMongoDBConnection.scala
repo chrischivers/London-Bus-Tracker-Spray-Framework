@@ -10,11 +10,11 @@ object TFLMongoDBConnection {
 
   lazy val getDatabase = mc(PREDICTION_DATABASE.name)
 
-  def getCollection(dbc:DatabaseCollections) = {
-    val x = getDatabase(dbc.name)
-    createIndex(x, dbc)
-    println(x.getIndexInfo)
-    x
+  def getCollection(dbc:DatabaseCollections): MongoCollection = {
+    val coll = getDatabase(dbc.name)
+    createIndex(coll, dbc)
+    println(coll.getIndexInfo)
+    coll
   }
 
   def closeConnection() = mc.close()

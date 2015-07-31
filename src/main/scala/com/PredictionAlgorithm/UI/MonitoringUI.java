@@ -3,6 +3,7 @@ package com.PredictionAlgorithm.UI;
 import com.PredictionAlgorithm.Commons.Commons;
 import com.PredictionAlgorithm.ControlInterface.QueryController;
 import com.PredictionAlgorithm.ControlInterface.StartStopControlInterface;
+import com.PredictionAlgorithm.DataDefinitions.TFL.TFLDefinitions;
 
 
 import javax.swing.*;
@@ -17,7 +18,7 @@ public class MonitoringUI {
     private JLabel dataSourceLinesReadValue;
     private JPanel mainPanel;
 
-    private int WINDOW_H_SIZE = 900;
+    private int WINDOW_H_SIZE = 1200;
     private int WINDOW_V_SIZE = 500;
 
     private int UI_REFRESH_INTERVAL;
@@ -41,6 +42,17 @@ public class MonitoringUI {
     private JLabel numberLiveActorsValue;
     private JButton startStopLiveStreamingButton;
     private JButton startStopHistoricalDataCollectionButton;
+    private JButton updateRouteDefinitionsFromButton;
+    private JPanel liveStreamingPanel;
+    private JPanel updateRouteDefinitionsPanel;
+    private JLabel numberRoutesInsertedDBValue;
+    private JLabel numberRoutesUpdatedDBValue;
+    private JLabel routeUpdatePercentageCompleteValue;
+    private JPanel updateStopDefinitionsPanel;
+    private JButton updateStopDefinitionsFromButton;
+    private JLabel stopUpdatePercentageCompleteValue;
+    private JLabel numberStopsInsertedDBValue;
+    private JLabel numberStopsUpdatedDBValue;
 
 
     public MonitoringUI(int refreshIntervalMS) {
@@ -57,6 +69,35 @@ public class MonitoringUI {
         frame.pack();
         frame.setVisible(true);
 
+    }
+
+    public void setUpdateRouteDefinitions(StartStopControlInterface sSCI) {
+        updateRouteDefinitionsFromButton.addActionListener(new ActionListener() {
+            volatile boolean buttonStarted = false;
+            CounterUpdater cu = new CounterUpdater(sSCI, routeUpdatePercentageCompleteValue, numberRoutesInsertedDBValue, numberRoutesUpdatedDBValue);
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                sSCI.start();
+                new Thread(cu).start();
+                updateRouteDefinitionsFromButton.setEnabled(false);
+                buttonStarted = true;
+            }
+        });
+    }
+
+    public void setUpdateStopDefinitions(StartStopControlInterface sSCI) {
+        updateStopDefinitionsFromButton.addActionListener(new ActionListener() {
+            volatile boolean buttonStarted = false;
+            CounterUpdater cu = new CounterUpdater(sSCI, stopUpdatePercentageCompleteValue, numberStopsInsertedDBValue,numberStopsUpdatedDBValue);
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                sSCI.start();
+                new Thread(cu).start();
+                updateStopDefinitionsFromButton.setEnabled(false);
+                buttonStarted = true;
+            }
+        });
     }
 
     public void setStreamProcessing(StartStopControlInterface sSCI) {
@@ -182,31 +223,4 @@ public class MonitoringUI {
         }
     }
 
-  /*  public class StreamUpdater implements Runnable {
-        private volatile boolean running = true;
-        private StreamControlInterface sc;
-        public StreamUpdater(StreamControlInterface sc) {
-            this.sc = sc;
-        }
-        public void terminate() {
-            running = false;
-        }
-
-
-        @Override
-        public void run() {
-            running = true;
-            System.out.println("Stream refresh running");
-            while (running) {
-                try {
-                    Thread.sleep(UI_REFRESH_INTERVAL);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                numberLiveActorsValue.setText(Integer.toString(sc.getNumberLiveActors()));
-            }
-
-
-        }
-    }*/
 }

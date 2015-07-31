@@ -1,9 +1,12 @@
 package com.PredictionAlgorithm.DataDefinitions
 
+import com.PredictionAlgorithm.Database.DatabaseCollections
+
 /**
  * Created by chrischivers on 17/07/15.
  */
 trait LoadResource {
+
 
   val DEFAULT_RESOURCES_LOCATION = "src/main/resources/"
   val DEFAULT_ROUTE_DEFINITIONS_FILE_NAME = "routeSequence.csv"
