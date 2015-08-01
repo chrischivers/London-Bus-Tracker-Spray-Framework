@@ -18,6 +18,7 @@ object TFLProcessSourceLines {
 
   val logger = Logger(classOf[TFLProcessSourceLines])
   val MAXIMUM_AGE_OF_RECORDS_IN_HOLDING_BUFFER = 600000 //In Ms
+  var numberNonMatches = 0
 
   // Map of (Route ID, Vehicle Reg, Direction ID) -> (Stop ID, Arrival Timestamp)
   private var holdingBuffer: Map[(String, String, Int), (String, Long)] = Map()
@@ -72,6 +73,7 @@ object TFLProcessSourceLines {
 
     def inDefinitionFile(line: TFLSourceLine): Boolean = {
       if (tflRouteDefinitions.get(line.route_ID, line.direction_ID, line.stop_Code).isEmpty) {
+        numberNonMatches += 1
         //logger.info("Cannot get definition. Line: " + line) //TODO Fix this
         false
       } else true

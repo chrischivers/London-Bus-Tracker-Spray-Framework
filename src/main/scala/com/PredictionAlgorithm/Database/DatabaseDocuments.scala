@@ -11,7 +11,7 @@ final case class POINT_TO_POINT_DOCUMENT(route_ID: String, direction_ID: Int, fr
 
 }
 
-final case class ROUTE_DEFINITION_DOCUMENT(route_ID: String, direction_ID: Int, sequence: Int, stop_Code: String, first_Last: Option[String], polyLine: String) extends DatabaseDocuments {
+final case class ROUTE_DEFINITION_DOCUMENT(route_ID: String, direction_ID: Int, sequence: Int, stop_Code: String, first_Last: Option[String]) extends DatabaseDocuments {
 
   override val collection = ROUTE_DEFINITIONS_COLLECTION
 

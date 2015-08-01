@@ -23,7 +23,7 @@ object LoadStopDefinitions extends LoadResource {
   // Maps StopCode -> (StopPointName;StopPointType;Towards;Bearing;StopPointIndicator;StopPointState;Latitude;Longitude)
   private var stopDefinitionMap: Map[String, StopDefinitionFields] = Map()
 
-  def getstopDefinitionMap: Map[String, StopDefinitionFields]  = {
+  def getStopDefinitionMap: Map[String, StopDefinitionFields]  = {
     if (stopDefinitionMap.isEmpty) {
       retrieveFromDB
       stopDefinitionMap
@@ -31,9 +31,8 @@ object LoadStopDefinitions extends LoadResource {
   }
 
 
-  private def retrieveFromDB: Map[String, StopDefinitionFields] = {
+  private def retrieveFromDB: Unit = {
     var tempMap: Map[String, StopDefinitionFields] = Map()
-
 
     val cursor = TFLGetStopDefinitionDocument.fetchAll()
     for (doc <- cursor) {
@@ -49,7 +48,8 @@ object LoadStopDefinitions extends LoadResource {
 
       tempMap += (stopCode -> new StopDefinitionFields(stopName, stopType, towards, bearing, indicator, state, lat, lng))
     }
-    tempMap
+    stopDefinitionMap = tempMap
+    println("Number stop definitions fetched from DB: " + stopDefinitionMap.size)
   }
 
   def updateFromWeb: Unit = {

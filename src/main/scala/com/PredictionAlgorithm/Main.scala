@@ -30,6 +30,7 @@ object Main extends App {
       ui.setQueryProcessing(new QueryController)//TODO remove class and replace with obect
       ui.setUpdateRouteDefinitions(UpdateRouteDefinitionsControlInterface)
       ui.setUpdateStopDefinitions(UpdateStopDefinitionsControlInterface)
+      ui.setAddPolyLines(AddPolyLinesControlInterface)
       ui.createAndDisplayGUI
 
     }

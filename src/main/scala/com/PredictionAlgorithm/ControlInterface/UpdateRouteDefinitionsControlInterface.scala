@@ -11,8 +11,6 @@ import com.PredictionAlgorithm.Processes.TFL.{TFLIterateOverArrivalStream, TFLPr
  */
 object UpdateRouteDefinitionsControlInterface extends StartStopControlInterface {
 
-  val streamActor = actorSystem.actorOf(Props[TFLIterateOverArrivalStream], name = "TFLArrivalStream")
-
   override def getVariableArray: Array[String] = {
     val percentageComplete = LoadRouteDefinitions.percentageComplete.toString
     val numberInserted = TFLInsertUpdateRouteDefinitionDocument.numberDBInsertsRequested.toString

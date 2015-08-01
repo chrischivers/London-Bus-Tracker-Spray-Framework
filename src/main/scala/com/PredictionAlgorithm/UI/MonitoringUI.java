@@ -53,6 +53,10 @@ public class MonitoringUI {
     private JLabel stopUpdatePercentageCompleteValue;
     private JLabel numberStopsInsertedDBValue;
     private JLabel numberStopsUpdatedDBValue;
+    private JLabel numberPolyLinesAddedValue;
+    private JButton addPolyLinesButton;
+    private JLabel numberAddPolyLinesLinesReadValue;
+    private JLabel nonMatchesCountValue;
 
 
     public MonitoringUI(int refreshIntervalMS) {
@@ -81,6 +85,20 @@ public class MonitoringUI {
                 sSCI.start();
                 new Thread(cu).start();
                 updateRouteDefinitionsFromButton.setEnabled(false);
+                buttonStarted = true;
+            }
+        });
+    }
+
+    public void setAddPolyLines(StartStopControlInterface sSCI) {
+        addPolyLinesButton.addActionListener(new ActionListener() {
+            volatile boolean buttonStarted = false;
+            CounterUpdater cu = new CounterUpdater(sSCI, numberAddPolyLinesLinesReadValue, numberPolyLinesAddedValue);
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                sSCI.start();
+                new Thread(cu).start();
+                addPolyLinesButton.setEnabled(false);
                 buttonStarted = true;
             }
         });
@@ -125,7 +143,7 @@ public class MonitoringUI {
     public void setHistoricalDataCollection(StartStopControlInterface sSCI) {
         startStopHistoricalDataCollectionButton.addActionListener(new ActionListener() {
             volatile boolean buttonStarted = false;
-            CounterUpdater cu = new CounterUpdater(sSCI,sizeHoldingBufferValue, dBTransactionsRequestedValue, dBTransactionsExecutedValue, dBTransactionsOutstandingValue, dBPullTransactionsRequestedValue);
+            CounterUpdater cu = new CounterUpdater(sSCI,sizeHoldingBufferValue, nonMatchesCountValue, dBTransactionsRequestedValue, dBTransactionsExecutedValue, dBTransactionsOutstandingValue, dBPullTransactionsRequestedValue);
 
             @Override
             public void actionPerformed(ActionEvent e) {

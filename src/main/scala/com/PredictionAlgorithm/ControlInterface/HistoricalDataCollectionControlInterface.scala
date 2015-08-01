@@ -19,11 +19,12 @@ TFLProcessSourceLines.setHistoricalDataStoring(true)
 
   override def getVariableArray: Array[String] = {
     val numberInHoldingBuffer = TFLProcessSourceLines.getBufferSize.toString
+    val numberNonMatches = TFLProcessSourceLines.numberNonMatches.toString
     val numberDBTransactionsRequested = TFLInsertPointToPointDuration.numberDBTransactionsRequested.toString
     val numberDBTransactionsExecuted = TFLInsertPointToPointDuration.numberDBTransactionsExecuted.toString
     val numberDBTransactionsOutstanding = (TFLInsertPointToPointDuration.numberDBTransactionsRequested - TFLInsertPointToPointDuration.numberDBTransactionsExecuted).toString
     val numberDBPullTransactionsExecuted = TFLInsertPointToPointDuration.numberDBPullTransactionsExecuted.toString
-    Array(numberInHoldingBuffer, numberDBTransactionsRequested, numberDBTransactionsExecuted, numberDBTransactionsOutstanding, numberDBPullTransactionsExecuted)
+    Array(numberInHoldingBuffer, numberNonMatches, numberDBTransactionsRequested, numberDBTransactionsExecuted, numberDBTransactionsOutstanding, numberDBPullTransactionsExecuted)
   }
 
 

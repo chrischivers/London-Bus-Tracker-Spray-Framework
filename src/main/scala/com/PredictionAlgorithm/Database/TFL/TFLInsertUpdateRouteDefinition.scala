@@ -9,12 +9,17 @@ import com.mongodb.casbah.commons.{MongoDBObject, Imports}
 object TFLInsertUpdateRouteDefinitionDocument extends DatabaseModifyInterface{
 
   @volatile var numberDBUpdatesRequested = 0
+  @volatile var numberPolyLinesInserted = 0
   @volatile var numberDBInsertsRequested = 0
 
   override val dbModifyActor: ActorRef = actorSystem.actorOf(Props[TFLInsertUpdateRouteDefinitionDocument], name = "TFLInsertRouteDefinitionActor")
 
   override protected val collection: DatabaseCollections = ROUTE_DEFINITIONS_COLLECTION
 
+  def updateDocumentWithPolyLine (doc: DatabaseDocuments, polyLine:String): Unit = {
+    numberPolyLinesInserted += 1
+    dbModifyActor ! (doc, polyLine)
+  }
 }
 
 class TFLInsertUpdateRouteDefinitionDocument extends Actor {
@@ -22,7 +27,8 @@ class TFLInsertUpdateRouteDefinitionDocument extends Actor {
   val collection = ROUTE_DEFINITIONS_COLLECTION
 
   override def receive: Receive = {
-    case doc1: ROUTE_DEFINITION_DOCUMENT => insertToDB(doc1)
+    case doc: ROUTE_DEFINITION_DOCUMENT => insertToDB(doc)
+    case (doc: ROUTE_DEFINITION_DOCUMENT, polyline:String) => updateDbWithPolyline(doc,polyline)
     case _ => throw new IllegalStateException("TFL Route Definition Actor received unknown message")
   }
 
@@ -34,8 +40,7 @@ class TFLInsertUpdateRouteDefinitionDocument extends Actor {
       collection.DIRECTION_ID -> doc.direction_ID,
       collection.SEQUENCE -> doc.sequence,
       collection.STOP_CODE-> doc.stop_Code,
-      collection.FIRST_LAST-> doc.first_Last,
-      collection.POLYLINE -> doc.polyLine)
+      collection.FIRST_LAST-> doc.first_Last)
 
 
     val cursor = TFLGetRouteDefinitionDocument.executeQuery(newObj)
@@ -56,8 +61,26 @@ class TFLInsertUpdateRouteDefinitionDocument extends Actor {
       TFLInsertUpdateRouteDefinitionDocument.numberDBInsertsRequested+= 1
     }
 
+  }
 
+  private def updateDbWithPolyline(doc: ROUTE_DEFINITION_DOCUMENT, polyLineEncoded:String) = {
+    val query = MongoDBObject(
+      collection.ROUTE_ID -> doc.route_ID,
+      collection.DIRECTION_ID -> doc.direction_ID,
+      collection.SEQUENCE -> doc.sequence,
+      collection.STOP_CODE-> doc.stop_Code,
+      collection.FIRST_LAST -> doc.first_Last)
 
+    val newObj = MongoDBObject(
+      collection.ROUTE_ID -> doc.route_ID,
+      collection.DIRECTION_ID -> doc.direction_ID,
+      collection.SEQUENCE -> doc.sequence,
+      collection.STOP_CODE-> doc.stop_Code,
+      collection.FIRST_LAST -> doc.first_Last,
+      collection.POLYLINE -> polyLineEncoded
+    )
+
+    TFLInsertUpdateRouteDefinitionDocument.dBCollection.update(query, newObj, upsert = true)
   }
 
 }
