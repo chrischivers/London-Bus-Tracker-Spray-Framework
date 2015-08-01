@@ -8,6 +8,7 @@ sealed trait DatabaseCollections {
   val name: String
   val fieldsVector: Vector[String]
   val indexKeyList: List[(String,Int)]
+  val uniqueIndex: Boolean
 }
 
 final case object POINT_TO_POINT_COLLECTION extends DatabaseCollections {
@@ -26,7 +27,7 @@ final case object POINT_TO_POINT_COLLECTION extends DatabaseCollections {
   override val name: String = "PointToPoint"
   override val fieldsVector = Vector(ROUTE_ID, DIRECTION_ID, FROM_POINT_ID, TO_POINT_ID, DAY, TIME_OFFSET, DURATION, TIME_STAMP)
   override val indexKeyList = List((ROUTE_ID, 1),(DIRECTION_ID, 1),(FROM_POINT_ID, 1),(TO_POINT_ID, 1), (DAY, 1))
-
+  override val uniqueIndex = false
 }
 
 
@@ -42,6 +43,7 @@ final case object ROUTE_DEFINITIONS_COLLECTION extends DatabaseCollections {
   override val name: String = "RouteDefinitions"
   override val fieldsVector = Vector(ROUTE_ID, DIRECTION_ID, SEQUENCE, STOP_CODE, FIRST_LAST, POLYLINE)
   override val indexKeyList = List((ROUTE_ID, 1),(DIRECTION_ID, 1),(SEQUENCE, 1))
+  override val uniqueIndex = true
 
 }
 
@@ -60,5 +62,19 @@ final case object STOP_DEFINITIONS_COLLECTION extends DatabaseCollections {
   override val name: String = "StopDefinitions"
   override val fieldsVector = Vector(STOP_CODE, STOP_NAME, STOP_TYPE, TOWARDS, BEARING, INDICATOR, STATE, LAT, LNG)
   override val indexKeyList = List((STOP_CODE, 1))
+  override val uniqueIndex = true
+
+}
+
+final case object POLYLINE_INDEX_COLLECTION extends DatabaseCollections {
+
+  val FROM_STOP_CODE = "FROM_STOP_CODE"
+  val TO_STOP_CODE = "TO_STOP_CODE"
+  val POLYLINE = "POLYLINE"
+
+  override val name: String = "PolyLineDefinitions"
+  override val fieldsVector = Vector(FROM_STOP_CODE, TO_STOP_CODE, POLYLINE)
+  override val indexKeyList = List((FROM_STOP_CODE, 1),(TO_STOP_CODE, 1))
+  override val uniqueIndex = true
 
 }

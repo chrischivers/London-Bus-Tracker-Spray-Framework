@@ -3,16 +3,18 @@ package com.PredictionAlgorithm.Database.TFL
 import akka.actor.{Actor, Props, ActorRef}
 import com.PredictionAlgorithm.Database._
 
+import com.mongodb.casbah.Imports._
+
 import com.mongodb.casbah.commons.{MongoDBObject, Imports}
 
 
-object TFLInsertUpdateRouteDefinitionDocument extends DatabaseModifyInterface{
+object TFLInsertUpdateRouteDefinition extends DatabaseModifyInterface{
 
   @volatile var numberDBUpdatesRequested = 0
-  @volatile var numberPolyLinesInserted = 0
   @volatile var numberDBInsertsRequested = 0
+  @volatile var numberPolyLinesInserted = 0
 
-  override val dbModifyActor: ActorRef = actorSystem.actorOf(Props[TFLInsertUpdateRouteDefinitionDocument], name = "TFLInsertRouteDefinitionActor")
+  override val dbModifyActor: ActorRef = actorSystem.actorOf(Props[TFLInsertUpdateRouteDefinition], name = "TFLInsertRouteDefinitionActor")
 
   override protected val collection: DatabaseCollections = ROUTE_DEFINITIONS_COLLECTION
 
@@ -22,7 +24,7 @@ object TFLInsertUpdateRouteDefinitionDocument extends DatabaseModifyInterface{
   }
 }
 
-class TFLInsertUpdateRouteDefinitionDocument extends Actor {
+class TFLInsertUpdateRouteDefinition extends Actor {
 
   val collection = ROUTE_DEFINITIONS_COLLECTION
 
@@ -53,12 +55,12 @@ class TFLInsertUpdateRouteDefinitionDocument extends Actor {
           collection.ROUTE_ID -> doc.route_ID,
           collection.DIRECTION_ID -> doc.direction_ID,
           collection.SEQUENCE -> doc.sequence)
-        TFLInsertUpdateRouteDefinitionDocument.dBCollection.update(query, newObj, upsert = true)
-        TFLInsertUpdateRouteDefinitionDocument.numberDBUpdatesRequested += 1
+        TFLInsertUpdateRouteDefinition.dBCollection.update(query, newObj, upsert = true)
+        TFLInsertUpdateRouteDefinition.numberDBUpdatesRequested += 1
       }
     } else {
-      TFLInsertUpdateRouteDefinitionDocument.dBCollection.insert(newObj)
-      TFLInsertUpdateRouteDefinitionDocument.numberDBInsertsRequested+= 1
+      TFLInsertUpdateRouteDefinition.dBCollection.insert(newObj)
+      TFLInsertUpdateRouteDefinition.numberDBInsertsRequested+= 1
     }
 
   }
@@ -71,16 +73,9 @@ class TFLInsertUpdateRouteDefinitionDocument extends Actor {
       collection.STOP_CODE-> doc.stop_Code,
       collection.FIRST_LAST -> doc.first_Last)
 
-    val newObj = MongoDBObject(
-      collection.ROUTE_ID -> doc.route_ID,
-      collection.DIRECTION_ID -> doc.direction_ID,
-      collection.SEQUENCE -> doc.sequence,
-      collection.STOP_CODE-> doc.stop_Code,
-      collection.FIRST_LAST -> doc.first_Last,
-      collection.POLYLINE -> polyLineEncoded
-    )
+    val update = $set(collection.POLYLINE -> polyLineEncoded)
 
-    TFLInsertUpdateRouteDefinitionDocument.dBCollection.update(query, newObj, upsert = true)
+    TFLInsertUpdateRouteDefinition.dBCollection.update(query, update, upsert = true)
   }
 
 }

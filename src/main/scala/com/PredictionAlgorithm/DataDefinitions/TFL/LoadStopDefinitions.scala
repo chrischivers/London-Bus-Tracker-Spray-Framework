@@ -8,7 +8,7 @@ import com.PredictionAlgorithm.ControlInterface.StreamProcessingControlInterface
 import com.PredictionAlgorithm.DataDefinitions.LoadResource
 import com.PredictionAlgorithm.DataDefinitions.TFL.LoadRouteDefinitions._
 import com.PredictionAlgorithm.Database.{STOP_DEFINITIONS_COLLECTION, ROUTE_DEFINITIONS_COLLECTION, STOP_DEFINITION_DOCUMENT, ROUTE_DEFINITION_DOCUMENT}
-import com.PredictionAlgorithm.Database.TFL.{TFLGetStopDefinitionDocument, TFLGetRouteDefinitionDocument, TFLInsertStopDefinition, TFLInsertUpdateRouteDefinitionDocument}
+import com.PredictionAlgorithm.Database.TFL.{TFLGetStopDefinitionDocument, TFLGetRouteDefinitionDocument, TFLInsertStopDefinition, TFLInsertUpdateRouteDefinition$}
 
 import scala.io.Source
 

@@ -19,6 +19,9 @@ object TFLMongoDBConnection {
 
   def closeConnection() = mc.close()
 
-  def createIndex(mongoCollection: MongoCollection, dbc: DatabaseCollections) = mongoCollection.createIndex(MongoDBObject(dbc.indexKeyList))
-  //TODO make index unique
+  def createIndex(mongoCollection: MongoCollection, dbc: DatabaseCollections) = {
+    if (dbc.uniqueIndex) mongoCollection.createIndex(MongoDBObject(dbc.indexKeyList),MongoDBObject("unique" -> true))
+    else mongoCollection.createIndex(MongoDBObject(dbc.indexKeyList),MongoDBObject("unique" -> false))
+  }
+
 }

@@ -1,7 +1,7 @@
 package com.PredictionAlgorithm.ControlInterface
 
 import com.PredictionAlgorithm.DataDefinitions.TFL.{LoadStopDefinitions, LoadRouteDefinitions, TFLDefinitions}
-import com.PredictionAlgorithm.Database.TFL.{TFLInsertStopDefinition, TFLInsertUpdateRouteDefinitionDocument}
+import com.PredictionAlgorithm.Database.TFL.{TFLInsertStopDefinition, TFLInsertUpdateRouteDefinition}
 
 /**
  * Created by chrischivers on 31/07/15.

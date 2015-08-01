@@ -3,7 +3,6 @@ package com.PredictionAlgorithm.UI;
 import com.PredictionAlgorithm.Commons.Commons;
 import com.PredictionAlgorithm.ControlInterface.QueryController;
 import com.PredictionAlgorithm.ControlInterface.StartStopControlInterface;
-import com.PredictionAlgorithm.DataDefinitions.TFL.TFLDefinitions;
 
 
 import javax.swing.*;
@@ -53,10 +52,11 @@ public class MonitoringUI {
     private JLabel stopUpdatePercentageCompleteValue;
     private JLabel numberStopsInsertedDBValue;
     private JLabel numberStopsUpdatedDBValue;
-    private JLabel numberPolyLinesAddedValue;
+    private JLabel numberPolyLinesAddedFromWebValue;
     private JButton addPolyLinesButton;
     private JLabel numberAddPolyLinesLinesReadValue;
     private JLabel nonMatchesCountValue;
+    private JLabel numberPolyLinesAddedFromCacheValue;
 
 
     public MonitoringUI(int refreshIntervalMS) {
@@ -93,7 +93,7 @@ public class MonitoringUI {
     public void setAddPolyLines(StartStopControlInterface sSCI) {
         addPolyLinesButton.addActionListener(new ActionListener() {
             volatile boolean buttonStarted = false;
-            CounterUpdater cu = new CounterUpdater(sSCI, numberAddPolyLinesLinesReadValue, numberPolyLinesAddedValue);
+            CounterUpdater cu = new CounterUpdater(sSCI, numberAddPolyLinesLinesReadValue, numberPolyLinesAddedFromWebValue,numberPolyLinesAddedFromCacheValue);
             @Override
             public void actionPerformed(ActionEvent e) {
                 sSCI.start();

@@ -3,7 +3,7 @@ package com.PredictionAlgorithm.ControlInterface
 import akka.actor.Props
 import com.PredictionAlgorithm.ControlInterface.StreamProcessingControlInterface._
 import com.PredictionAlgorithm.DataDefinitions.TFL.{LoadRouteDefinitions, TFLDefinitions}
-import com.PredictionAlgorithm.Database.TFL.{TFLInsertUpdateRouteDefinitionDocument, TFLInsertPointToPointDuration}
+import com.PredictionAlgorithm.Database.TFL.{TFLInsertUpdateRouteDefinition, TFLInsertUpdateRouteDefinition$, TFLInsertPointToPointDuration}
 import com.PredictionAlgorithm.Processes.TFL.{TFLIterateOverArrivalStream, TFLProcessSourceLines}
 
 /**
@@ -13,8 +13,8 @@ object UpdateRouteDefinitionsControlInterface extends StartStopControlInterface 
 
   override def getVariableArray: Array[String] = {
     val percentageComplete = LoadRouteDefinitions.percentageComplete.toString
-    val numberInserted = TFLInsertUpdateRouteDefinitionDocument.numberDBInsertsRequested.toString
-    val numberUpdated = TFLInsertUpdateRouteDefinitionDocument.numberDBUpdatesRequested.toString
+    val numberInserted = TFLInsertUpdateRouteDefinition.numberDBInsertsRequested.toString
+    val numberUpdated = TFLInsertUpdateRouteDefinition.numberDBUpdatesRequested.toString
     Array(percentageComplete, numberInserted, numberUpdated)
   }
 

@@ -4,7 +4,7 @@ import java.io.File
 
 import com.PredictionAlgorithm.DataDefinitions.TFL
 import com.PredictionAlgorithm.DataDefinitions.TFL.LoadRouteIgnoreListFromFile._
-import com.PredictionAlgorithm.DataDefinitions.Tools.AddPolyLines
+import com.PredictionAlgorithm.DataDefinitions.Tools.FetchPolyLines
 
 import scala.io.Source
 
@@ -13,9 +13,9 @@ case class StopDefinitionFields(stopPointName:String, stopPointType:String, towa
 object TFLDefinitions {
 
   //lazy val TFLSequenceMap:Map[(String, Int, String), (Int, Option[String])] = LoadRouteDefinitionsFromWebsite.getMap
-  lazy val StopToPointSequenceMap: Map[(String, Int, String), (Int, Option[String])] =  LoadRouteDefinitions.getStopToPointSequenceMap
-  lazy val PointToStopSequenceMap: Map[(String, Int, Int), (String, Option[String])] = LoadRouteDefinitions.getPointToStopSequenceMap
-  lazy val RouteDirSequenceList: List[(String, Int, Int, String, Option[String])] = LoadRouteDefinitions.getRouteDirSequenceList
+  lazy val StopToPointSequenceMap: Map[(String, Int, String), (Int, Option[String], String)] =  LoadRouteDefinitions.getStopToPointSequenceMap
+  lazy val PointToStopSequenceMap: Map[(String, Int, Int), (String, Option[String], String)] = LoadRouteDefinitions.getPointToStopSequenceMap
+  lazy val RouteDirSequenceList: List[(String, Int, Int, String, Option[String], String)] = LoadRouteDefinitions.getRouteDirSequenceList
   lazy val StopDefinitions: Map[String,StopDefinitionFields] = LoadStopDefinitions.getStopDefinitionMap
   lazy val RouteIgnoreList: Set[String] = LoadRouteIgnoreListFromFile.routeIgnoreSet
   lazy val StopIgnoreList: Set[String] = LoadStopIgnoreListFromFile.stopIgnoreSet
@@ -29,6 +29,6 @@ object TFLDefinitions {
   }
 
   def addPolyLinesFromWeb = {
-    AddPolyLines.add
+    FetchPolyLines.updateAll
   }
 }

@@ -17,7 +17,7 @@ trait DatabaseModifyInterface {
   lazy val dBCollection =
     Try(TFLMongoDBConnection.getCollection(collection)) match {
       case Success(coll) => coll
-      case Failure(fail) => throw new IllegalStateException("Cannot get DB Collection")
+      case Failure(fail) => throw new IllegalStateException("Cannot get DB Collection "+ fail)
     }
 
   def insertDocument(doc: DatabaseDocuments): Unit = {

@@ -22,3 +22,10 @@ final case class STOP_DEFINITION_DOCUMENT(stopCode: String, stopName:String, sto
   override val collection = STOP_DEFINITIONS_COLLECTION
 
 }
+
+
+final case class POLYLINE_INDEX_DOCUMENT(fromStopCode: String, toStopCode:String, polyLine: String) extends DatabaseDocuments {
+
+  override val collection = POLYLINE_INDEX_COLLECTION
+
+}

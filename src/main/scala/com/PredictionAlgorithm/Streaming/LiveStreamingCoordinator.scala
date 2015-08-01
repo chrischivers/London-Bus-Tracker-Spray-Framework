@@ -19,8 +19,8 @@ object LiveStreamingCoordinator {
   implicit val actorSystem = ActorSystem("live_streaming")
   implicit val timeout = 1000
 
-  val x = new FIFOStream
-  var liveActors = Map[String, ActorRef]()
+  private val stream = new FIFOStream
+  private var liveActors = Map[String, ActorRef]()
 
   def setObjectPosition(liveSourceLine: TFLSourceLine): Unit = {
     val vehicleReg = liveSourceLine.vehicle_Reg
@@ -36,9 +36,9 @@ object LiveStreamingCoordinator {
 
   def getNumberLiveActors = liveActors.size
 
-  def getStream = x.toStream
+  def getStream = stream.toStream
 
-
+  def enqueue(vehicle_ID: String, latitude: Double, longitude: Double)  = stream.enqueue((vehicle_ID,latitude,longitude))
 
 }
 
@@ -61,7 +61,7 @@ class VehicleActor(vehicle_ID: String, routeID: String, directionID: Int) extend
 
   var currentPosition:(Double,Double) = (0.0, 0.0)
   var predictedPositionQueue: mutable.Queue[(Long, Double, Double)] = mutable.Queue()
-  val definitions = TFLDefinitions.StopDefinitions
+  val stopDefinitions = TFLDefinitions.StopDefinitions
 
   override def receive: Receive = {
     case sourceLine:TFLSourceLine => processNewLine(sourceLine)
@@ -72,7 +72,7 @@ class VehicleActor(vehicle_ID: String, routeID: String, directionID: Int) extend
           val lat = head._2
           val lng = head._3
           currentPosition = (lat, lng)
-          LiveStreamingCoordinator.x.enqueue(vehicle_ID, lat, lng)
+          LiveStreamingCoordinator.enqueue(vehicle_ID, lat, lng)
           self ! "next"
           //TODO KILL if last
 
@@ -82,10 +82,14 @@ class VehicleActor(vehicle_ID: String, routeID: String, directionID: Int) extend
   }
 
   def processNewLine(sourceLine:TFLSourceLine) = {
-    val lat = definitions(sourceLine.stop_Code).latitude
-    val lng = definitions(sourceLine.stop_Code).longitude
+   // val lat = definitions(sourceLine.stop_Code).latitude
+   // val lng = definitions(sourceLine.stop_Code).longitude
    // predictedPositionQueue = predictedPositionQueue.filter(_._1 < sourceLine.arrival_TimeStamp) //remove anythign in the queue ahead of the stream input (redundant)
-    addToPredictedPositionQueue(sourceLine.arrival_TimeStamp,lat, lng) //TODO this is where the subpoints are fetched... AND where more paramaters may need to be passed
+    val currentStopCode = sourceLine.stop_Code
+    val currentPointNumber = TFLDefinitions.StopToPointSequenceMap((sourceLine.route_ID,sourceLine.direction_ID,sourceLine.stop_Code))._1
+
+   // val nextStop = TFLDefinitions.PointToStopSequenceMap
+   // addToPredictedPositionQueue(sourceLine.arrival_TimeStamp,lat, lng) //TODO this is where the subpoints are fetched... AND where more paramaters may need to be passed
     self ! "next"
   }
 

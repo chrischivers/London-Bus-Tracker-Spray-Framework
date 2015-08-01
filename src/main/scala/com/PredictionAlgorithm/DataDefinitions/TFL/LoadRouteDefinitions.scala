@@ -5,8 +5,9 @@ import java.io.{PrintWriter, File}
 import akka.actor.{Props, Actor}
 import com.PredictionAlgorithm.ControlInterface.StreamProcessingControlInterface._
 import com.PredictionAlgorithm.DataDefinitions.LoadResource
+import com.PredictionAlgorithm.DataDefinitions.Tools.FetchPolyLines
 import com.PredictionAlgorithm.Database.{ROUTE_DEFINITION_DOCUMENT, ROUTE_DEFINITIONS_COLLECTION, DatabaseCollections}
-import com.PredictionAlgorithm.Database.TFL.{TFLGetRouteDefinitionDocument, TFLInsertUpdateRouteDefinitionDocument}
+import com.PredictionAlgorithm.Database.TFL.{TFLInsertUpdateRouteDefinition, TFLGetRouteDefinitionDocument}
 
 
 import scala.io.Source
@@ -15,22 +16,22 @@ object LoadRouteDefinitions extends LoadResource {
 
   var percentageComplete = 0
   private val collection = ROUTE_DEFINITIONS_COLLECTION
-  private var StopToPointSequenceMap: Map[(String, Int, String), (Int, Option[String])] = Map()
+  private var StopToPointSequenceMap: Map[(String, Int, String), (Int, Option[String], String)] = Map()
 
-  def getStopToPointSequenceMap: Map[(String, Int, String), (Int, Option[String])]  = {
+  def getStopToPointSequenceMap: Map[(String, Int, String), (Int, Option[String], String)]  = {
     if (StopToPointSequenceMap.isEmpty) {
       retrieveFromDB
       StopToPointSequenceMap
     } else StopToPointSequenceMap
   }
 
-  def getPointToStopSequenceMap: Map[(String, Int, Int), (String, Option[String])] = getStopToPointSequenceMap.map{case((route,dir,stop),(point,fl)) => ((route,dir,point),(stop,fl))} //swaps point and stop
+  def getPointToStopSequenceMap: Map[(String, Int, Int), (String, Option[String], String)] = getStopToPointSequenceMap.map{case((route,dir,stop),(point,fl, poly)) => ((route,dir,point),(stop,fl, poly))} //swaps point and stop
 
-  def  getRouteDirSequenceList: List[(String, Int, Int, String, Option[String])] = getStopToPointSequenceMap.toList.map{case((route,dir,stop),(point,fl)) => (route,dir, point, stop,fl)}
+  def getRouteDirSequenceList: List[(String, Int, Int, String, Option[String], String)] = getStopToPointSequenceMap.toList.map{case((route,dir,stop),(point,fl, poly)) => (route,dir, point, stop,fl, poly)}
 
 
   private def retrieveFromDB: Unit = {
-    var tempMap:Map[(String, Int, String), (Int, Option[String])] = Map()
+    var tempMap:Map[(String, Int, String), (Int, Option[String], String)] = Map()
 
     val cursor = TFLGetRouteDefinitionDocument.fetchAll()
     for(doc <- cursor) {
@@ -41,7 +42,7 @@ object LoadRouteDefinitions extends LoadResource {
       val firstLast = doc.get(collection.FIRST_LAST).asInstanceOf[String]
       val polyLine = doc.get(collection.POLYLINE).asInstanceOf[String]
       val firstLastOption = if (firstLast == null) None else Some(firstLast)
-      tempMap += ((routeID, direction, stop_code) ->(sequence, firstLastOption))
+      tempMap += ((routeID, direction, stop_code) ->(sequence, firstLastOption, polyLine))
     }
     println("Number route definitions fetched from DB: " + StopToPointSequenceMap.size)
     StopToPointSequenceMap = tempMap
@@ -62,7 +63,7 @@ object LoadRouteDefinitions extends LoadResource {
 
     def updateFromWeb: Unit = {
 
-      var tempMap: Map[(String, Int, String), (Int, Option[String])] = Map()
+      var tempMap: Map[(String, Int, String), (Int, Option[String], String)] = Map()
 
 
       println("Loading Route Definitions From Web...")
@@ -84,7 +85,7 @@ object LoadRouteDefinitions extends LoadResource {
           for (direction <- 1 to 2) {
             getStopList(route_Web_ID, direction).foreach {
               case (stopCode, pointSeq, first_last) => {
-                tempMap += ((route_ID, direction, stopCode) ->(pointSeq, first_last))
+                tempMap += ((route_ID, direction, stopCode) ->(pointSeq, first_last, ""))
               }
             }
           }
@@ -117,23 +118,38 @@ object LoadRouteDefinitions extends LoadResource {
 
       val s = Source.fromURL(tflURL)
       var pointSequence = 1
+      var skipNext = false
+      var viaEncountered,toEncountered = false
+
       s.getLines.foreach((line) => {
         // For some routes there are mutliple pattern segments (e.g. route 134). This discards the first one if a second one follows (only second is kept)
-        if (line.contains("<dt class=\"callingPatternSegmentDescription\">")) {
+        if (line.contains("route segment icon") && line.contains(";From")) {
           pointSequence = 1
           stopCodeSequenceList = List()
         }
 
-        if (line.contains("<dd><a href=")) {
-          val startChar: Int = line.indexOf("searchTerm=") + 11
-          val endChar: Int = line.indexOf("+")
-          val stopCode = line.substring(startChar, endChar)
-          val first_last: Option[String] = {
-            if (pointSequence == 1) Some("FIRST") else None
-          }
+        if (line.contains("route segment icon") && line.contains(";Via")) {
+          if (viaEncountered) skipNext = true
+          viaEncountered = true
+        }
 
-          stopCodeSequenceList = stopCodeSequenceList :+ ((stopCode, pointSequence, first_last))
-          pointSequence += 1
+        if (line.contains("route segment icon") && line.contains(";To")) {
+          if (toEncountered) skipNext = true
+          toEncountered = true
+        }
+
+        if (line.contains("<dd><a href=")) {
+          if (!skipNext) {
+            val startChar: Int = line.indexOf("searchTerm=") + 11
+            val endChar: Int = line.indexOf("+")
+            val stopCode = line.substring(startChar, endChar)
+            val first_last: Option[String] = {
+              if (pointSequence == 1) Some("FIRST") else None
+            }
+
+            stopCodeSequenceList = stopCodeSequenceList :+ ((stopCode, pointSequence, first_last))
+            pointSequence += 1
+          } else skipNext = false
         }
       })
 
@@ -148,9 +164,9 @@ object LoadRouteDefinitions extends LoadResource {
     private def persistToDB: Unit = {
 
       StopToPointSequenceMap.foreach {
-        case ((route_ID, direction, stop_code), (pointSequence, first_last)) => {
+        case ((route_ID, direction, stop_code), (pointSequence, first_last, polyLine)) => {
           val newDoc = new ROUTE_DEFINITION_DOCUMENT(route_ID, direction, pointSequence, stop_code, first_last)
-          TFLInsertUpdateRouteDefinitionDocument.insertDocument(newDoc)
+          TFLInsertUpdateRouteDefinition.insertDocument(newDoc)
         }
       }
       println("Route Definitons loaded from web and persisted to DB")

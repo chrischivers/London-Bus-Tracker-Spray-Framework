@@ -10,7 +10,7 @@ import scala.util.{Failure, Success, Try}
 
 
 trait DatabaseQueryInterface {
-  protected implicit val actorSystem = ActorSystem()
+  protected implicit val actorSystem = ActorSystem("DB_Actor_System")
 
   protected val collection:DatabaseCollections
 
@@ -19,7 +19,7 @@ trait DatabaseQueryInterface {
   lazy val dBCollection =
     Try(TFLMongoDBConnection.getCollection(collection)) match {
       case Success(coll) => coll
-      case Failure(fail) => throw new IllegalStateException("Cannot get DB Collection")
+      case Failure(fail) => throw new IllegalStateException("Cannot get DB Collection " + fail)
     }
 
   def executeQuery(mongoObj: Imports.DBObject): MongoCursor = {
