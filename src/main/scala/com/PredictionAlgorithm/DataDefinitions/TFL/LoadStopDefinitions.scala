@@ -8,7 +8,7 @@ import com.PredictionAlgorithm.ControlInterface.StreamProcessingControlInterface
 import com.PredictionAlgorithm.DataDefinitions.LoadResource
 import com.PredictionAlgorithm.DataDefinitions.TFL.LoadRouteDefinitions._
 import com.PredictionAlgorithm.Database.{STOP_DEFINITIONS_COLLECTION, ROUTE_DEFINITIONS_COLLECTION, STOP_DEFINITION_DOCUMENT, ROUTE_DEFINITION_DOCUMENT}
-import com.PredictionAlgorithm.Database.TFL.{TFLGetStopDefinitionDocument, TFLGetRouteDefinitionDocument, TFLInsertStopDefinition, TFLInsertUpdateRouteDefinition$}
+import com.PredictionAlgorithm.Database.TFL.{TFLGetStopDefinitionDocument, TFLGetRouteDefinitionDocument, TFLInsertStopDefinition}
 
 import scala.io.Source
 
@@ -43,8 +43,8 @@ object LoadStopDefinitions extends LoadResource {
       val bearing = doc.get(collection.BEARING).asInstanceOf[Int]
       val indicator = doc.get(collection.INDICATOR).asInstanceOf[String]
       val state = doc.get(collection.STATE).asInstanceOf[Int]
-      val lat = doc.get(collection.LAT).asInstanceOf[Double]
-      val lng = doc.get(collection.LNG).asInstanceOf[Double]
+      val lat = doc.get(collection.LAT).asInstanceOf[String]
+      val lng = doc.get(collection.LNG).asInstanceOf[String]
 
       tempMap += (stopCode -> new StopDefinitionFields(stopName, stopType, towards, bearing, indicator, state, lat, lng))
     }
@@ -78,7 +78,9 @@ object LoadStopDefinitions extends LoadResource {
       val s = Source.fromURL(tflURL(x))
       s.getLines.drop(1).foreach(line => {
         val split = splitLine(line)
-        tempMap += (x -> new StopDefinitionFields(split(0), split(1), split(2), split(3).toInt, split(4), split(5).toInt, split(6).toDouble, split(7).toDouble))
+        val lat = BigDecimal(split(6)).toString()
+        val lng = BigDecimal(split(7)).toString()
+        tempMap += (x -> new StopDefinitionFields(split(0), split(1), split(2), split(3).toInt, split(4), split(5).toInt, lat, lng))
         numberLinesProcessed += 1
         percentageComplete = ((numberLinesProcessed.toDouble / totalNumberOfStops.toDouble) * 100).toInt
       }

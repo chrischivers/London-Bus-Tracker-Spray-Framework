@@ -8,7 +8,7 @@ import com.PredictionAlgorithm.DataDefinitions.Tools.FetchPolyLines
 
 import scala.io.Source
 
-case class StopDefinitionFields(stopPointName:String, stopPointType:String, towards:String, bearing:Int, stopPointIndicator:String, stopPointState:Int, latitude:Double, longitude:Double)
+case class StopDefinitionFields(stopPointName:String, stopPointType:String, towards:String, bearing:Int, stopPointIndicator:String, stopPointState:Int, latitude:String, longitude:String)
 
 object TFLDefinitions {
 

@@ -139,6 +139,7 @@ object LoadRouteDefinitions extends LoadResource {
         }
 
         if (line.contains("<dd><a href=")) {
+
           if (!skipNext) {
             val startChar: Int = line.indexOf("searchTerm=") + 11
             val endChar: Int = line.indexOf("+")

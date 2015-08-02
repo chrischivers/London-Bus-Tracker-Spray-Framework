@@ -7,7 +7,7 @@ import com.PredictionAlgorithm.Streaming.{LiveStreamResult, LiveStreamingCoordin
 
 object LiveStreamControlInterface extends StartStopControlInterface {
 
-  def getStream: Iterator[(String, Double, Double)] = {
+  def getStream: Iterator[(String, String, String)] = {
     LiveStreamingCoordinator.getStream.iterator
   }
 

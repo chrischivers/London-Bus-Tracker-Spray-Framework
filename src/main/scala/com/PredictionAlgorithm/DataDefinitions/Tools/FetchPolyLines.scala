@@ -12,7 +12,7 @@ import scala.io.Source
 
 object FetchPolyLines extends LoadResource {
 
-  val TIME_BETWEEN_POLYLINE_QUERIES = 1000
+  val TIME_BETWEEN_POLYLINE_QUERIES = 250
   var numberLinesProcessed = 0
   var numberPolyLinesUpdatedFromWeb = 0
   var numberPolyLinesUpdatedFromCache = 0
@@ -50,15 +50,15 @@ object FetchPolyLines extends LoadResource {
 
     }  else { //get it from online
     val url = "https://maps.googleapis.com/maps/api/directions/xml?origin=" + lastStopCodeLat + "," + lastStopCodeLng + "&destination=" + thisStopCodeLat + "," + thisStopCodeLng + "&key=" + getAPIKeys.get + "&mode=driving"
-      println(url)
+     // println("from : " + fromStopCode + ". To: " + toStopCode + "." + "Url: " + url)
       val s = Source.fromURL(url).getLines()
       for (line <- s) {
         if (line.contains("OVER_QUERY_LIMIT")) {
           APICurrentIndex += 1
           println("Over limit - new API being selected. APi Index: " + APICurrentIndex)
-          if (getAPIKeys.isDefined) getPolyLineForTwoPoints(fromStopCode,toStopCode)
+          if (getAPIKeys().isDefined) return getPolyLineForTwoPoints(fromStopCode,toStopCode)
           else {
-            throw new IllegalStateException("Out of API Keys")
+            throw new IllegalStateException("Out of API Keys. URL: " + url)
           }
         }
         else if (line.contains("<overview_polyline>")) {
@@ -70,7 +70,7 @@ object FetchPolyLines extends LoadResource {
 
         }
       }
-      throw new IllegalStateException("Cannot get polyline between stops " + fromStopCode + " and " + toStopCode)
+      throw new IllegalStateException("Cannot get polyline between stops " + fromStopCode + " and " + toStopCode + ". URL: " + url)
     }
 
   }
@@ -83,7 +83,12 @@ object FetchPolyLines extends LoadResource {
       "AIzaSyDcuDPhqrEoVPoLxoeeLpWwx07fYjFqSeM",
       "AIzaSyCHLODVvW1s20QhS_zyKEAYnlbvsC6Gu9w",
       "AIzaSyAj6_kBtnllfulkTG0aih6onOnf9Qm5cX0",
-      "AIzaSyAcWJNih_q90XV4ufyoNWpzzEsMP1PoLz0")
+      "AIzaSyAcWJNih_q90XV4ufyoNWpzzEsMP1PoLz0",
+    "AIzaSyAk7O0DzuX5S1kmsI948QHEMGK1kJPAafM",
+    "AIzaSyCupO_iJ-uaNnvE8V9fKG4Aeo0Z4OobhDc",
+      "AIzaSyAxBbetDC6UR596Okg4luf3vJVwB2-BDTc",
+      "AIzaSyA-dJzMNsZwjlWulZOGmII-gSh8NaUd3kQ",
+      "AIzaSyCj3EZ9527OuKIHlzJ3P9ycgUNQZe7xx4Y")
     if (APICurrentIndex < APIKeys.length) Some(APIKeys(APICurrentIndex)) else None
   }
 

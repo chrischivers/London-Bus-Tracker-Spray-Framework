@@ -36,6 +36,8 @@ class TFLInsertPointToPointDuration extends Actor {
 
   private def insertToDB(doc: POINT_TO_POINT_DOCUMENT) = {
 
+    TFLInsertPointToPointDuration.numberDBTransactionsRequested += 1
+
     val newObj = MongoDBObject(
       collection.ROUTE_ID -> doc.route_ID,
       collection.DIRECTION_ID -> doc.direction_ID,

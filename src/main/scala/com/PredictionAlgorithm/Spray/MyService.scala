@@ -44,7 +44,7 @@ trait MyService extends HttpService {
   implicit def executionContext = actorRefFactory.dispatcher
 
   val sc = LiveStreamControlInterface
-  val stream: Iterator[(String, Double, Double)] = sc.getStream
+  val stream: Iterator[(String, String, String)] = sc.getStream
   val `text/event-stream` = MediaType.custom("text/event-stream")
   MediaTypes.register(`text/event-stream`)
 
@@ -141,8 +141,8 @@ trait MyService extends HttpService {
                 //  "point" -> next._2.nextPointSeq.toString,
                 //  "stopCode" -> next._2.nextStopCode,
                 //  "stopName" -> next._2.nextStopName,
-                  "lat" -> next._2.toString,
-                  "lng" -> next._3.toString)
+                  "lat" -> next._2,
+                  "lng" -> next._3)
                  // "arrivalTime" -> next._2.arrivalTimeStamp.toString)
                 val json = compact(render(nextList))
 

@@ -17,7 +17,7 @@ final case class ROUTE_DEFINITION_DOCUMENT(route_ID: String, direction_ID: Int, 
 
 }
 
-final case class STOP_DEFINITION_DOCUMENT(stopCode: String, stopName:String, stopType: String, towards: String, bearing:Int, indicator:String, state:Int, lat:Double, lng: Double) extends DatabaseDocuments {
+final case class STOP_DEFINITION_DOCUMENT(stopCode: String, stopName:String, stopType: String, towards: String, bearing:Int, indicator:String, state:Int, lat:String, lng: String) extends DatabaseDocuments {
 
   override val collection = STOP_DEFINITIONS_COLLECTION
 

@@ -21,7 +21,6 @@ trait DatabaseModifyInterface {
     }
 
   def insertDocument(doc: DatabaseDocuments): Unit = {
-    numberDBTransactionsRequested += 1
     dbModifyActor ! doc
   }
 

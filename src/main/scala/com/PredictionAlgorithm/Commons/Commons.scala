@@ -45,4 +45,48 @@ object Commons {
     else Some(x.get._1)
   }
 
+  def decodePolyLine(encodedPolyLine: String): Vector[(String, String)] = {
+    //Code adapted from Decode Method of Google's PolyUtil Class from Android Map Utils
+    // https://github.com/googlemaps/android-maps-utils/blob/master/library/src/com/google/maps/android/PolyUtil.java
+
+    val len: Int = encodedPolyLine.length
+    var latLngList: Vector[(String,String)] = Vector()
+
+    var index: Int = 0
+    var lat: Int = 0
+    var lng: Int = 0
+
+    while (index < len) {
+      var result: Int = 1
+      var shift: Int = 0
+      var b: Int = 0
+
+      do {
+        b = encodedPolyLine.charAt(index) - 63 - 1
+        index += 1
+        result += b << shift
+        shift += 5
+      } while (b >= 0x1f)
+
+
+      lat += (if ((result & 1) != 0) ~(result >> 1) else (result >> 1))
+
+      result = 1
+      shift = 0
+
+      do {
+        b = encodedPolyLine.charAt(index) - 63 - 1
+        index += 1
+        result += b << shift
+        shift += 5
+      } while (b >= 0x1f)
+
+      lng += (if ((result & 1) != 0) ~(result >> 1) else (result >> 1))
+
+      val x = ((lat * 1e-5).toString, (lng * 1e-5).toString)
+      latLngList = latLngList :+ x
+    }
+    return latLngList
+  }
+
 }
