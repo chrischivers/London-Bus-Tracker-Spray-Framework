@@ -70,7 +70,7 @@ class VehicleActor(vehicle_ID: String, routeID: String, directionID: Int) extend
     case "next" =>
       if (predictedPositionQueue.nonEmpty) {
         val head = predictedPositionQueue.dequeue
-        in(Duration(System.currentTimeMillis() - head._1, MILLISECONDS)) {
+        in(Duration(head._1 - System.currentTimeMillis(), MILLISECONDS)) {
           val lat = head._2
           val lng = head._3
           currentPosition = (lat, lng)
@@ -88,29 +88,28 @@ class VehicleActor(vehicle_ID: String, routeID: String, directionID: Int) extend
    // val lng = definitions(sourceLine.stop_Code).longitude
    // predictedPositionQueue = predictedPositionQueue.filter(_._1 < sourceLine.arrival_TimeStamp) //remove anythign in the queue ahead of the stream input (redundant)
     val currentStopCode = sourceLine.stop_Code
-    val currentStopReference = TFLDefinitions.StopToPointSequenceMap(routeID,directionID,currentStopCode)
+    val currentRouteReference = TFLDefinitions.RouteDefinitionMap(routeID,directionID)
+    val currentStopReference = currentRouteReference.filter(x=> x._2 == currentStopCode).head
     val currentPointNumber = currentStopReference._1
-    val currentFirstLast = currentStopReference._2
-    val polyLineToNextStop = currentStopReference._3
+    val currentFirstLast = currentStopReference._3
 
-    val nextStopReference = TFLDefinitions.PointToStopSequenceMap(routeID,directionID,currentPointNumber + 1)
-    val nextStopCode = nextStopReference._1
+    if (!currentFirstLast.contains("LAST")) {
+      val nextStopReference = currentRouteReference.filter(x => x._1 == currentPointNumber + 1).last
+      val nextStopCode = nextStopReference._2
+      val polyLineToNextStop = currentStopReference._4
 
-    val predictionRequest = new PredictionRequest(routeID,directionID,currentStopCode,nextStopCode,Commons.getDayCode(System.currentTimeMillis()),Commons.getTimeOffset(System.currentTimeMillis()))
-    val predictedDurationToNextStop = KNNPrediction.makePredictionBetweenConsecutivePoints(predictionRequest)
+      val predictionRequest = new PredictionRequest(routeID, directionID, currentStopCode, nextStopCode, Commons.getDayCode(System.currentTimeMillis()), Commons.getTimeOffset(System.currentTimeMillis()))
+      val predictedDurationToNextStop = KNNPrediction.makePredictionBetweenConsecutivePoints(predictionRequest)
 
-    var goAhead:Boolean = true
-    if (currentFirstLast.contains("LAST")) goAhead = false
-    if (predictedDurationToNextStop.isEmpty) goAhead = false
+        if (!predictedDurationToNextStop.isEmpty) {
+        val decodedPolyLineToNextStop = Commons.decodePolyLine(polyLineToNextStop)
+        val eachPointDuration = (predictedDurationToNextStop.get * 1000) / decodedPolyLineToNextStop.length
 
-    if (goAhead) {
-      val decodedPolyLineToNextStop = Commons.decodePolyLine(polyLineToNextStop)
-      val eachPointDuration = (predictedDurationToNextStop.get * 1000) / decodedPolyLineToNextStop.length
+        decodedPolyLineToNextStop.foreach(x => {
+          addToPredictedPositionQueue(sourceLine.arrival_TimeStamp + eachPointDuration.toLong, x._1, x._2)
+        })
 
-      decodedPolyLineToNextStop.foreach(x => {
-        addToPredictedPositionQueue(sourceLine.arrival_TimeStamp + eachPointDuration.toLong, x._1, x._2)
-      })
-
+      }
     }
 
     self ! "next"

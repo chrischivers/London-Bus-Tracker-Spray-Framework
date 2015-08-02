@@ -13,9 +13,7 @@ case class StopDefinitionFields(stopPointName:String, stopPointType:String, towa
 object TFLDefinitions {
 
   //lazy val TFLSequenceMap:Map[(String, Int, String), (Int, Option[String])] = LoadRouteDefinitionsFromWebsite.getMap
-  lazy val StopToPointSequenceMap: Map[(String, Int, String), (Int, Option[String], String)] =  LoadRouteDefinitions.getStopToPointSequenceMap
-  lazy val PointToStopSequenceMap: Map[(String, Int, Int), (String, Option[String], String)] = LoadRouteDefinitions.getPointToStopSequenceMap
-  lazy val RouteDirSequenceList: List[(String, Int, Int, String, Option[String], String)] = LoadRouteDefinitions.getRouteDirSequenceList
+  lazy val RouteDefinitionMap:Map[(String, Int), List[(Int, String, Option[String], String)]] =  LoadRouteDefinitions.getRouteDefinitionMap
   lazy val StopDefinitions: Map[String,StopDefinitionFields] = LoadStopDefinitions.getStopDefinitionMap
   lazy val RouteIgnoreList: Set[String] = LoadRouteIgnoreListFromFile.routeIgnoreSet
   lazy val StopIgnoreList: Set[String] = LoadStopIgnoreListFromFile.stopIgnoreSet

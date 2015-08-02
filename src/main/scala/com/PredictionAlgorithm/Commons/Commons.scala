@@ -33,17 +33,6 @@ object Commons {
     ((existingTime.getTimeInMillis - beginningOfDayTime.getTimeInMillis)/1000).toInt
   }
 
-  def getPointSequenceFromStopCode(route_ID: String, direction_ID: Int, stop_Code: String): Option[Int] = {
-    val x = TFLDefinitions.StopToPointSequenceMap.get(route_ID, direction_ID, stop_Code)
-    if (x.isEmpty) None
-    else Some(x.get._1)
-  }
-
-  def getStopCodeFromPointSequence(route_ID: String, direction_ID: Int, pointSequence: Int): Option[String] = {
-    val x = TFLDefinitions.PointToStopSequenceMap.get(route_ID, direction_ID, pointSequence)
-    if (x.isEmpty) None
-    else Some(x.get._1)
-  }
 
   def decodePolyLine(encodedPolyLine: String): Vector[(String, String)] = {
     //Code adapted from Decode Method of Google's PolyUtil Class from Android Map Utils

@@ -24,7 +24,6 @@ object TFLProcessSourceLines {
   private var holdingBuffer: Map[(String, String, Int), (String, Long)] = Map()
   private var liveStreamCollectionEnabled:Boolean = false
   private var historicalDataStoringEnabled = false
-  val tflRouteDefinitions = TFLDefinitions.StopToPointSequenceMap
   val stopIgnoreList = TFLDefinitions.StopIgnoreList
   val routeIgnoreList = TFLDefinitions.RouteIgnoreList
 
@@ -42,8 +41,8 @@ object TFLProcessSourceLines {
             val existingValues = holdingBuffer(newLine.route_ID, newLine.vehicle_Reg, newLine.direction_ID)
             val existingStopCode = existingValues._1
             val existingArrivalTimeStamp = existingValues._2
-            val existingPointSequence = getPointSequence(newLine.route_ID, newLine.direction_ID, existingStopCode)
-            val newPointSequence = getPointSequence(newLine.route_ID, newLine.direction_ID, newLine.stop_Code)
+            val existingPointSequence = TFLDefinitions.RouteDefinitionMap(newLine.route_ID, newLine.direction_ID).filter(x=> x._2 == existingStopCode).head._1
+            val newPointSequence = TFLDefinitions.RouteDefinitionMap(newLine.route_ID, newLine.direction_ID).filter(x=> x._2 == newLine.stop_Code).last._1
             if (newPointSequence == existingPointSequence + 1) {
               val durationInSeconds = ((newLine.arrival_TimeStamp - existingArrivalTimeStamp) / 1000).toInt
               if (durationInSeconds > 0) {
@@ -72,11 +71,15 @@ object TFLProcessSourceLines {
   def validateLine(line: TFLSourceLine): Boolean = {
 
     def inDefinitionFile(line: TFLSourceLine): Boolean = {
-      if (tflRouteDefinitions.get(line.route_ID, line.direction_ID, line.stop_Code).isEmpty) {
+      if (TFLDefinitions.RouteDefinitionMap.get(line.route_ID, line.direction_ID).isEmpty) {
         numberNonMatches += 1
         //logger.info("Cannot get definition. Line: " + line) //TODO Fix this
         false
-      } else true
+      } else if (!TFLDefinitions.RouteDefinitionMap(line.route_ID, line.direction_ID).exists(x => x._2 == line.stop_Code)) {
+        numberNonMatches += 1
+        false
+      }
+      else true
     }
 
     def isWithinTimeThreshold(line: TFLSourceLine): Boolean = {
@@ -93,11 +96,8 @@ object TFLProcessSourceLines {
     true
   }
 
-  def isFinalStop(line: TFLSourceLine): Boolean = tflRouteDefinitions(line.route_ID, line.direction_ID, line.stop_Code)._2.contains("LAST")
+  def isFinalStop(line: TFLSourceLine): Boolean = TFLDefinitions.RouteDefinitionMap(line.route_ID, line.direction_ID).filter(x => x._2 == line.stop_Code).head._3.contains("LAST")
 
-  def getPointSequence(route_ID: String, direction_ID: Int, stop_Code: String): Int = {
-    tflRouteDefinitions(route_ID, direction_ID, stop_Code)._1
-  }
 
   def createPointToPointDocument(route_ID: String, direction_ID: Int, from_Point_ID: String, to_Point_ID: String, day_Type: String, observed_Time: Int, durationSeconds: Int): POINT_TO_POINT_DOCUMENT = {
     new POINT_TO_POINT_DOCUMENT(route_ID, direction_ID, from_Point_ID, to_Point_ID, day_Type, observed_Time, durationSeconds)

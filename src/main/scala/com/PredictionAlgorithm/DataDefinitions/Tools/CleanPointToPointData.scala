@@ -16,7 +16,7 @@ object CleanPointToPointData {
 class CleanPointToPointData extends Actor {
 
   val collection = POINT_TO_POINT_COLLECTION
-  val routeDefinitions = TFLDefinitions.StopToPointSequenceMap
+  val routeDefinitions = TFLDefinitions.RouteDefinitionMap
 
   override def receive: Receive = {
     case "start" => startClean
@@ -30,8 +30,8 @@ class CleanPointToPointData extends Actor {
       val fromStop = doc.get(collection.FROM_POINT_ID).asInstanceOf[String]
       val toStop = doc.get(collection.TO_POINT_ID).asInstanceOf[String]
 
-     val toPointSeqFromDef = routeDefinitions(routeID,direction,fromStop)._1
-      val fromPointSeqFromDef = routeDefinitions(routeID,direction,toStop)._1
+     val fromPointSeqFromDef = routeDefinitions(routeID,direction).filter(x => x._2 == fromStop).head._1
+      val toPointSeqFromDef = routeDefinitions(routeID,direction).filter(x => x._2 == toStop).last._1
 
       if(fromPointSeqFromDef + 1 != toPointSeqFromDef) {
 
