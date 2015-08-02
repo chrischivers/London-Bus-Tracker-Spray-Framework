@@ -4,10 +4,13 @@ import java.util.{GregorianCalendar, Calendar}
 
 import com.PredictionAlgorithm.DataDefinitions.TFL.TFLDefinitions
 
+import scala.math.BigDecimal.RoundingMode
+
 /**
- * Created by chrischivers on 19/07/15.
+ * Created  by chrischivers on 19/07/15.
  */
 object Commons {
+
 
   def getDayCode(arrivalTime: Long): String = {
     val cal: Calendar  = new GregorianCalendar();
@@ -34,12 +37,12 @@ object Commons {
   }
 
 
-  def decodePolyLine(encodedPolyLine: String): Vector[(String, String)] = {
+  def decodePolyLine(encodedPolyLine: String): Array[(String, String)] = {
     //Code adapted from Decode Method of Google's PolyUtil Class from Android Map Utils
     // https://github.com/googlemaps/android-maps-utils/blob/master/library/src/com/google/maps/android/PolyUtil.java
 
     val len: Int = encodedPolyLine.length
-    var latLngList: Vector[(String,String)] = Vector()
+    var latLngList: Array[(String,String)] = Array()
 
     var index: Int = 0
     var lat: Int = 0
@@ -72,7 +75,8 @@ object Commons {
 
       lng += (if ((result & 1) != 0) ~(result >> 1) else (result >> 1))
 
-      val x = ((lat * 1e-5).toString, (lng * 1e-5).toString)
+      //BigDecimal("3.53456").round(new MathContext(4, RoundingMode.HALF_UP));
+      val x = (BigDecimal(lat * 1e-5).setScale(6, RoundingMode.HALF_UP).toString, BigDecimal(lng * 1e-5).setScale(6, RoundingMode.HALF_UP).toString())
       latLngList = latLngList :+ x
     }
     return latLngList
