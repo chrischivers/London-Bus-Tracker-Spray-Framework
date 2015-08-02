@@ -40,21 +40,21 @@ object LiveStreamingCoordinator {
 
   def getStream = stream.toStream
 
-  def enqueue(vehicle_ID: String, latitude: String, longitude: String)  = stream.enqueue((vehicle_ID,latitude,longitude))
+  def enqueue(vehicle_ID: String, duration: Double, latitude: String, longitude: String)  = stream.enqueue((vehicle_ID, duration.toString, latitude,longitude))
 
 }
 
 // Implementation adapted from Stack Overflow article:
 //http://stackoverflow.com/questions/7553270/is-there-a-fifo-stream-in-scala
 class FIFOStream {
-  private val queue = new LinkedBlockingQueue[Option[(String, String, String)]]
+  private val queue = new LinkedBlockingQueue[Option[(String, String, String, String)]]
 
-  def toStream: Stream[(String, String, String)] = queue take match {
-    case Some((a:String,b:String, c:String)) => Stream cons ( (a,b,c), toStream )
+  def toStream: Stream[(String, String, String, String)] = queue take match {
+    case Some((a:String,b:String, c:String, d:String)) => Stream cons ( (a,b,c,d), toStream )
     case None => Stream empty
   }
   def close() = queue add None
-  def enqueue(as:(String, String, String)) = queue add Some(as)
+  def enqueue(as:(String, String, String, String)) = queue add Some(as)
 }
 
 class VehicleActor(vehicle_ID: String, routeID: String, directionID: Int) extends Actor{
@@ -62,7 +62,9 @@ class VehicleActor(vehicle_ID: String, routeID: String, directionID: Int) extend
   import context.dispatcher
 
   var currentPosition:(String,String) = ("0.0", "0.0")
-  var predictedPositionQueue: mutable.Queue[(Long, String, String)] = mutable.Queue()
+
+  //Queue is TimeToTransmit, Duration, Lat, Long
+  var predictedPositionQueue: mutable.Queue[(Long, Double, String, String)] = mutable.Queue()
   val stopDefinitions = TFLDefinitions.StopDefinitions
 
   override def receive: Receive = {
@@ -71,10 +73,11 @@ class VehicleActor(vehicle_ID: String, routeID: String, directionID: Int) extend
       if (predictedPositionQueue.nonEmpty) {
         val head = predictedPositionQueue.dequeue
         in(Duration(head._1 - System.currentTimeMillis(), MILLISECONDS)) {
-          val lat = head._2
-          val lng = head._3
+          val dur = head._2
+          val lat = head._3
+          val lng = head._4
           currentPosition = (lat, lng)
-          LiveStreamingCoordinator.enqueue(vehicle_ID, lat, lng)
+          LiveStreamingCoordinator.enqueue(vehicle_ID,dur, lat, lng)
           self ! "next"
           //TODO KILL if last
 
@@ -88,7 +91,7 @@ class VehicleActor(vehicle_ID: String, routeID: String, directionID: Int) extend
    // val lng = definitions(sourceLine.stop_Code).longitude
    // predictedPositionQueue = predictedPositionQueue.filter(_._1 < sourceLine.arrival_TimeStamp) //remove anythign in the queue ahead of the stream input (redundant)
     val currentStopCode = sourceLine.stop_Code
-    val currentRouteReference = TFLDefinitions.RouteDefinitionMap(routeID,directionID)
+    val currentRouteReference = TFLDefinitions.RouteDefinitionMap(sourceLine.route_ID,sourceLine.direction_ID)
     val currentStopReference = currentRouteReference.filter(x=> x._2 == currentStopCode).head
     val currentPointNumber = currentStopReference._1
     val currentFirstLast = currentStopReference._3
@@ -105,8 +108,12 @@ class VehicleActor(vehicle_ID: String, routeID: String, directionID: Int) extend
         val decodedPolyLineToNextStop = Commons.decodePolyLine(polyLineToNextStop)
         val eachPointDuration = (predictedDurationToNextStop.get * 1000) / decodedPolyLineToNextStop.length
 
-        decodedPolyLineToNextStop.foreach(x => {
-          addToPredictedPositionQueue(sourceLine.arrival_TimeStamp + eachPointDuration.toLong, x._1, x._2)
+          addToPredictedPositionQueue(sourceLine.arrival_TimeStamp, 0, decodedPolyLineToNextStop.head._1, decodedPolyLineToNextStop.head._2) //First Point
+
+          var acc = 0.0
+          decodedPolyLineToNextStop.drop(1).foreach(x => {
+          addToPredictedPositionQueue(sourceLine.arrival_TimeStamp + acc.toInt, eachPointDuration, x._1, x._2)
+            acc += eachPointDuration
         })
 
       }
@@ -115,8 +122,8 @@ class VehicleActor(vehicle_ID: String, routeID: String, directionID: Int) extend
     self ! "next"
   }
 
-  def addToPredictedPositionQueue(timestamp:Long, latitude: String, longitude: String) = {
-    predictedPositionQueue.enqueue((timestamp,latitude,longitude))
+  def addToPredictedPositionQueue(timestampToTransmit:Long, duration: Double, latitude: String, longitude: String) = {
+    predictedPositionQueue.enqueue((timestampToTransmit,duration, latitude,longitude))
   }
 
   def in[U](duration: FiniteDuration)(body: => U): Unit =

@@ -39,7 +39,7 @@ object KNNPrediction extends PredictionInterface {
 
   def makePredictionBetweenConsecutivePoints(pr: PredictionRequest): Option[Double] = {
 
-    assert(TFLDefinitions.RouteDefinitionMap(pr.route_ID, pr.direction_ID).filter(x=> x._2 == pr.from_Point_ID).head._1 + 1 == TFLDefinitions.RouteDefinitionMap(pr.route_ID, pr.direction_ID).filter(x=> x._2 == pr.to_Point_ID).head._1)
+//    assert(TFLDefinitions.RouteDefinitionMap(pr.route_ID, pr.direction_ID).filter(x=> x._2 == pr.from_Point_ID).head._1 + 1 == TFLDefinitions.RouteDefinitionMap(pr.route_ID, pr.direction_ID).filter(x=> x._2 == pr.to_Point_ID).head._1)
 
     val query = MongoDBObject(coll.ROUTE_ID -> pr.route_ID, coll.DIRECTION_ID -> pr.direction_ID, coll.FROM_POINT_ID -> pr.from_Point_ID, coll.TO_POINT_ID -> pr.to_Point_ID)
     val cursor: MongoCursor = TFLGetPointToPointDocument.executeQuery(query)

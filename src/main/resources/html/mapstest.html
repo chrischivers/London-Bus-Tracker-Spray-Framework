@@ -51,7 +51,7 @@
         });
 
 
-        function setNewLocation(reg, lat, lng) {
+        function setNewLocation(reg, dur, lat, lng) {
             var newLatlng = new google.maps.LatLng(lat, lng);
             var currentTimeMillis = new Date().getTime();
            // var timeToArrival = (parseInt(duration) - currentTimeMillis);
@@ -59,13 +59,14 @@
             //alert(timeToArrival)
             if (timeToArrival > 0) {
                 if(reg in markerArray) {
+                    markerArray[reg].setDuration(parseInt(dur))
                     markerArray[reg].setPosition(newLatlng)
                 } else {
                     var marker = new SlidingMarker({
                         position: newLatlng,
                         map: map,
                         id: reg,
-                        duration: 1000
+                        duration: parseInt(dur)
                     });
                     markerArray[reg] = marker;
                 }
@@ -95,7 +96,7 @@
                 var source = new EventSource("/stream");
                 source.onmessage = function(event) {
                     var parsedJson = JSON.parse(event.data);
-                    setNewLocation(parsedJson.reg, parsedJson.lat, parsedJson.lng);
+                    setNewLocation(parsedJson.reg, parsedJson.dur, parsedJson.lat, parsedJson.lng);
 
                 };
             });
