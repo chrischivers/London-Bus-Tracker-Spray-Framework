@@ -70,16 +70,20 @@ object TFLProcessSourceLines {
 
   def validateLine(line: TFLSourceLine): Boolean = {
 
+    if (line.route_ID == "288" && line.direction_ID == 1 && line.stop_Code == "76069") {
+      println("Result: " + inDefinitionFile(line))
+    }
+
     def inDefinitionFile(line: TFLSourceLine): Boolean = {
       if (TFLDefinitions.RouteDefinitionMap.get(line.route_ID, line.direction_ID).isEmpty) {
         numberNonMatches += 1
         //logger.info("Cannot get definition. Line: " + line) //TODO Fix this
-        false
+         false
       } else if (!TFLDefinitions.RouteDefinitionMap(line.route_ID, line.direction_ID).exists(x => x._2 == line.stop_Code)) {
         numberNonMatches += 1
-        false
+         false
       }
-      else true
+      else  true
     }
 
     def isWithinTimeThreshold(line: TFLSourceLine): Boolean = {

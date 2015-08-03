@@ -10,7 +10,7 @@ import com.PredictionAlgorithm.DataDefinitions.TFL.TFLDefinitions
 import com.PredictionAlgorithm.DataSource.TFL.TFLSourceLine
 import com.PredictionAlgorithm.Prediction.{PredictionRequest, KNNPrediction}
 
-import scala.collection.mutable
+import scala.collection.{SortedMap, mutable}
 import scala.concurrent.duration._
 
 //case class LiveStreamResult(nextPointSeq: Int,nextStopCode: String, nextStopName:String, nextStopLate:Double, nextStopLng: Double, timeTilNextStop:Int)
@@ -48,6 +48,11 @@ object LiveStreamingCoordinator {
 
   def getNumberLiveActors = liveActors.size
 
+  def killLiveActor (reg:String): Unit = {
+    liveActors(reg) ! PoisonPill
+    liveActors = liveActors - reg //Remove from map
+  }
+
   def getStream = stream.toStream
 
   def enqueue(vehicle_ID: String, duration: Double, latLngArray: Array[(String, String)]) = stream.enqueue((vehicle_ID, duration.toString, latLngArray))
@@ -70,6 +75,8 @@ class FIFOStream {
   def enqueue(as: (String, String, Array[(String, String)])) = queue add Some(as)
 }
 
+
+/*
 class VehicleActor(vehicle_ID: String, routeID: String, directionID: Int) extends Actor {
 
   import context.dispatcher
@@ -128,6 +135,127 @@ class VehicleActor(vehicle_ID: String, routeID: String, directionID: Int) extend
   def addToPredictedPositionQueue(timestampToTransmit: Long, duration: Double, latLngArray: Array[(String, String)]) = {
     predictedPositionQueue.enqueue((timestampToTransmit, duration, latLngArray))
   }
+
+  def in[U](duration: FiniteDuration)(body: => U): Unit =
+    LiveStreamingCoordinator.actorSystem.scheduler.scheduleOnce(duration)(body)
+
+}*/
+
+
+class VehicleActor(vehicle_ID: String, routeID: String, directionID: Int) extends Actor {
+
+  import context.dispatcher
+
+  // Sequence, FromStop ToStop -> TimeExpected, Duration, PolyLine
+  var routeTree: SortedMap[(Int, String, String), Option[(Long, Double, String)]] = SortedMap()
+  val stopList = TFLDefinitions.RouteDefinitionMap(routeID, directionID).sortBy(_._1)
+
+
+  // Builds Tree
+  for (i <- 0 until stopList.length - 1) {
+    routeTree += (i + 1, stopList(i)._2, stopList(i + 1)._2) -> None
+  }
+
+  assert(TFLDefinitions.RouteDefinitionMap(routeID, directionID).head._2 == routeTree.head._1._2)
+  assert(TFLDefinitions.RouteDefinitionMap(routeID, directionID).last._2 == routeTree.last._1._3)
+
+
+  override def receive: Receive = {
+    case sourceLine: TFLSourceLine => processSourceLine(sourceLine)
+    case "next" => pushNextToQueue
+
+  }
+
+  var alreadyreceived = false
+  def processSourceLine(sourceLine: TFLSourceLine) = {
+    if (!alreadyreceived) {
+      //  println("Before processing: " + routeTree)
+      val fromStopCode = sourceLine.stop_Code
+      val arrivalTimeStamp = sourceLine.arrival_TimeStamp
+      val nextCalculatedArrivalStamp = calculateAndUpdateTree(fromStopCode, arrivalTimeStamp)
+      if (nextCalculatedArrivalStamp.isDefined) calculateFuturePointPredictions(nextCalculatedArrivalStamp.get._1, nextCalculatedArrivalStamp.get._2)
+
+      self ! "next"
+      alreadyreceived = true
+    }
+
+}
+
+  def pushNextToQueue = {
+    //TODO better way of dealing with empties
+    val routeTreeWithValues = routeTree.filter(x => x._2.isDefined)
+    val routeTreeFilteredOutPast = routeTreeWithValues.filter(x => (x._2.get._1 - System.currentTimeMillis()) > 0)
+    if (routeTreeFilteredOutPast.nonEmpty) {
+      val nextToEnter = routeTreeFilteredOutPast.head
+      val firstLast = stopList.filter(x => x._2 == nextToEnter._1._3).head._3
+
+      in(Duration(nextToEnter._2.get._1 - System.currentTimeMillis(), MILLISECONDS)) {
+        val dur = nextToEnter._2.get._2
+        val decodedPolyLineToNextStop = Commons.decodePolyLine(nextToEnter._2.get._3)
+        LiveStreamingCoordinator.enqueue(vehicle_ID, dur, decodedPolyLineToNextStop)
+        if (firstLast.contains("LAST")) {
+          //TODO enqueue kill actor instruction
+          LiveStreamingCoordinator.killLiveActor(vehicle_ID)
+        }
+        self ! "next"
+      }
+    } else {
+       //TODO think
+    }
+  }
+
+
+  def calculateFuturePointPredictions(setPointSequence: Int, nextCalculatedArrivalStamp:Long):Boolean = {
+
+    var nextTimeStampHolder = nextCalculatedArrivalStamp
+
+    for( i <- setPointSequence + 1 to routeTree.size){
+      val thisRecord = routeTree.filter(x=> x._1._1 == i).head
+      val fromStopCode= thisRecord._1._2
+      val nextTimeStamp = calculateAndUpdateTree(fromStopCode, nextTimeStampHolder)
+      if (nextTimeStamp.isDefined) {
+        nextTimeStampHolder = nextTimeStamp.get._2
+
+        if(nextTimeStamp.get._1 != i + 1) {
+          println(nextTimeStamp.get._1 +", " +  (i + 1))
+          println("routeID: " + routeID + ". Direction: " + directionID + ". Vehicle ID: " + vehicle_ID)
+          println("Stop List: " + stopList)
+          println("route tree :" + routeTree)
+        }
+      } else return false
+
+    }
+    true
+  }
+
+  def calculateAndUpdateTree(fromStopCode:String,arrivalTimeStamp:Long):Option[(Int, Long)] = {
+    try {
+      stopList.filter(x => x._2 == fromStopCode).head._3
+    } catch {
+      case e:Exception =>     println("routeID: " + routeID + ". Direction: " + directionID + ". From stop code: " + fromStopCode + ". stopList: " + stopList)
+    }
+    val firstLast = stopList.filter(x => x._2 == fromStopCode).head._3
+      if (!firstLast.contains("LAST")) {
+        val thisRecord = routeTree.filter(x => x._1._2 == fromStopCode).head
+        val pointSequence = thisRecord._1._1
+        val dayCode = Commons.getDayCode(arrivalTimeStamp)
+        val timeOffset = Commons.getTimeOffset(arrivalTimeStamp)
+        val toStopCode = thisRecord._1._3
+        val polyLine = stopList.filter(x => x._2 == fromStopCode).head._4
+        val predictedDuration = KNNPrediction.makePredictionBetweenConsecutivePoints(new PredictionRequest(routeID, directionID, fromStopCode, toStopCode, dayCode, timeOffset))
+
+        if (predictedDuration.isDefined) {
+          val keyToUse = (pointSequence, fromStopCode, toStopCode)
+          val mapValueToInsert = (arrivalTimeStamp, predictedDuration.get * 1000, polyLine)
+          routeTree += keyToUse -> Some(mapValueToInsert)
+          return Some(pointSequence + 1, arrivalTimeStamp + (predictedDuration.get.toInt * 1000))
+        } else {
+          //TODO
+          None
+        }
+      } else None
+    }
+
 
   def in[U](duration: FiniteDuration)(body: => U): Unit =
     LiveStreamingCoordinator.actorSystem.scheduler.scheduleOnce(duration)(body)

@@ -8,7 +8,7 @@
     <style type="text/css">
         html, body, #map_canvas {
             width: 100%;
-            height: 98%;
+            height: 100%;
             margin: 0;
             padding: 0;
         }
@@ -34,6 +34,12 @@
             map = new google.maps.Map(document.getElementById('map_canvas'), mapOptions);
 
 
+            var source = new EventSource("/stream");
+            source.onmessage = function (event) {
+                var parsedJson = JSON.parse(event.data);
+                setNewLocation(parsedJson.reg, parsedJson.dur, parsedJson.latLng);
+
+            };
 
         }
         $(function () {
@@ -56,7 +62,7 @@
                 //markerArray[reg].setPosition(newLatlng)
 
                 var newPolyLine = new google.maps.Polyline({
-                    strokeOpacity: 0,
+                    strokeOpacity: 1,
                     path: latLngArray,
                     icons: [{
                         icon: symbolArray[reg],
@@ -65,8 +71,9 @@
                     map: map
                 });
 
-                polyLineArray[reg].setMap(null);
+
                 polyLineArray[reg] = newPolyLine;
+               // polyLineArray[reg].setMap(null);
 
                 animateCircle(newPolyLine, dur);
 
@@ -82,7 +89,7 @@
                 };
 
                 var newPolyLine = new google.maps.Polyline({
-                    strokeOpacity: 0,
+                    strokeOpacity: 1,
                     path: latLngArray,
                     icons: [{
                         icon: lineSymbol,
@@ -95,11 +102,7 @@
                 polyLineArray[reg] = newPolyLine;
 
                 animateCircle(newPolyLine, dur);
-
-
-
             }
-
 
         }
 
@@ -128,36 +131,9 @@
 
         }
 
-
-
-
-        $(document).ready(function () {
-            $("button").click(function () {
-                /* $.post("getPosition.asp",
-                 {
-                 name: "bus_reg"
-                 },
-                 function (data, status) {
-                 var parsedJson = JSON.parse(data);
-
-                 for (x in parsedJson) {
-                 setNewLocation(parsedJson[x].reg, parsedJson[x].lat,parsedJson[x].lng, parsedJson[x].arrivalTime);
-                 }
-
-                 });*/
-
-                var source = new EventSource("/stream");
-                source.onmessage = function (event) {
-                    var parsedJson = JSON.parse(event.data);
-                    setNewLocation(parsedJson.reg, parsedJson.dur, parsedJson.latLng);
-
-                };
-            });
-        });
     </script>
 </head>
 <body>
 <div id="map_canvas"></div>
-<button>Send an HTTP POST request to a page and get the result back</button>
 </body>
 </html>
