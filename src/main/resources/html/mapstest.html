@@ -17,12 +17,15 @@
 
     <script type="text/javascript"
             src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBxCYp9RWcbhuPg0nLWFzJhuPbECQYOqBw"></script>
-    <script src="https://code.jquery.com/jquery.min.js"></script>
+    <script src="js/jquery-2.1.4.min.js"></script>
 
     <script>
         var map;
         var symbolArray = {};
         var polyLineArray = {};
+        var intervalFunctionArray = {};
+        var nextArrivalTimeArray = {}
+
         var image = 'images/bus_icon.png';
         function initialize() {
             var myLatlng = new google.maps.LatLng(32.520204, 34.937258);
@@ -37,8 +40,11 @@
             var source = new EventSource("/stream");
             source.onmessage = function (event) {
                 var parsedJson = JSON.parse(event.data);
-                setNewLocation(parsedJson.reg, parsedJson.dur, parsedJson.latLng);
-
+                if (parsedJson.nextArr != "0") {
+                    setNewLocation(parsedJson.reg, parsedJson.nextArr, parsedJson.latLng);
+                } else {
+                    deleteVehicle(parsedJson.reg);
+                }
             };
 
         }
@@ -47,8 +53,17 @@
 
         });
 
+        function deleteVehicle(reg) {
+            polyLineArray[reg].setMap(null);
+            clearSetInterval(intervalFunctionArray[reg]);
+            delete polyLineArray[reg];
+            delete symbolArray[reg];
+            delete intervalFunctionArray[reg];
+            delete nextArrivalTimeArray[reg];
+        }
 
-        function setNewLocation(reg, dur, latLng) {
+
+        function setNewLocation(reg, nextArr, latLng) {
 
             var latLngArray = [];
             var parsedJson = JSON.parse(latLng);
@@ -58,34 +73,35 @@
             }
 
             if (reg in symbolArray) {
-                // markerArray[reg].setDuration(parseInt(dur))
-                //markerArray[reg].setPosition(newLatlng)
 
-                var newPolyLine = new google.maps.Polyline({
-                    strokeOpacity: 1,
-                    path: latLngArray,
-                    icons: [{
-                        icon: symbolArray[reg],
-                        offset: '0%'
-                    }],
-                    map: map
-                });
+                var timeTilCompleted = (nextArrivalTimeArray[reg] - Date.now());
+
+                setTimeout(function(){
+
+                    var newPolyLine = new google.maps.Polyline({
+                        strokeOpacity: 1,
+                        path: latLngArray,
+                        icons: [{
+                            icon: symbolArray[reg],
+                            offset: '0%'
+                        }],
+                        map: map
+                    });
+
+                    polyLineArray[reg].setMap(null);
+                    polyLineArray[reg] = newPolyLine;
+                    animateCircle(reg, newPolyLine, nextArr);
 
 
-                polyLineArray[reg] = newPolyLine;
-               // polyLineArray[reg].setMap(null);
-
-                animateCircle(newPolyLine, dur);
-
+                }, timeTilCompleted);
 
 
             } else {
-
                 var lineSymbol = {
-                    path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                    path: google.maps.SymbolPath.CIRCLE,
                     scale: 6,
                     strokeColor: 'red',
-                    strokeOpacity: 1
+                    strokeOpacity:1
                 };
 
                 var newPolyLine = new google.maps.Polyline({
@@ -101,14 +117,16 @@
                 symbolArray[reg] = lineSymbol;
                 polyLineArray[reg] = newPolyLine;
 
-                animateCircle(newPolyLine, dur);
+                animateCircle(reg, newPolyLine, nextArr);
             }
 
         }
 
-        function animateCircle(polyLine, dur) {
+        function animateCircle(reg, polyLine, nextArr) {
             var refreshTimeMs = 200;
-            var onePercentDur = (parseInt(dur)/100);
+            var nextArrivalTime = parseInt(nextArr);
+            var dur = (nextArrivalTime - Date.now());
+            var onePercentDur = (dur/100);
             var perentIncreaseEachRefresh = refreshTimeMs/onePercentDur;
             var acc = 0;
             var setIntervalFunction = window.setInterval(function () {
@@ -118,18 +136,19 @@
                     icons[0].offset = acc + '%';
                     polyLine.set('icons', icons);
                 } else {
-                    clearSetIntervalFunction(setIntervalFunction)
+                    //clearSetIntervalFunction(setIntervalFunction)
                 }
             }, refreshTimeMs);
 
-            var clearSetIntervalFunction = function (myInterval) {
-                clearInterval(myInterval);
-            };
-
+            clearSetInterval(intervalFunctionArray[reg]);
+            intervalFunctionArray[reg] = setIntervalFunction;
+            nextArrivalTimeArray[reg] = nextArrivalTime
             setIntervalFunction
-
-
         }
+
+        function clearSetInterval(myInterval) {
+            window.clearInterval(myInterval);
+        };
 
     </script>
 </head>

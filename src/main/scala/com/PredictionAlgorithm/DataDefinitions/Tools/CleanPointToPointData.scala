@@ -9,7 +9,7 @@ import com.PredictionAlgorithm.Database.TFL.TFLGetPointToPointDocument
 /**
  * Created by chrischivers on 02/08/15.
  */
-object CleanPointToPointData {
+object CleanPointToPointData extends App{
 
 }
 
@@ -34,7 +34,7 @@ class CleanPointToPointData extends Actor {
       val toPointSeqFromDef = routeDefinitions(routeID,direction).filter(x => x._2 == toStop).last._1
 
       if(fromPointSeqFromDef + 1 != toPointSeqFromDef) {
-
+          println("Mismatch in PointToPoint")
       }
 
 

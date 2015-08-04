@@ -144,7 +144,7 @@ trait MyService extends HttpService {
                 //  "point" -> next._2.nextPointSeq.toString,
                 //  "stopCode" -> next._2.nextStopCode,
                 //  "stopName" -> next._2.nextStopName,
-                  "dur" -> next._2,
+                  "nextArr" -> next._2,
                   "latLng" -> compact(render(next._3.map(x=> x._1 + "," + x._2).toList)))
                  // "arrivalTime" -> next._2.arrivalTimeStamp.toString)
                 val json = compact(render(nextList))
