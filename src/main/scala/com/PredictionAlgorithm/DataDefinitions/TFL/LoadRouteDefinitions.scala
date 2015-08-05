@@ -172,7 +172,10 @@ object LoadRouteDefinitions extends LoadResource {
         // Set LAST on last option
         val lastone: List[(String, Int, Option[String])] = stopCodeSequenceList.takeRight(1).map { case (x, y, z) => (x, y, Some("LAST")) }
         stopCodeSequenceList = stopCodeSequenceList.dropRight(1) ::: lastone
-      if (!skipThisRoute) Some(stopCodeSequenceList) else None
+      if (!skipThisRoute) Some(stopCodeSequenceList) else {
+      //  println("Skipped: " + webRouteID + ", " + direction)
+        None
+      }
     }
 
 

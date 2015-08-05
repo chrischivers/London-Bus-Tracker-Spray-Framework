@@ -67,7 +67,7 @@ trait MyService extends HttpService {
         }
       } ~
       path("maps") {
-        getFromResource("html/mapstest.html")
+        getFromResource("html/mapstest2.html")
       } ~
     path("predict") {
       get {

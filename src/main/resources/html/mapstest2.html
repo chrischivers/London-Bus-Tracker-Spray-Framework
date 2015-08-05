@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>Bus Route UI</title>
+
+    <style type="text/css">
+        html, body, #map_canvas {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+
+    <script type="text/javascript"
+            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBxCYp9RWcbhuPg0nLWFzJhuPbECQYOqBw"></script>
+    <script src="js/jquery-2.1.4.min.js"></script>
+    <script src="js/jquery.easing.1.3.js"></script>
+    <script src="js/markerAnimate.js"></script>
+    <script src="js/SlidingMarker.min.js"></script>
+
+
+
+    <script>
+        //SlidingMarker.initializeGlobally();
+        var map;
+        var markerArray = {};
+        var intervalFunctionArray = {};
+        var nextArrivalTimeArray = {};
+
+        function initialize() {
+            var myLatlng = new google.maps.LatLng(32.520204, 34.937258);
+            var mapOptions = {
+                zoom: 4,
+                center: myLatlng,
+                mapTypeId: google.maps.MapTypeId.ROADMAP
+            };
+
+            map = new google.maps.Map(document.getElementById('map_canvas'), mapOptions);
+
+            var source = new EventSource("/stream");
+            source.onmessage = function(event) {
+                var parsedJson = JSON.parse(event.data);
+                if (parsedJson.nextArr != "0") {
+                    setNewLocation(parsedJson.reg, parsedJson.nextArr, parsedJson.latLng);
+                }else {
+                        deleteVehicle(parsedJson.reg);
+                    }
+            };
+
+        }
+        $(function () {
+            initialize();
+        });
+
+        function deleteVehicle(reg) {
+            clearSetInterval(intervalFunctionArray[reg]);
+            delete markerArray[reg];
+            delete intervalFunctionArray[reg];
+            delete nextArrivalTimeArray[reg];
+        }
+
+
+        function setNewLocation(reg, nextArr, latLng) {
+
+            var latLngArray = [];
+            var parsedLatLngArray = JSON.parse(latLng);
+
+            for (var i = 0; i < parsedLatLngArray.length; i++) {
+                var splitLatLng = parsedLatLngArray[i].split(",");
+                latLngArray[i] = new google.maps.LatLng(splitLatLng[0], splitLatLng[1]);
+            }
+
+                if(reg in markerArray) {
+
+                    var timeTilCompleted = (nextArrivalTimeArray[reg] - Date.now());
+                    setTimeout(function(){
+
+                      moveMarker(reg, latLngArray, nextArr);
+
+                    }, timeTilCompleted);
+
+
+                } else {
+
+                    var marker = new SlidingMarker({
+                        position: latLngArray[0],
+                        map: map,
+                        easing: "linear"
+                    });
+
+                    markerArray[reg] = marker;
+                    moveMarker(reg, latLngArray, nextArr);
+                }
+
+        }
+
+        function moveMarker(reg, latLngArray, nextArr) {
+
+            var nextArrivalTime = parseInt(nextArr);
+            var latLngLength = latLngArray.length;
+            var dur = (nextArrivalTime - Date.now());
+            var durForEachSegment = dur / latLngLength;
+            var indexOfLatLngArray = 0;
+
+            markerArray[reg].setPosition(latLngArray[indexOfLatLngArray]);
+            markerArray[reg].setDuration(durForEachSegment);
+            indexOfLatLngArray = indexOfLatLngArray + 1;
+
+            var setIntervalFunction = window.setInterval(function () {
+                if (indexOfLatLngArray < latLngLength) {
+                    markerArray[reg].setPosition(latLngArray[indexOfLatLngArray]);
+                    markerArray[reg].setDuration(durForEachSegment);
+                    indexOfLatLngArray = indexOfLatLngArray + 1;
+                }
+            }, durForEachSegment);
+
+            clearSetInterval(intervalFunctionArray[reg]);
+             intervalFunctionArray[reg] = setIntervalFunction;
+            nextArrivalTimeArray[reg] = nextArrivalTime;
+            setIntervalFunction;
+        }
+
+        function clearSetInterval(myInterval) {
+            window.clearInterval(myInterval);
+        }
+
+
+    </script>
+</head>
+<body>
+<div id="map_canvas"></div>
+</body>
+</html>
