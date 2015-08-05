@@ -57,6 +57,9 @@ public class MonitoringUI {
     private JLabel numberAddPolyLinesLinesReadValue;
     private JLabel nonMatchesCountValue;
     private JLabel numberPolyLinesAddedFromCacheValue;
+    private JButton cleanUpPointToPointButton;
+    private JLabel numberPointToPointRecordsCheckedForCleanUpValue;
+    private JLabel numberPointToPointRecordsDeletedValue;
 
 
     public MonitoringUI(int refreshIntervalMS) {
@@ -73,6 +76,28 @@ public class MonitoringUI {
         frame.pack();
         frame.setVisible(true);
 
+    }
+
+    public void setCleanUpPointToPoint(StartStopControlInterface sSCI) {
+        cleanUpPointToPointButton.addActionListener(new ActionListener() {
+            volatile boolean buttonStarted = false;
+            CounterUpdater cu = new CounterUpdater(sSCI, numberPointToPointRecordsCheckedForCleanUpValue, numberPointToPointRecordsDeletedValue);
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (!buttonStarted) {
+                    sSCI.start();
+                    new Thread(cu).start();
+                    cleanUpPointToPointButton.setText("Stop PointToPoint Clean up");
+                    buttonStarted = true;
+                } else {
+                    sSCI.stop();
+                    cu.terminate();
+                    cleanUpPointToPointButton.setText("Start PointToPoint Clean up");
+                    buttonStarted = false;
+                }
+
+            }
+        });
     }
 
     public void setUpdateRouteDefinitions(StartStopControlInterface sSCI) {

@@ -10,13 +10,13 @@ import com.mongodb.casbah.Imports._
 import scala.util.{Failure, Success, Try}
 
 
-object TFLInsertPointToPointDuration extends DatabaseModifyInterface {
+object TFLInsertPointToPointDuration extends DatabaseInsertInterface {
 
   @volatile var numberDBTransactionsRequested:Long= 0
   @volatile var numberDBTransactionsExecuted:Long = 0
   @volatile var numberDBPullTransactionsExecuted:Long = 0
 
-  override val dbModifyActor: ActorRef = actorSystem.actorOf(Props[TFLInsertPointToPointDuration], name = "TFLInsertPointToPointDurationActor")
+  override val dbInsertActor: ActorRef = actorSystem.actorOf(Props[TFLInsertPointToPointDuration], name = "TFLInsertPointToPointDurationActor")
 
   override protected val collection: DatabaseCollections = POINT_TO_POINT_COLLECTION
 }

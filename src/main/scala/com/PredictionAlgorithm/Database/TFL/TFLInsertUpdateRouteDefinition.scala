@@ -8,19 +8,19 @@ import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.{MongoDBObject, Imports}
 
 
-object TFLInsertUpdateRouteDefinition extends DatabaseModifyInterface{
+object TFLInsertUpdateRouteDefinition extends DatabaseInsertInterface{
 
   @volatile var numberDBUpdatesRequested = 0
   @volatile var numberDBInsertsRequested = 0
   @volatile var numberPolyLinesInserted = 0
 
-  override val dbModifyActor: ActorRef = actorSystem.actorOf(Props[TFLInsertUpdateRouteDefinition], name = "TFLInsertRouteDefinitionActor")
+  override val dbInsertActor: ActorRef = actorSystem.actorOf(Props[TFLInsertUpdateRouteDefinition], name = "TFLInsertRouteDefinitionActor")
 
   override protected val collection: DatabaseCollections = ROUTE_DEFINITIONS_COLLECTION
 
   def updateDocumentWithPolyLine (doc: DatabaseDocuments, polyLine:String): Unit = {
     numberPolyLinesInserted += 1
-    dbModifyActor ! (doc, polyLine)
+    dbInsertActor ! (doc, polyLine)
   }
 }
 

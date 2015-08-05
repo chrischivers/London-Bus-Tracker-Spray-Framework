@@ -7,10 +7,10 @@ import com.mongodb.casbah.MongoCollection
 
 import scala.util.{Failure, Success, Try}
 
-trait DatabaseModifyInterface {
+trait DatabaseInsertInterface {
 
   protected implicit val actorSystem = ActorSystem("DB_Actor_System")
-  protected val dbModifyActor:ActorRef
+  protected val dbInsertActor:ActorRef
 
   protected val collection:DatabaseCollections
 
@@ -21,7 +21,8 @@ trait DatabaseModifyInterface {
     }
 
   def insertDocument(doc: DatabaseDocuments): Unit = {
-    dbModifyActor ! doc
+    dbInsertActor ! doc
   }
+
 
 }

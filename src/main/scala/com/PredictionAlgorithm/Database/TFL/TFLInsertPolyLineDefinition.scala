@@ -9,11 +9,11 @@ import com.mongodb.casbah.Imports._
 /**
  * Created by chrischivers on 01/08/15.
  */
-object TFLInsertPolyLineDefinition extends DatabaseModifyInterface{
+object TFLInsertPolyLineDefinition extends DatabaseInsertInterface{
 
   @volatile var numberPolyLinesInserted = 0
 
-  override val dbModifyActor: ActorRef = actorSystem.actorOf(Props[TFLInsertPolyLineDefinition], name = "TFLUpdatePolyLine")
+  override val dbInsertActor: ActorRef = actorSystem.actorOf(Props[TFLInsertPolyLineDefinition], name = "TFLUpdatePolyLine")
   override protected val collection: DatabaseCollections = POLYLINE_INDEX_COLLECTION
 }
 

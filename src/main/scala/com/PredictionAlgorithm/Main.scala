@@ -31,6 +31,7 @@ object Main extends App {
       ui.setUpdateRouteDefinitions(UpdateRouteDefinitionsControlInterface)
       ui.setUpdateStopDefinitions(UpdateStopDefinitionsControlInterface)
       ui.setAddPolyLines(AddPolyLinesControlInterface)
+      ui.setCleanUpPointToPoint(CleanUpPointToPointControlInterface)
       ui.createAndDisplayGUI
 
     }

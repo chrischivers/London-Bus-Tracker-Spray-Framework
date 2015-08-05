@@ -89,7 +89,7 @@
           </component>
         </children>
       </grid>
-      <grid id="33526" binding="DataProcessingPanel" layout-manager="GridLayoutManager" row-count="7" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="33526" binding="DataProcessingPanel" layout-manager="GridLayoutManager" row-count="10" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="5" left="5" bottom="5" right="5"/>
         <constraints>
           <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="2" indent="0" use-parent-layout="false"/>
@@ -199,6 +199,46 @@
             </constraints>
             <properties>
               <text value="Number route definition non-matches"/>
+            </properties>
+          </component>
+          <component id="6ba83" class="javax.swing.JButton" binding="cleanUpPointToPointButton">
+            <constraints>
+              <grid row="7" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Start PointToPoint Clean up"/>
+            </properties>
+          </component>
+          <component id="f3669" class="javax.swing.JLabel" binding="numberPointToPointRecordsCheckedForCleanUpValue">
+            <constraints>
+              <grid row="8" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="0"/>
+            </properties>
+          </component>
+          <component id="ae39b" class="javax.swing.JLabel">
+            <constraints>
+              <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Number PointToPoint Records checked"/>
+            </properties>
+          </component>
+          <component id="6ca8a" class="javax.swing.JLabel" binding="numberPointToPointRecordsDeletedValue">
+            <constraints>
+              <grid row="9" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="0"/>
+            </properties>
+          </component>
+          <component id="30b7c" class="javax.swing.JLabel">
+            <constraints>
+              <grid row="9" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Number PointToPoint Records deleted"/>
             </properties>
           </component>
         </children>
