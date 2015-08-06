@@ -21,13 +21,10 @@
     <script src="js/markerAnimate.js"></script>
     <script src="js/SlidingMarker.min.js"></script>
 
-
-
     <script>
         //SlidingMarker.initializeGlobally();
         var map;
         var markerArray = {};
-        var intervalFunctionArray = {};
         var nextArrivalTimeArray = {};
 
         function initialize() {
@@ -37,95 +34,96 @@
                 center: myLatlng,
                 mapTypeId: google.maps.MapTypeId.ROADMAP
             };
-
             map = new google.maps.Map(document.getElementById('map_canvas'), mapOptions);
-
             var source = new EventSource("/stream");
             source.onmessage = function(event) {
                 var parsedJson = JSON.parse(event.data);
                 if (parsedJson.nextArr != "0") {
                     setNewLocation(parsedJson.reg, parsedJson.nextArr, parsedJson.latLng);
                 }else {
-                        deleteVehicle(parsedJson.reg);
-                    }
+                    deleteVehicle(parsedJson.reg);
+                }
             };
-
         }
         $(function () {
             initialize();
         });
-
         function deleteVehicle(reg) {
-            clearSetInterval(intervalFunctionArray[reg]);
             delete markerArray[reg];
-            delete intervalFunctionArray[reg];
             delete nextArrivalTimeArray[reg];
         }
-
-
         function setNewLocation(reg, nextArr, latLng) {
-
             var latLngArray = [];
             var parsedLatLngArray = JSON.parse(latLng);
-
             for (var i = 0; i < parsedLatLngArray.length; i++) {
                 var splitLatLng = parsedLatLngArray[i].split(",");
                 latLngArray[i] = new google.maps.LatLng(splitLatLng[0], splitLatLng[1]);
             }
-
-                if(reg in markerArray) {
-
-                    var timeTilCompleted = (nextArrivalTimeArray[reg] - Date.now());
-                    setTimeout(function(){
-
-                      moveMarker(reg, latLngArray, nextArr);
-
-                    }, timeTilCompleted);
-
-
-                } else {
-
-                    var marker = new SlidingMarker({
-                        position: latLngArray[0],
-                        map: map,
-                        easing: "linear"
-                    });
-
-                    markerArray[reg] = marker;
+            if(reg in markerArray) {
+                var timeTilCompleted = (nextArrivalTimeArray[reg] - Date.now());
+                setTimeout(function(){
                     moveMarker(reg, latLngArray, nextArr);
-                }
-
+                }, timeTilCompleted);
+            } else {
+                markerArray[reg] = new SlidingMarker({
+                    position: latLngArray[0],
+                    map: map,
+                    easing: "linear"
+                });
+                moveMarker(reg, latLngArray, nextArr);
+            }
         }
-
         function moveMarker(reg, latLngArray, nextArr) {
 
             var nextArrivalTime = parseInt(nextArr);
             var latLngLength = latLngArray.length;
             var dur = (nextArrivalTime - Date.now());
-            var durForEachSegment = dur / latLngLength;
-            var indexOfLatLngArray = 0;
 
-            markerArray[reg].setPosition(latLngArray[indexOfLatLngArray]);
-            markerArray[reg].setDuration(durForEachSegment);
-            indexOfLatLngArray = indexOfLatLngArray + 1;
+            var distanceArray = [];
+            distanceArray[0] = 0;
+            var totalDistance = 0;
 
-            var setIntervalFunction = window.setInterval(function () {
-                if (indexOfLatLngArray < latLngLength) {
-                    markerArray[reg].setPosition(latLngArray[indexOfLatLngArray]);
-                    markerArray[reg].setDuration(durForEachSegment);
-                    indexOfLatLngArray = indexOfLatLngArray + 1;
-                }
-            }, durForEachSegment);
+            for (i = 1; i < latLngLength; i++) {
+                distanceArray[i] = getDistance(latLngArray[i - 1], latLngArray[i]);
+                totalDistance = totalDistance + distanceArray[i];
+            }
 
-            clearSetInterval(intervalFunctionArray[reg]);
-             intervalFunctionArray[reg] = setIntervalFunction;
+            var timeOutAcc = 0;
+            for (i = 0; i < latLngLength; i++) {
+                var proportionalDuration = distanceArray[i] / totalDistance;
+                var actualDuration = Math.round(dur * proportionalDuration);
+                timeoutFunc(reg,actualDuration,latLngArray[i],timeOutAcc);
+                timeOutAcc  = timeOutAcc + actualDuration;
+            }
+
+            function timeoutFunc(reg, actualDuration, position, timeOut){
+                setTimeout(function(){
+                    markerArray[reg].setDuration(actualDuration);
+                    markerArray[reg].setPosition(position);
+                },timeOut);
+            }
+
             nextArrivalTimeArray[reg] = nextArrivalTime;
-            setIntervalFunction;
+
         }
 
-        function clearSetInterval(myInterval) {
-            window.clearInterval(myInterval);
-        }
+
+        // Not own code. Taken from: http://stackoverflow.com/questions/1502590/calculate-distance-between-two-points-in-google-maps-v3
+        var rad = function(x) {
+            return x * Math.PI / 180;
+        };
+
+        var getDistance = function(p1, p2) {
+            var R = 6378137; // Earth’s mean radius in meter
+            var dLat = rad(p2.lat() - p1.lat());
+            var dLong = rad(p2.lng() - p1.lng());
+            var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(rad(p1.lat())) * Math.cos(rad(p2.lat())) *
+                    Math.sin(dLong / 2) * Math.sin(dLong / 2);
+            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            var d = R * c;
+            return Math.round(d * 100) / 100; // returns the distance in meter
+        };
 
 
     </script>
