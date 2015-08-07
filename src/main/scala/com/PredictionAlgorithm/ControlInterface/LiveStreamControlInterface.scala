@@ -2,12 +2,12 @@ package com.PredictionAlgorithm.ControlInterface
 
 import com.PredictionAlgorithm.Prediction.{KNNPrediction, PredictionInterface}
 import com.PredictionAlgorithm.Processes.TFL.{TFLProcessSourceLines, TFLIterateOverArrivalStream}
-import com.PredictionAlgorithm.Streaming.{LiveStreamResult, LiveStreamingCoordinator, StreamObject}
+import com.PredictionAlgorithm.Streaming.{PackagedStreamObject, LiveStreamResult, LiveStreamingCoordinator, LiveStream}
 
 
 object LiveStreamControlInterface extends StartStopControlInterface {
 
-  def getStream: Iterator[(String, String, Array[(String, String)])] = {
+  def getStream: Iterator[PackagedStreamObject] = {
     LiveStreamingCoordinator.getStream.iterator
   }
 

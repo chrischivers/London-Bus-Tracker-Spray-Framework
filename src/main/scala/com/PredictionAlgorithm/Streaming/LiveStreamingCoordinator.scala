@@ -10,6 +10,7 @@ import com.PredictionAlgorithm.Prediction.{PredictionRequest, KNNPrediction}
 import scala.collection.{SortedMap, mutable}
 import scala.concurrent.duration._
 
+case class PackagedStreamObject(reg:String, nextArrivalTime: String, decodedPolyLineToNextStop: Array[(String,String)], route_ID: String, direction_ID: Int, towards:String, nextStopID: String, nextStopName: String)
 
 object LiveStreamingCoordinator {
 
@@ -60,7 +61,7 @@ object LiveStreamingCoordinator {
       val actorsToKill = liveActors.filter(x => x._2._2 < (System.currentTimeMillis() - IDLE_TIME_UNTIL_ACTOR_KILLED))
       actorsToKill.foreach(x => {
         x._2._1 ! PoisonPill //Kill actor
-        enqueue(x._1, 0, Array()) //Send kill to stream Queue
+        enqueue(new PackagedStreamObject("","",Array(),"",0,"","","")) //Send kill to stream Queue
         liveActors = liveActors - x._1
         println("ActorKilled: " + x._1)
       })
@@ -70,24 +71,23 @@ object LiveStreamingCoordinator {
 
   def getStream = stream.toStream
 
-  def enqueue(vehicle_ID: String, arrivalTimeAtNextStop: Long, latLngArray: Array[(String, String)]) = stream.enqueue((vehicle_ID, arrivalTimeAtNextStop.toString, latLngArray))
+  def enqueue(pso: PackagedStreamObject) = stream.enqueue(pso)
 
 }
 
 // Implementation adapted from Stack Overflow article:
 //http://stackoverflow.com/questions/7553270/is-there-a-fifo-stream-in-scala
 class FIFOStream {
-  //StartAtTimestamp, duration, [lat lng],
-  private val queue = new LinkedBlockingQueue[Option[(String, String, Array[(String, String)])]]
+  private val queue = new LinkedBlockingQueue[Option[PackagedStreamObject]]
 
-  def toStream: Stream[(String, String, Array[(String, String)])] = queue take match {
-    case Some((a: String, b: String, c: Array[(String, String)])) => Stream cons((a, b, c), toStream)
+  def toStream: Stream[PackagedStreamObject] = queue take match {
+    case Some(pso: PackagedStreamObject) => Stream cons(pso, toStream)
     case None => Stream empty
   }
 
   def close() = queue add None
 
-  def enqueue(as: (String, String, Array[(String, String)])) = queue add Some(as)
+  def enqueue(pso: PackagedStreamObject) = queue add Some(pso)
 }
 
 

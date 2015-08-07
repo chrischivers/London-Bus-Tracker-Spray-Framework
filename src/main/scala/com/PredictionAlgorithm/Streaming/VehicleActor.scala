@@ -2,7 +2,7 @@ package com.PredictionAlgorithm.Streaming
 
 import akka.actor.Actor
 import com.PredictionAlgorithm.Commons.Commons
-import com.PredictionAlgorithm.DataDefinitions.TFL.TFLDefinitions
+import com.PredictionAlgorithm.DataDefinitions.TFL.{StopDefinitionFields, TFLDefinitions}
 import com.PredictionAlgorithm.DataSource.TFL.TFLSourceLine
 import com.PredictionAlgorithm.Prediction.{KNNPrediction, PredictionRequest}
 
@@ -89,7 +89,8 @@ class VehicleActor(vehicle_ID: String) extends Actor {
       nextStopArrivalDueAt = arrivalTime + predictedDurtoNextStop_MS.toLong
 
       // println("Veh: " + vehicle_ID + ". Relative duration: " + relativeDuration)
-      LiveStreamingCoordinator.enqueue(vehicle_ID, nextStopArrivalDueAt, decodedPolyLineToNextStop)
+      val pso = new PackagedStreamObject(vehicle_ID,nextStopArrivalDueAt.toString,decodedPolyLineToNextStop,routeID,directionID,"TODO",stopCode, TFLDefinitions.StopDefinitions(stopCode).stopPointName)
+      LiveStreamingCoordinator.enqueue(pso)
       LiveStreamingCoordinator.updateLiveActorTimestamp(vehicle_ID)
 
       val relativeDuration = nextStopArrivalDueAt - System.currentTimeMillis()

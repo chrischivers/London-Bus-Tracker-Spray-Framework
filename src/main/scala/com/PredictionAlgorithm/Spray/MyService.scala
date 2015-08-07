@@ -6,7 +6,7 @@ import akka.io.Tcp
 import com.PredictionAlgorithm.Commons.Commons
 import com.PredictionAlgorithm.ControlInterface.{LiveStreamControlInterface, QueryController}
 import com.PredictionAlgorithm.DataDefinitions.TFL.TFLDefinitions
-import com.PredictionAlgorithm.Streaming.{LiveStreamResult, LiveStreamingCoordinator}
+import com.PredictionAlgorithm.Streaming.{PackagedStreamObject, LiveStreamResult, LiveStreamingCoordinator}
 import spray.http.CacheDirectives.`no-cache`
 import spray.http.HttpHeaders.`Cache-Control`
 import spray.routing._
@@ -44,7 +44,8 @@ trait MyService extends HttpService {
   implicit def executionContext = actorRefFactory.dispatcher
 
   val sc = LiveStreamControlInterface
-  val stream: Iterator[(String, String, Array[(String, String)])] = sc.getStream
+  val stream: Iterator[PackagedStreamObject] = sc.getStream
+  val streamFields = Array("reg","nextArr","latLng","routeID", "directionID", "towards","nextStopID","nextStopName")
   val `text/event-stream` = MediaType.custom("text/event-stream")
   MediaTypes.register(`text/event-stream`)
 
@@ -67,7 +68,7 @@ trait MyService extends HttpService {
         }
       } ~
       path("maps") {
-        getFromResource("html/mapstest2.html")
+        getFromResource("html/mapstest.html")
       } ~
     path("predict") {
       get {
@@ -138,15 +139,16 @@ trait MyService extends HttpService {
              // in(Duration(500, MILLISECONDS))
               {
                 val next = stream.next()
-                val nextList = Map("reg" -> next._1,
-               //   "route" -> next._2.routeID,
-                //  "dir" -> next._2.directionID.toString,
-                //  "point" -> next._2.nextPointSeq.toString,
-                //  "stopCode" -> next._2.nextStopCode,
-                //  "stopName" -> next._2.nextStopName,
-                  "nextArr" -> next._2,
-                  "latLng" -> compact(render(next._3.map(x=> x._1 + "," + x._2).toList)))
-                 // "arrivalTime" -> next._2.arrivalTimeStamp.toString)
+                val nextList = Map(
+                  streamFields(0) -> next.reg,
+                  streamFields(1) -> next.nextArrivalTime,
+                  streamFields(2) -> compact(render(next.decodedPolyLineToNextStop.map(x=> x._1 + "," + x._2).toList)),
+                 streamFields(3) -> next.route_ID,
+                 streamFields(4) -> next.direction_ID.toString,
+                 streamFields(5) -> next.towards,
+               streamFields(6) -> next.nextStopID,
+              streamFields(7) -> next.nextStopName)
+
                 val json = compact(render(nextList))
 
                 val nextChunk = MessageChunk("data: " + json +"\n\n")

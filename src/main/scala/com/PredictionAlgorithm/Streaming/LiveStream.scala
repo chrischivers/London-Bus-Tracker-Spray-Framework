@@ -7,7 +7,7 @@ import com.PredictionAlgorithm.Prediction.{RouteListVariables, RoutePredictionMa
 
 
 //TODO add starting point
-class StreamObject(val routeID: String, val direction:Int, val startPoint:String, val startTime:Long) extends StreamInterface {
+class LiveStream(val routeID: String, val direction:Int, val startPoint:String, val startTime:Long) extends StreamInterface {
   //TODO do something with startPoint
   val startTimeOffset = Commons.getTimeOffset(startTime)
   val startDay = Commons.getDayCode(startTime)
