@@ -24,9 +24,6 @@ import scala.concurrent.duration._
 // we want to be able to test it independently, without having to spin up an actor
 class MyServiceActor extends Actor with MyService {
 
-  override val sc: LiveStreamControlInterface = new LiveStreamControlInterface
-  override val stream: Iterator[PackagedStreamObject] = sc.getStream
-
   // the HttpService trait defines only one abstract member, which
   // connects the services environment to the enclosing actor or test
   def actorRefFactory = context
@@ -48,8 +45,6 @@ trait MyService extends HttpService {
 
   implicit def executionContext = actorRefFactory.dispatcher
 
-  val sc: LiveStreamControlInterface
-  val stream: Iterator[PackagedStreamObject]
   val streamFields = Array("reg","nextArr","latLng","routeID", "directionID", "towards","nextStopID","nextStopName")
   val `text/event-stream` = MediaType.custom("text/event-stream")
   MediaTypes.register(`text/event-stream`)
@@ -89,7 +84,7 @@ trait MyService extends HttpService {
       } ~
       path("stream") {
         respondAsEventStream {
-          sendSSE
+          new sendStream().sendSSE
         }
       } ~
     path ("route_list_request.asp") {
@@ -101,52 +96,58 @@ trait MyService extends HttpService {
     }
   }
 
-  case class Ok()
+  class sendStream {
 
-  // This streaming method has been adapted from a demo at https://github.com/chesterxgchen/sse-demo
-  def sendSSE(ctx: RequestContext): Unit = {
-    actorRefFactory.actorOf {
-      Props {
-        new Actor {
-          // we use the successful sending of a chunk as trigger for scheduling the next chunk
-          val responseStart = HttpResponse(entity = HttpEntity(`text/event-stream`, "data: start\n\n"))
-          ctx.responder ! ChunkedResponseStart(responseStart).withAck(Ok)
+    case class Ok()
 
-          def receive = {
-            case Ok =>
-             // in(Duration(500, MILLISECONDS))
-              {
+    // This streaming method has been adapted from a demo at https://github.com/chesterxgchen/sse-demo
+    def sendSSE(ctx: RequestContext): Unit = {
+      actorRefFactory.actorOf {
+        Props {
+          new Actor {
+            val streamImpl: FIFOStreamImplementation = new FIFOStreamImplementation()
+            LiveStreamingCoordinator.registerNewStream(streamImpl)
+            val stream: Iterator[PackagedStreamObject] = streamImpl.toStream.iterator
+
+            // we use the successful sending of a chunk as trigger for scheduling the next chunk
+            val responseStart = HttpResponse(entity = HttpEntity(`text/event-stream`, "data: start\n\n"))
+            ctx.responder ! ChunkedResponseStart(responseStart).withAck(Ok)
+
+            def receive = {
+              case Ok =>
+                // in(Duration(500, MILLISECONDS)) {
                 val next = stream.next()
                 val nextList = Map(
                   streamFields(0) -> next.reg,
                   streamFields(1) -> next.nextArrivalTime,
-                  streamFields(2) -> compact(render(next.decodedPolyLineToNextStop.map(x=> x._1 + "," + x._2).toList)),
-                 streamFields(3) -> next.route_ID,
-                 streamFields(4) -> next.direction_ID.toString,
-                 streamFields(5) -> next.towards,
-               streamFields(6) -> next.nextStopID,
-              streamFields(7) -> next.nextStopName)
+                  streamFields(2) -> compact(render(next.decodedPolyLineToNextStop.map(x => x._1 + "," + x._2).toList)),
+                  streamFields(3) -> next.route_ID,
+                  streamFields(4) -> next.direction_ID.toString,
+                  streamFields(5) -> next.towards,
+                  streamFields(6) -> next.nextStopID,
+                  streamFields(7) -> next.nextStopName)
 
                 val json = compact(render(nextList))
 
-                val nextChunk = MessageChunk("data: " + json +"\n\n")
+                val nextChunk = MessageChunk("data: " + json + "\n\n")
                 ctx.responder ! nextChunk.withAck(Ok)
-              }
 
-            case ev: Tcp.ConnectionClosed => //
+              case ev: Tcp.ConnectionClosed => //
+            }
           }
         }
       }
     }
+
+
+    def in[U](duration: FiniteDuration)(body: => U): Unit =
+      ActorSystem().scheduler.scheduleOnce(duration)(body)
   }
 
   def respondAsEventStream =
     respondWithHeader(`Cache-Control`(`no-cache`)) &
       respondWithHeader(`Connection`("Keep-Alive")) &
       respondWithMediaType(`text/event-stream`)
-
-  def in[U](duration: FiniteDuration)(body: => U): Unit =
-    ActorSystem().scheduler.scheduleOnce(duration)(body)
 
   def sendRouteList: String = {
     val routeList: List[String] = TFLDefinitions.RouteDefinitionMap.map(x=>x._1._1).toSet.toList.sorted

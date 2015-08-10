@@ -4,15 +4,6 @@ import com.PredictionAlgorithm.Prediction.{KNNPrediction, PredictionInterface}
 import com.PredictionAlgorithm.Processes.TFL.{TFLProcessSourceLines, TFLIterateOverArrivalStream}
 import com.PredictionAlgorithm.Streaming.{PackagedStreamObject, LiveStreamResult, LiveStreamingCoordinator, LiveStream}
 
-
-class LiveStreamControlInterface {
-
-  def getStream: Iterator[PackagedStreamObject] = {
-    LiveStreamingCoordinator.getStream.iterator
-  }
-
-}
-
 object LiveStreamControlInterface extends StartStopControlInterface {
 
   override def getVariableArray: Array[String] = {

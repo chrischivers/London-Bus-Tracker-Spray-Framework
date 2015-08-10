@@ -6,7 +6,9 @@ import akka.actor.Status.{Failure, Success}
 import akka.actor._
 import com.PredictionAlgorithm.DataSource.TFL.TFLSourceLine
 import com.PredictionAlgorithm.Prediction.{PredictionRequest, KNNPrediction}
+import com.PredictionAlgorithm.Spray.FIFOStreamImplementation
 
+import scala.collection.mutable.ListBuffer
 import scala.collection.{SortedMap, mutable}
 import scala.concurrent.duration._
 
@@ -15,9 +17,9 @@ case class PackagedStreamObject(reg:String, nextArrivalTime: String, decodedPoly
 object LiveStreamingCoordinator {
 
   implicit val actorSystem = ActorSystem("live_streaming")
+  @volatile private var streamList:mutable.ListBuffer[FIFOStreamImplementation] = ListBuffer()
   implicit val timeout = 1000
 
-  private val stream = new FIFOStream
   private var liveActors = Map[String, (ActorRef, Long)]()
   private var inputsReceivedCache: List[(String, String, Int, String, Long)] = List()
   private val CACHE_HOLD_FOR_TIME = 600000
@@ -46,6 +48,11 @@ object LiveStreamingCoordinator {
      }
   }
 
+  def registerNewStream(streamImpl: FIFOStreamImplementation): Unit = {
+    println("new stream registered")
+    streamList += streamImpl
+  }
+
   def getNumberLiveActors = liveActors.size
 
   def updateLiveActorTimestamp(reg: String) = {
@@ -69,26 +76,12 @@ object LiveStreamingCoordinator {
     }
   }
 
-  def getStream = stream.toStream
-
-  def enqueue(pso: PackagedStreamObject) = stream.enqueue(pso)
-
-}
-
-// Implementation adapted from Stack Overflow article:
-//http://stackoverflow.com/questions/7553270/is-there-a-fifo-stream-in-scala
-class FIFOStream {
-  private val queue = new LinkedBlockingQueue[Option[PackagedStreamObject]]
-
-  def toStream: Stream[PackagedStreamObject] = queue take match {
-    case Some(pso: PackagedStreamObject) => Stream cons(pso, toStream)
-    case None => Stream empty
+  def enqueue(pso: PackagedStreamObject) =  {
+    streamList.foreach(x=> x.enqueue(pso))
   }
 
-  def close() = queue add None
-
-  def enqueue(pso: PackagedStreamObject) = queue add Some(pso)
 }
+
 
 
 
