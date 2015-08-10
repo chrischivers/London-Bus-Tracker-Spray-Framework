@@ -48,10 +48,10 @@
 
 
         function initialize() {
-            var myLatlng = new google.maps.LatLng(32.520204, 34.937258);
+            var startingPoint = new google.maps.LatLng(51.504041, -0.124283);
             var mapOptions = {
-                zoom: 4,
-                center: myLatlng,
+                zoom:11,
+                center: startingPoint,
                 mapTypeId: google.maps.MapTypeId.ROADMAP
             };
             map = new google.maps.Map(document.getElementById('map_canvas'), mapOptions);
@@ -83,8 +83,9 @@
             }
             if(reg in markerArray) {
                 var timeTilCompleted = (nextArrivalTimeArray[reg] - Date.now());
+               // alert("Next arrival time array = " + nextArrivalTimeArray[reg] + ". Date now: " + Date.now() + " Time till completed: " + timeTilCompleted);
                 setTimeout(function(){
-                    moveMarker(reg, latLngArray, nextArr);
+                    moveMarker(reg, latLngArray, nextArr, routeID, directionID, towards, nextStopID, nextStopName);
                 }, timeTilCompleted);
             } else {
 
@@ -101,13 +102,11 @@
                    // labelAnchor: ,
                     easing: "linear"
                 });
-
-
-
                 moveMarker(reg, latLngArray, nextArr, routeID, directionID, towards, nextStopID, nextStopName);
             }
         }
         function moveMarker(reg, latLngArray, nextArr, routeID, directionID, towards, nextStopID, nextStopName) {
+           // alert("move requested");
 
             var nextArrivalTime = parseInt(nextArr);
             var latLngLength = latLngArray.length;
@@ -136,6 +135,8 @@
                 timeOutAcc  = timeOutAcc + actualDuration;
             }
 
+            nextArrivalTimeArray[reg] = nextArrivalTime;
+
             function timeoutFunc(reg, actualDuration, position, labelPosition, rotation, timeOut){
                 setTimeout(function(){
                     markerArray[reg].setDuration(actualDuration);
@@ -151,7 +152,7 @@
             }
 
 
-            nextArrivalTimeArray[reg] = nextArrivalTime;
+
 
         }
 

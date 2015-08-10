@@ -24,6 +24,9 @@ import scala.concurrent.duration._
 // we want to be able to test it independently, without having to spin up an actor
 class MyServiceActor extends Actor with MyService {
 
+  override val sc: LiveStreamControlInterface = new LiveStreamControlInterface
+  override val stream: Iterator[PackagedStreamObject] = sc.getStream
+
   // the HttpService trait defines only one abstract member, which
   // connects the services environment to the enclosing actor or test
   def actorRefFactory = context
@@ -35,6 +38,8 @@ class MyServiceActor extends Actor with MyService {
     //runRoute(myRoute)
     runRoute(thisRoute)
   }
+
+
 }
 
 
@@ -43,8 +48,8 @@ trait MyService extends HttpService {
 
   implicit def executionContext = actorRefFactory.dispatcher
 
-  val sc = LiveStreamControlInterface
-  val stream: Iterator[PackagedStreamObject] = sc.getStream
+  val sc: LiveStreamControlInterface
+  val stream: Iterator[PackagedStreamObject]
   val streamFields = Array("reg","nextArr","latLng","routeID", "directionID", "towards","nextStopID","nextStopName")
   val `text/event-stream` = MediaType.custom("text/event-stream")
   MediaTypes.register(`text/event-stream`)

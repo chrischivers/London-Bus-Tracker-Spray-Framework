@@ -9,11 +9,7 @@
 
         function loadRouteIDs()
         {
-            var xmlhttp;
-            if (window.XMLHttpRequest)
-            {// code for IE7+, Firefox, Chrome, Opera, Safari
-                xmlhttp=new XMLHttpRequest();
-            }
+            var xmlhttp =new XMLHttpRequest();
             xmlhttp.onreadystatechange=function()
             {
                 if (xmlhttp.readyState==4 && xmlhttp.status==200)
@@ -32,9 +28,28 @@
             };
             xmlhttp.open("GET","route_list_request.asp",true);
             xmlhttp.send();
-        };
+        }
 
-        function loadDirections() {
+        function loadDirections(routeID) {
+            var xmlhttp =new XMLHttpRequest();
+                xmlhttp.onreadystatechange=function()
+                {
+                    if (xmlhttp.readyState==4 && xmlhttp.status==200)
+                    {
+                        var parsedJson = JSON.parse(xmlhttp.responseText);
+                        var routeArray = parsedJson.routeList;
+
+                        for(var i = 0; i < routeArray.length; i++) {
+                            var opt = routeArray[i];
+                            var el = document.createElement("option");
+                            el.textContent = opt;
+                            el.value = opt;
+                            routeIdCombo.appendChild(el);
+                        }
+                    }
+                };
+            xmlhttp.open("GET","direction_list_request.asp?route=" + routeID,true);
+            xmlhttp.send();
 
         }
     </SCRIPT>
