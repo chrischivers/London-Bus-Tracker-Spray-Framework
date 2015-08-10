@@ -69,6 +69,34 @@
     <orderEntry type="library" name="SBT: org.scala-lang:scala-reflect:2.11.0:jar" level="project" />
     <orderEntry type="library" name="SBT: org.scala-lang:scalap:2.11.0:jar" level="project" />
     <orderEntry type="library" name="SBT: org.scala-lang.modules:scala-parser-combinators_2.11:1.0.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: asm:asm:3.0:jar" level="project" />
+    <orderEntry type="library" name="SBT: asm:asm-commons:3.0:jar" level="project" />
+    <orderEntry type="library" name="SBT: asm:asm-tree:3.0:jar" level="project" />
+    <orderEntry type="library" name="SBT: classworlds:classworlds:1.1-alpha-2:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.intellij:forms_rt:7.0.3:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.intellij:javac2:7.0.3:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.jgoodies:forms:1.1-preview:jar" level="project" />
+    <orderEntry type="library" name="SBT: jdom:jdom:1.0:jar" level="project" />
+    <orderEntry type="library" name="SBT: junit:junit:3.8.2:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.apache.ant:ant:1.7.0:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.apache.ant:ant-launcher:1.7.0:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.apache.maven:maven-artifact:2.0.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.apache.maven:maven-artifact-manager:2.0.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.apache.maven:maven-model:2.0.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.apache.maven:maven-plugin-api:2.0:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.apache.maven:maven-profile:2.0.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.apache.maven:maven-project:2.0.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.apache.maven:maven-repository-metadata:2.0.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.apache.maven.wagon:wagon-provider-api:1.0-alpha-5:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.codehaus.plexus:plexus-container-default:1.0-alpha-9:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.codehaus.plexus:plexus-utils:1.0.5:jar" level="project" />
+    <orderEntry type="module-library">
+      <library name="SBT: unmanaged-sources-and-docs">
+        <CLASSES />
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
     <option name="_basePreferences">

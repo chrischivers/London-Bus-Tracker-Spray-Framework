@@ -75,13 +75,13 @@ object LoadRouteDefinitions extends LoadResource {
 
       // RouteName, WebCode
       var routeSet: Set[(String, String)] = Set()
-      val routeListFile = new File(DEFAULT_RESOURCES_LOCATION + DEFAULT_ROUTE_LIST_FILE_NAME)
-      val numberLinesInFile = Source.fromFile(routeListFile).getLines().size
+      val routeListFile  = DEFAULT_ROUTE_LIST_FILE
+      val numberLinesInFile = routeListFile.getLines().size
       println("Lines in file: " + numberLinesInFile)
       var numberLinesProcessed = 0
 
-      val s = Source.fromFile(routeListFile)
-      s.getLines.drop(1).foreach((line) => {
+
+      routeListFile.getLines.drop(1).foreach((line) => {
         //drop first row and iterate through others
         try {
           val splitLine = line.split(",")

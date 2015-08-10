@@ -7,7 +7,6 @@ import akka.io.IO
 import akka.util.Timeout
 import com.PredictionAlgorithm.ControlInterface._
 import com.PredictionAlgorithm.DataDefinitions.TFL.{TFLDefinitions, LoadStopDefinitions}
-import com.PredictionAlgorithm.Prediction.RoutePredictionMapping
 import com.PredictionAlgorithm.Spray.{MyServiceActor, Boot}
 import com.PredictionAlgorithm.UI.{MonitoringUI}
 import akka.io.IO
@@ -20,6 +19,7 @@ import scala.concurrent.duration._
 object Main extends App {
 
   val UI_REFRESH_INTERVAL:Int = 1000;
+
 
   SwingUtilities.invokeLater(new Runnable() {
     def run {
@@ -46,7 +46,7 @@ object Main extends App {
 
   implicit val timeout = Timeout(5.seconds)
   // start a new HTTP server on port 8080 with our service actor as the handler
-  IO(Http) ? Http.Bind(service, interface = "localhost", port = 8080)
+  IO(Http) ? Http.Bind(service, interface = "0.0.0.0", port = 8080)
 
 
   //println(RoutePredictionMapping.getRoutePredictionMap("3",1,"THU",75600))

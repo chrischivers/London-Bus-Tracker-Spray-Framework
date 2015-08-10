@@ -70,40 +70,8 @@ trait MyService extends HttpService {
       path("maps") {
         getFromResource("html/mapstest.html")
       } ~
-    path("predict") {
-      get {
-          complete {
-            <html>
-              <link rel="stylesheet" href="css/form.css"/>
-              <body>
-                <form method="post">
-                  <p>
-                    <label for="a">Route:</label>
-                    <input type="text" name="route_ID"></input>
-                  </p>
-                  <p>
-                    <label for="a">Direction:</label>
-                    <input type="text" name="direction_ID"></input>
-                  </p>
-                  <p>
-                    <label for="a">From ID:</label>
-                    <input type="text" name="from_ID"></input>
-                  </p>
-                  <p>
-                    <label for="a">To ID:</label>
-                    <input type="text" name="to_ID"></input>
-                  </p>
-                  <p>
-                    <label for="a">Day Code:</label>
-                    <input type="text" name="day_code"></input>
-                  </p>
-                  <p>
-                    <input type="submit" value="Submit"></input>
-                  </p>
-                </form>
-              </body>
-            </html>
-        }
+    path("prediction") {
+            getFromResource("html/prediction.html")
       } ~
         post {
           formFields('route_ID, 'direction_ID, 'from_ID, 'to_ID, 'day_code) { (route: String, dir: String, from: String, to: String, day: String) => {
@@ -113,14 +81,19 @@ trait MyService extends HttpService {
             </h1>)
           }
           }
-
-        }
       } ~
       path("stream") {
         respondAsEventStream {
           sendSSE
         }
+      } ~
+    path ("route_list_request.asp") {
+      get {
+        complete{
+          sendRouteList
+        }
       }
+    }
   }
 
   case class Ok()
@@ -169,6 +142,12 @@ trait MyService extends HttpService {
 
   def in[U](duration: FiniteDuration)(body: => U): Unit =
     ActorSystem().scheduler.scheduleOnce(duration)(body)
+
+  def sendRouteList: String = {
+    val routeList: List[String] = TFLDefinitions.RouteDefinitionMap.map(x=>x._1._1).toSet.toList.sorted
+    val jsonMap = Map("routeList" -> routeList)
+    compact(render(jsonMap))
+  }
 
 }
 

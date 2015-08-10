@@ -12,13 +12,12 @@ import scala.io.Source
 object LoadStopIgnoreListFromFile extends LoadResource{
 
 
-  private val stopIgnoreListFile = new File(DEFAULT_RESOURCES_LOCATION + DEFAULT_STOP_IGNORE_LIST_FILE_NAME)
+  private val stopIgnoreListFile = DEFAULT_STOP_IGNORE_LIST_FILE
 
 
   lazy val stopIgnoreSet:Set[String] = {
    var stopIgnoreSet:Set[String] = Set()
-    val s = Source.fromFile(stopIgnoreListFile)
-    s.getLines.drop(1).foreach((line) => {
+    stopIgnoreListFile.getLines.drop(1).foreach((line) => {
       //drop first row and iterate through others
       try {
         val splitLine = line.split(",")

@@ -8,7 +8,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.duration._
 
-object Boot extends App {
+object Boot {
 
 
   // we need an ActorSystem to host our application in

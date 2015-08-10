@@ -12,12 +12,11 @@ import scala.io.Source
 object LoadRouteIgnoreListFromFile extends LoadResource{
 
 
-  private val routeIgnoreListFile = new File(DEFAULT_RESOURCES_LOCATION + DEFAULT_ROUTE_IGNORE_LIST_FILE_NAME)
+  private val routeIgnoreListFile = DEFAULT_ROUTE_IGNORE_LIST_FILE
 
   lazy val routeIgnoreSet:Set[String] = {
     var routeIgnoreSet:Set[String] = Set()
-    val s = Source.fromFile(routeIgnoreListFile)
-    s.getLines.drop(1).foreach((line) => {
+    routeIgnoreListFile.getLines.drop(1).foreach((line) => {
       //drop first row and iterate through others
       try {
         val splitLine = line.split(",")

@@ -1,6 +1,9 @@
+import sbtassembly.AssemblyKeys
+
+
 name := "BbkProject"
 
-version := "1.0"
+version := "1.02"
 
 scalaVersion := "2.11.7"
 
@@ -33,3 +36,17 @@ libraryDependencies ++= Seq("org.slf4j" % "slf4j-api" % "1.7.5",
   "org.clapper" %% "grizzled-slf4j" % "1.0.2")
 
 libraryDependencies += "org.json4s" %% "json4s-native" % "3.2.10"
+
+libraryDependencies += "org.codehaus.mojo" % "ideauidesigner-maven-plugin" % "1.0-beta-1"
+
+mainClass in assembly := Some("com.PredictionAlgorithm.Main")
+
+mainClass in (Compile, run) := Some("com.PredictionAlgorithm.Main")
+
+
+assemblyMergeStrategy in assembly := {
+  case PathList(ps @ _*) if ps.contains("uiDesigner") => MergeStrategy.first
+  case x =>
+    val oldStrategy = (assemblyMergeStrategy in assembly).value
+    oldStrategy(x)
+}
