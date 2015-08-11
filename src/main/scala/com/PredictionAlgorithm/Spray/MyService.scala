@@ -67,8 +67,8 @@ trait MyService extends HttpService {
           getFromResourceDirectory("images")
         }
       } ~
-      path("maps") {
-        getFromResource("html/mapstest.html")
+      path("map") {
+        getFromResource("html/livemap.html")
       } ~
     path("prediction") {
             getFromResource("html/prediction.html")
@@ -83,8 +83,11 @@ trait MyService extends HttpService {
           }
       } ~
       path("stream") {
-        respondAsEventStream {
-          new sendStream().sendSSE
+        parameters("routeIDs".?) { (routeIDs) =>
+          respondAsEventStream {
+            if (routeIDs.isDefined) new sendStream(routeIDs.get.split(",")).sendSSE
+            else new sendStream(Array()).sendSSE
+          }
         }
       } ~
     path ("route_list_request.asp") {
@@ -96,19 +99,20 @@ trait MyService extends HttpService {
     }
   }
 
-  class sendStream {
+  class sendStream(routeIDs:Array[String]) {
 
     case class Ok()
 
     // This streaming method has been adapted from a demo at https://github.com/chesterxgchen/sse-demo
     def sendSSE(ctx: RequestContext): Unit = {
+
+      val streamImpl: FIFOStreamImplementation = new FIFOStreamImplementation(routeIDs)
+      LiveStreamingCoordinator.registerNewStream(streamImpl)
+      val stream: Iterator[PackagedStreamObject] = streamImpl.toStream.iterator
+
       actorRefFactory.actorOf {
         Props {
           new Actor {
-            val streamImpl: FIFOStreamImplementation = new FIFOStreamImplementation()
-            LiveStreamingCoordinator.registerNewStream(streamImpl)
-            val stream: Iterator[PackagedStreamObject] = streamImpl.toStream.iterator
-
             // we use the successful sending of a chunk as trigger for scheduling the next chunk
             val responseStart = HttpResponse(entity = HttpEntity(`text/event-stream`, "data: start\n\n"))
             ctx.responder ! ChunkedResponseStart(responseStart).withAck(Ok)
@@ -132,7 +136,7 @@ trait MyService extends HttpService {
                 val nextChunk = MessageChunk("data: " + json + "\n\n")
                 ctx.responder ! nextChunk.withAck(Ok)
 
-              case ev: Tcp.ConnectionClosed => //
+              case ev: Tcp.ConnectionClosed => LiveStreamingCoordinator.deregisterStream(streamImpl)
             }
           }
         }

@@ -20,7 +20,6 @@ object LiveStreamingCoordinator extends LiveStreamingCoordinatorInterface {
 
 
   override def setObjectPosition(liveSourceLine: TFLSourceLine): Unit = {
-    if (liveSourceLine.route_ID == "3") {
       // This checks it is not aready in the cache
       if (!inputsReceivedCache.exists(x => x._1 == liveSourceLine.vehicle_Reg && x._2 == liveSourceLine.route_ID && x._3 == liveSourceLine.direction_ID && x._4 == liveSourceLine.stop_Code)) {
         inputsReceivedCache = inputsReceivedCache :+(liveSourceLine.vehicle_Reg, liveSourceLine.route_ID, liveSourceLine.direction_ID, liveSourceLine.stop_Code, System.currentTimeMillis())
@@ -31,14 +30,13 @@ object LiveStreamingCoordinator extends LiveStreamingCoordinatorInterface {
           liveActors(vehicleReg)._1 ! liveSourceLine
         } else {
 
-          val newActor: ActorRef = actorSystem.actorOf(Props(new VehicleActor(vehicleReg)), vehicleReg)
+          val newVehicleActor: ActorRef = actorSystem.actorOf(Props(new VehicleActor(vehicleReg)), vehicleReg)
           this.synchronized {
-            liveActors = liveActors + (vehicleReg ->(newActor, System.currentTimeMillis()))
+            liveActors = liveActors + (vehicleReg ->(newVehicleActor, System.currentTimeMillis()))
           }
-          newActor ! liveSourceLine //Start it off
+          newVehicleActor ! liveSourceLine //Start it off
         }
       }
-    }
   }
 
 }

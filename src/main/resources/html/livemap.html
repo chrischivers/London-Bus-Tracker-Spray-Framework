@@ -5,27 +5,7 @@
     <meta charset="utf-8">
     <title>Bus Route UI</title>
 
-    <style type="text/css">
-        html, body, #map_canvas {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-        }
-    </style>
-
-    <style type="text/css">
-        .labels {
-            color: red;
-            background: white;
-            font-family: "Lucida Grande", "Arial", sans-serif;
-            font-size: 18px;
-            font-weight: bold;
-            text-align: center;
-            white-space: nowrap;
-        }
-    </style>
-
+    <link href="css/map.css" rel="stylesheet" />
     <script type="text/javascript"
             src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBxCYp9RWcbhuPg0nLWFzJhuPbECQYOqBw"></script>
     <script src="js/jquery-2.1.4.min.js"></script>
@@ -47,7 +27,9 @@
         var LABEL_ROTATE_POINT_V_OFFSET = 10;
 
 
+
         function initialize() {
+            loadRouteIDs();
             var startingPoint = new google.maps.LatLng(51.504041, -0.124283);
             var mapOptions = {
                 zoom:11,
@@ -56,16 +38,12 @@
             };
             map = new google.maps.Map(document.getElementById('map_canvas'), mapOptions);
 
+            document.getElementById("runButton").addEventListener("click", function(){
+                var selectedValues = $('#routeIDOption').val();
+                startStream(selectedValues.join());
+                $('#settings_canvas').css('visibility', 'hidden');
+            });
 
-            var source = new EventSource("/stream");
-            source.onmessage = function(event) {
-                var parsedJson = JSON.parse(event.data);
-                if (parsedJson.nextArr != "0") {
-                    setNewLocation(parsedJson.reg, parsedJson.nextArr, parsedJson.latLng, parsedJson.routeID, parsedJson.directionID, parsedJson.towards, parsedJson.nextStopID, parsedJson.nextStopName);
-                }else {
-                    deleteVehicle(parsedJson.reg);
-                }
-            };
         }
         $(function () {
             initialize();
@@ -208,11 +186,56 @@
             return x * Math.PI / 180;
         };
 
+        function loadRouteIDs()
+        {
+            var routeIdCombo = document.getElementById("routeIDOption");
+            var xmlhttp =new XMLHttpRequest();
+            xmlhttp.onreadystatechange=function()
+            {
+                if (xmlhttp.readyState==4 && xmlhttp.status==200)
+                {
+                    var parsedJson = JSON.parse(xmlhttp.responseText);
+                    var routeArray = parsedJson.routeList;
+
+                    for(var i = 0; i < routeArray.length; i++) {
+                        var opt = routeArray[i];
+                        var el = document.createElement("option");
+                        el.textContent = opt;
+                        el.value = opt;
+                        routeIdCombo.appendChild(el);
+                    }
+                }
+            };
+            xmlhttp.open("GET","route_list_request.asp",true);
+            xmlhttp.send();
+        }
+        function startStream(routeSelection) {
+            var source = new EventSource("/stream?routeIDs=" + routeSelection);
+            source.onmessage = function(event) {
+                var parsedJson = JSON.parse(event.data);
+                if (parsedJson.nextArr != "0") {
+                    setNewLocation(parsedJson.reg, parsedJson.nextArr, parsedJson.latLng, parsedJson.routeID, parsedJson.directionID, parsedJson.towards, parsedJson.nextStopID, parsedJson.nextStopName);
+                }else {
+                    deleteVehicle(parsedJson.reg);
+                }
+            };
+        }
 
 
     </script>
 </head>
 <body>
 <div id="map_canvas"></div>
+<div id="settings_canvas" class="settings">
+    <div class="content">
+    <div class="row">
+        <label for="routeIDOption">Choose Route:</label>
+        <select id="routeIDOption" multiple>
+        </select>
+            <button id="runButton">Run</button>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>

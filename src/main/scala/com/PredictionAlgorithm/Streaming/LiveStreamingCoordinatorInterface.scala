@@ -1,6 +1,6 @@
 package com.PredictionAlgorithm.Streaming
 
-import akka.actor.{ActorSystem, ActorRef}
+import akka.actor.{PoisonPill, ActorSystem, ActorRef}
 import com.PredictionAlgorithm.DataSource.TFL.TFLSourceLine
 import com.PredictionAlgorithm.Spray.FIFOStreamImplementation
 
