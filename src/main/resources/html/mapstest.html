@@ -99,7 +99,7 @@
                     map: map,
                     labelContent: routeID,
                     labelClass: "labels",
-                   // labelAnchor: ,
+                    visible: false,
                     easing: "linear"
                 });
                 moveMarker(reg, latLngArray, nextArr, routeID, directionID, towards, nextStopID, nextStopName);
@@ -139,6 +139,7 @@
 
             function timeoutFunc(reg, actualDuration, position, labelPosition, rotation, timeOut){
                 setTimeout(function(){
+                    if (timeOut > 0) { markerArray[reg].setVisible(true);}
                     markerArray[reg].setDuration(actualDuration);
                     markerArray[reg].labelAnchor = labelPosition;
                     markerArray[reg].label.setStyles();
