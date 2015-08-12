@@ -8,9 +8,6 @@ import com.PredictionAlgorithm.Prediction.{KNNPrediction, PredictionRequest}
 
 import scala.concurrent.duration._
 
-/**
- * Created by chrischivers on 04/08/15.
- */
 class VehicleActor(vehicle_ID: String) extends Actor {
 
   import context.dispatcher
@@ -72,7 +69,6 @@ class VehicleActor(vehicle_ID: String) extends Actor {
     lastIndexSentForProcessing = indexOfStopCode
    // println("veh: " + vehicle_ID + ". lastindexSentforProcessing: " + lastIndexSentForProcessing + ". StopCode: " + stopCode + ". stopList length - 1: " + (StopList.length - 1) + "RouteID: " + routeID + ". Direction ID:" + directionID)
     val polyLineToNextStop = TFLDefinitions.RouteDefinitionMap(routeID,directionID)(indexOfStopCode)._4
-    val decodedPolyLineToNextStop = Commons.decodePolyLine(polyLineToNextStop)
 
     val nextStopCode = StopList(indexOfStopCode + 1)
     val indexOfNextStopCode = indexOfStopCode + 1
@@ -89,7 +85,8 @@ class VehicleActor(vehicle_ID: String) extends Actor {
       nextStopArrivalDueAt = arrivalTime + predictedDurtoNextStop_MS.toLong
 
       // println("Veh: " + vehicle_ID + ". Relative duration: " + relativeDuration)
-      val pso = new PackagedStreamObject(vehicle_ID,nextStopArrivalDueAt.toString,decodedPolyLineToNextStop,routeID,directionID,"TODO",stopCode, TFLDefinitions.StopDefinitions(stopCode).stopPointName)
+      val movementDataArray = Commons.getMovementDataArray(polyLineToNextStop,routeID)
+      val pso = new PackagedStreamObject(vehicle_ID,nextStopArrivalDueAt.toString,movementDataArray,routeID,directionID,"TODO",stopCode, TFLDefinitions.StopDefinitions(stopCode).stopPointName)
       LiveStreamingCoordinator.enqueue(pso)
       LiveStreamingCoordinator.updateLiveActorTimestamp(vehicle_ID)
 

@@ -17,6 +17,8 @@ trait LiveStreamingCoordinatorInterface {
   implicit val timeout = 1000
   val CACHE_HOLD_FOR_TIME = 600000
   val IDLE_TIME_UNTIL_ACTOR_KILLED = 600000
+  var TIME_OF_LAST_CLEANUP:Long = 0
+  val TIME_BETWEEN_CLEANUPS = 60000
   @volatile private var cleaningInProgress: Boolean = false
 
   def setObjectPosition(liveSourceLine: TFLSourceLine)
@@ -37,8 +39,9 @@ trait LiveStreamingCoordinatorInterface {
   def updateLiveActorTimestamp(reg: String) = {
     this.synchronized {
       liveActors = liveActors + (reg ->(liveActors(reg)._1, System.currentTimeMillis()))
+      if (!cleaningInProgress && System.currentTimeMillis() - TIME_OF_LAST_CLEANUP > TIME_BETWEEN_CLEANUPS) cleanUpLiveActorsList
     }
-    //if (!cleaningInProgress) cleanUpLiveActorsList
+
   }
   def enqueue(pso: PackagedStreamObject) =  {
     streamList.foreach(x=> x.enqueue(pso))
@@ -47,6 +50,7 @@ trait LiveStreamingCoordinatorInterface {
   def cleanUpLiveActorsList = {
     this.synchronized {
       cleaningInProgress = true
+      TIME_OF_LAST_CLEANUP = System.currentTimeMillis()
       val actorsToKill = liveActors.filter(x => x._2._2 < (System.currentTimeMillis() - IDLE_TIME_UNTIL_ACTOR_KILLED))
       actorsToKill.foreach(x => {
         x._2._1 ! PoisonPill //Kill actor

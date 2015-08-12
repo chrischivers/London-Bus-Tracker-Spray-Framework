@@ -23,9 +23,6 @@
         var markerArray = {};
         var nextArrivalTimeArray = {};
         var infoBoxArray = {};
-        var LABEL_DISTANCE = 50;
-        var LABEL_ROTATE_POINT_V_OFFSET = 10;
-
 
 
         function initialize() {
@@ -48,22 +45,45 @@
         $(function () {
             initialize();
         });
+
+        function startStream(routeSelection) {
+            var source = new EventSource("/stream?routeIDs=" + routeSelection);
+            source.onmessage = function(event) {
+                var parsedJson = JSON.parse(event.data);
+                if (parsedJson.nextArr != "0") {
+                    setNewLocation(parsedJson.reg, parsedJson.nextArr, parsedJson.movementData, parsedJson.routeID, parsedJson.directionID, parsedJson.towards, parsedJson.nextStopID, parsedJson.nextStopName);
+                }else {
+                    deleteVehicle(parsedJson.reg);
+                }
+            };
+        }
+
+
         function deleteVehicle(reg) {
             delete markerArray[reg];
             delete nextArrivalTimeArray[reg];
         }
-        function setNewLocation(reg, nextArr, latLng, routeID, directionID, towards, nextStopID, nextStopName) {
+        function setNewLocation(reg, nextArr, movementData, routeID, directionID, towards, nextStopID, nextStopName) {
             var latLngArray = [];
-            var parsedLatLngArray = JSON.parse(latLng);
-            for (var i = 0; i < parsedLatLngArray.length; i++) {
-                var splitLatLng = parsedLatLngArray[i].split(",");
-                latLngArray[i] = new google.maps.LatLng(splitLatLng[0], splitLatLng[1]);
+            var rotationArray = [];
+            var proportionalDurationArray = [];
+            var labelPosArray = [];
+
+            var parsedmovementDataArray = JSON.parse(movementData);
+            for (var i = 0; i < parsedmovementDataArray.length; i++) {
+                var splitArray = parsedmovementDataArray[i].split(",");
+                latLngArray[i] = new google.maps.LatLng(splitArray[0], splitArray[1]);
+                rotationArray[i] = parseInt(splitArray[2]);
+                proportionalDurationArray[i] = splitArray[3];
+                labelPosArray[i] = new google.maps.Point(splitArray[4], splitArray[5]);
+                //alert("latLng: " + latLngArray[i] + ", rotation: " + rotationArray[i] + ", propotional dist: " + proportionalDurationArray[i] + ", laelposArray: " + labelPosArray[i])
             }
+
             if(reg in markerArray) {
                 var timeTilCompleted = (nextArrivalTimeArray[reg] - Date.now());
                // alert("Next arrival time array = " + nextArrivalTimeArray[reg] + ". Date now: " + Date.now() + " Time till completed: " + timeTilCompleted);
                 setTimeout(function(){
-                    moveMarker(reg, latLngArray, nextArr, routeID, directionID, towards, nextStopID, nextStopName);
+                    moveMarker(reg, latLngArray, rotationArray, proportionalDurationArray, labelPosArray, nextArr, routeID, directionID, towards, nextStopID, nextStopName);
                 }, timeTilCompleted);
             } else {
 
@@ -80,35 +100,19 @@
                     visible: false,
                     easing: "linear"
                 });
-                moveMarker(reg, latLngArray, nextArr, routeID, directionID, towards, nextStopID, nextStopName);
+                moveMarker(reg, latLngArray, rotationArray, proportionalDurationArray, labelPosArray, nextArr, routeID, directionID, towards, nextStopID, nextStopName);
             }
         }
-        function moveMarker(reg, latLngArray, nextArr, routeID, directionID, towards, nextStopID, nextStopName) {
+        function moveMarker(reg, latLngArray, rotationArray, proportionalDurationArray, labelPosArray, nextArr, routeID, directionID, towards, nextStopID, nextStopName) {
            // alert("move requested");
 
             var nextArrivalTime = parseInt(nextArr);
             var latLngLength = latLngArray.length;
             var dur = (nextArrivalTime - Date.now());
 
-            var distanceArray = [];
-            var rotationArray = [];
-            var labelPosArray = [];
-            distanceArray[0] = 0;
-            rotationArray[0] = getRotation(latLngArray[0], latLngArray[1]); //starting position. Not significant. Improves visualisation
-            labelPosArray[0] = getLabelPosition(rotationArray[0], routeID.length); //starting position. Not significant. Improves visualisation
-            var totalDistance = 0;
-
-            for (i = 1; i < latLngLength; i++) {
-                distanceArray[i] = getDistance(latLngArray[i - 1], latLngArray[i]);
-                rotationArray[i] = getRotation(latLngArray[i - 1], latLngArray[i]);
-                labelPosArray[i] = getLabelPosition(rotationArray[i], routeID.length);
-                totalDistance = totalDistance + distanceArray[i];
-            }
-
             var timeOutAcc = 0;
             for (i = 0; i < latLngLength; i++) {
-                var proportionalDuration = distanceArray[i] / totalDistance;
-                var actualDuration = Math.round(dur * proportionalDuration);
+                var actualDuration = Math.round(dur * proportionalDurationArray[i]);
                 timeoutFunc(reg,actualDuration,latLngArray[i],labelPosArray[i], rotationArray[i], timeOutAcc);
                 timeOutAcc  = timeOutAcc + actualDuration;
             }
@@ -116,6 +120,7 @@
             nextArrivalTimeArray[reg] = nextArrivalTime;
 
             function timeoutFunc(reg, actualDuration, position, labelPosition, rotation, timeOut){
+                alert(rotation);
                 setTimeout(function(){
                     if (timeOut > 0) { markerArray[reg].setVisible(true);}
                     markerArray[reg].setDuration(actualDuration);
@@ -129,62 +134,8 @@
                      markerArray[reg].setPosition(position);
                 },timeOut);
             }
-
-
-
-
         }
 
-
-        // Not own code. Taken from: http://stackoverflow.com/questions/1502590/calculate-distance-between-two-points-in-google-maps-v3
-
-        var getDistance = function(p1, p2) {
-            var R = 6378137; // Earth’s mean radius in meter
-            var dLat = rad(p2.lat() - p1.lat());
-            var dLong = rad(p2.lng() - p1.lng());
-            var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                    Math.cos(rad(p1.lat())) * Math.cos(rad(p2.lat())) *
-                    Math.sin(dLong / 2) * Math.sin(dLong / 2);
-            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            var d = R * c;
-            return Math.round(d * 100) / 100; // returns the distance in meter
-        };
-
-        // Not my code
-        // Formula from http://stackoverflow.com/questions/2908892/get-degrees-0-360-from-one-latlng-to-another-in-javascript
-        var getRotation = function(p1, p2) {
-            var lat1 = p1.lat();
-            var lat2 = p2.lat();
-            var lon1 = p1.lng();
-            var lon2 = p2.lng();
-
-            var lat1 = lat1 * Math.PI / 180;
-            var lat2 = lat2 * Math.PI / 180;
-            var dLon = (lon2 - lon1) * Math.PI / 180;
-
-            var y = Math.sin(dLon) * Math.cos(lat2);
-            var x = Math.cos(lat1) * Math.sin(lat2) -
-                    Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
-
-            var brng = Math.atan2(y, x);
-
-            return (((brng * 180 / Math.PI) + 360) % 360);
-        };
-
-        var getLabelPosition = function(rotation, routeIDLength) {
-            var h = -(Math.sin(rad(rotation)) * -LABEL_DISTANCE) + ((routeIDLength / 2) * 8);
-            var v = Math.cos(rad(rotation))  * -LABEL_DISTANCE + LABEL_ROTATE_POINT_V_OFFSET;
-            //    alert("Angle: " + rotation + " Sin Pos: " + Math.sin(rotation * (Math.PI/180)) + ". Cos Pos: " + Math.cos(rotation * (Math.PI/ 180)) + ".  H: " + h + ". V: " + v)
-            //alert(h + "," + v);
-
-            //return new google.maps.Point((routeIDLength / 2) * 10, -LABEL_DISTANCE);
-           // return new google.maps.Point(0,-LABEL_DISTANCE);
-            return new google.maps.Point(h,v);
-        };
-
-        var rad = function(x) {
-            return x * Math.PI / 180;
-        };
 
         function loadRouteIDs()
         {
@@ -209,18 +160,6 @@
             xmlhttp.open("GET","route_list_request.asp",true);
             xmlhttp.send();
         }
-        function startStream(routeSelection) {
-            var source = new EventSource("/stream?routeIDs=" + routeSelection);
-            source.onmessage = function(event) {
-                var parsedJson = JSON.parse(event.data);
-                if (parsedJson.nextArr != "0") {
-                    setNewLocation(parsedJson.reg, parsedJson.nextArr, parsedJson.latLng, parsedJson.routeID, parsedJson.directionID, parsedJson.towards, parsedJson.nextStopID, parsedJson.nextStopName);
-                }else {
-                    deleteVehicle(parsedJson.reg);
-                }
-            };
-        }
-
 
     </script>
 </head>

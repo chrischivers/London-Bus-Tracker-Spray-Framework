@@ -45,7 +45,7 @@ trait MyService extends HttpService {
 
   implicit def executionContext = actorRefFactory.dispatcher
 
-  val streamFields = Array("reg","nextArr","latLng","routeID", "directionID", "towards","nextStopID","nextStopName")
+  val streamFields = Array("reg","nextArr","movementData","routeID", "directionID", "towards","nextStopID","nextStopName")
   val `text/event-stream` = MediaType.custom("text/event-stream")
   MediaTypes.register(`text/event-stream`)
 
@@ -124,13 +124,12 @@ trait MyService extends HttpService {
                 val nextList = Map(
                   streamFields(0) -> next.reg,
                   streamFields(1) -> next.nextArrivalTime,
-                  streamFields(2) -> compact(render(next.decodedPolyLineToNextStop.map(x => x._1 + "," + x._2).toList)),
+                  streamFields(2) -> compact(render(next.markerMovementData.map({case(lat,lng,rot,propDist,labx,laby) => lat + "," + lng + "," + rot + "," + propDist + "," + labx + "," + laby }).toList)),
                   streamFields(3) -> next.route_ID,
                   streamFields(4) -> next.direction_ID.toString,
                   streamFields(5) -> next.towards,
                   streamFields(6) -> next.nextStopID,
                   streamFields(7) -> next.nextStopName)
-
                 val json = compact(render(nextList))
 
                 val nextChunk = MessageChunk("data: " + json + "\n\n")

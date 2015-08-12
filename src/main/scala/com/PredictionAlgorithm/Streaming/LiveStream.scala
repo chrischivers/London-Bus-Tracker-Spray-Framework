@@ -11,7 +11,7 @@ class LiveStream(val routeID: String, val direction:Int, val startPoint:String, 
   //TODO do something with startPoint
   val startTimeOffset = Commons.getTimeOffset(startTime)
   val startDay = Commons.getDayCode(startTime)
-  var atEnd: Boolean = false;
+  var atEnd: Boolean = false
 
   val routeList = RoutePredictionMapping.getRoutePredictionMap(routeID,direction,startDay,startTimeOffset).getOrElse(
     throw new InstantiationError("Cannot get route map for routeID: " + routeID + ", direction: " + direction + ", start point: " + startDay + ", startTimeOffset: " + startTimeOffset))
