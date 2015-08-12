@@ -6,9 +6,7 @@ import com.PredictionAlgorithm.DataDefinitions.LoadResource
 
 import scala.io.Source
 
-/**
- * Created by chrischivers on 17/07/15.
- */
+
 object LoadRouteIgnoreListFromFile extends LoadResource{
 
 

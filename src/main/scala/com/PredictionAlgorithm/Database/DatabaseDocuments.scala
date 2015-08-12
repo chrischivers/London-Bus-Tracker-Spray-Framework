@@ -5,7 +5,7 @@ sealed trait DatabaseDocuments {
 
 }
 
-final case class POINT_TO_POINT_DOCUMENT(route_ID: String, direction_ID: Int, from_Point_ID: String, to_Point_ID: String, day_Of_Week: String, timeOffsetSeconds: Int, durationSeconds: Int) extends DatabaseDocuments {
+final case class POINT_TO_POINT_DOCUMENT(route_ID: String, direction_ID: Int, from_Point_ID: String, to_Point_ID: String, day_Of_Week: String, timeOffsetSeconds: Int, durationSeconds: Int, rainfall: Double) extends DatabaseDocuments {
 
   override val collection = POINT_TO_POINT_COLLECTION
 

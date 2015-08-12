@@ -7,6 +7,7 @@ import com.PredictionAlgorithm.DataDefinitions.TFL.TFLDefinitions
 import com.PredictionAlgorithm.DataSource.TFL.{TFLSourceLine, TFLDataSource}
 import com.PredictionAlgorithm.Database.POINT_TO_POINT_DOCUMENT
 import com.PredictionAlgorithm.Database.TFL.{TFLMongoDBConnection, TFLInsertPointToPointDuration}
+import com.PredictionAlgorithm.Processes.Weather.Weather
 import com.PredictionAlgorithm.Streaming.LiveStreamingCoordinator
 import grizzled.slf4j.Logger
 
@@ -27,9 +28,14 @@ object TFLProcessSourceLines {
   val stopIgnoreList = TFLDefinitions.StopIgnoreList
   val routeIgnoreList = TFLDefinitions.RouteIgnoreList
 
+  var currentRainFall = Weather.getCurrentRainFall
+
   def getBufferSize: Int = holdingBuffer.size
 
   def apply(newLine: TFLSourceLine) {
+
+    checkAndUpdateRainfall
+
     if (validateLine(newLine)) {
       // Send to Live Streaming Coordinator if Enabled
       if (liveStreamCollectionEnabled) LiveStreamingCoordinator.setObjectPosition(newLine)
@@ -68,6 +74,10 @@ object TFLProcessSourceLines {
     holdingBuffer = holdingBuffer.filter{case ((_),(_,time)) => time > CUT_OFF}
   }
 
+  def checkAndUpdateRainfall = {
+    if (currentRainFall.validTo - System.currentTimeMillis() < 0) currentRainFall = Weather.getCurrentRainFall
+  }
+
   def validateLine(line: TFLSourceLine): Boolean = {
 
     if (line.route_ID == "288" && line.direction_ID == 1 && line.stop_Code == "76069") {
@@ -104,7 +114,7 @@ object TFLProcessSourceLines {
 
 
   def createPointToPointDocument(route_ID: String, direction_ID: Int, from_Point_ID: String, to_Point_ID: String, day_Type: String, observed_Time: Int, durationSeconds: Int): POINT_TO_POINT_DOCUMENT = {
-    new POINT_TO_POINT_DOCUMENT(route_ID, direction_ID, from_Point_ID, to_Point_ID, day_Type, observed_Time, durationSeconds)
+    new POINT_TO_POINT_DOCUMENT(route_ID, direction_ID, from_Point_ID, to_Point_ID, day_Type, observed_Time, durationSeconds,currentRainFall.rainfall)
   }
 
   def setLiveStreamCollection(enabled: Boolean) = {

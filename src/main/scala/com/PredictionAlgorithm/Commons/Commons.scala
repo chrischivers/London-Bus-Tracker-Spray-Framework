@@ -63,10 +63,13 @@ object Commons {
       (BigDecimal(lat).setScale(6, RoundingMode.HALF_UP).toString(),
         BigDecimal(lng).setScale(6, RoundingMode.HALF_UP).toString(),
         rot.toString,
-        BigDecimal(dist / sumOfDistances).setScale(2, RoundingMode.HALF_UP).toString(),
+        try {
+          BigDecimal(dist / sumOfDistances).setScale(2, RoundingMode.HALF_UP).toString()
+        } catch {
+          case e:NumberFormatException => "0"
+        },
         BigDecimal(labx).setScale(6, RoundingMode.HALF_UP).toString(),
         BigDecimal(laby).setScale(6, RoundingMode.HALF_UP).toString())}
-
   }
 
 

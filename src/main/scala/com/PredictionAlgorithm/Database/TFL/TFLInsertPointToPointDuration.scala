@@ -47,7 +47,7 @@ class TFLInsertPointToPointDuration extends Actor {
 
     pruneExistingCollectionBeforeInsert(newObj, doc.timeOffsetSeconds)
 
-    val pushUpdate = $push(collection.DURATION_LIST -> (MongoDBObject(collection.DURATION -> doc.durationSeconds, collection.TIME_OFFSET -> doc.timeOffsetSeconds, collection.TIME_STAMP -> System.currentTimeMillis())))
+    val pushUpdate = $push(collection.DURATION_LIST -> (MongoDBObject(collection.DURATION -> doc.durationSeconds, collection.TIME_OFFSET -> doc.timeOffsetSeconds, collection.RAINFALL -> doc.rainfall, collection.TIME_STAMP -> System.currentTimeMillis())))
 
     // Upsert - pushing Duration and ObservedTime to Array
     TFLInsertPointToPointDuration.dBCollection.update(newObj, pushUpdate, upsert = true)
@@ -65,7 +65,7 @@ class TFLInsertPointToPointDuration extends Actor {
         val vecWithKNNTimeFiltering = sortedDurTimeDifVec.filter(_._4 <= PRUNE_THRESHOLD_TIME_LIMIT)
         if (vecWithKNNTimeFiltering.size > PRUNE_THRESHOLD_K_LIMIT) {
           val entryToDelete = vecWithKNNTimeFiltering.minBy(_._3) //Gets the oldest record in the vector
-          val updatePull = $pull(collection.DURATION_LIST -> (MongoDBObject(collection.DURATION-> entryToDelete._1,collection.TIME_OFFSET -> entryToDelete._2, collection.TIME_STAMP -> entryToDelete._3)))
+          val updatePull = $pull(collection.DURATION_LIST -> (MongoDBObject(collection.DURATION-> entryToDelete._1,collection.TIME_OFFSET -> entryToDelete._2, collection.TIME_STAMP -> entryToDelete._3, collection.RAINFALL -> entryToDelete._5)))
           TFLInsertPointToPointDuration.dBCollection.update(newObj, updatePull)
           TFLInsertPointToPointDuration.numberDBPullTransactionsExecuted += 1
         }
@@ -74,12 +74,13 @@ class TFLInsertPointToPointDuration extends Actor {
 
 
     // Vector is Duration, Time Offset, Time_Stamp, Time Offset Difference
-    def getDurListVectorFromCursor(dbObject: Imports.MongoDBObject, timeOffSet:Int): Vector[(Int, Int, Long, Int)] = {
+    def getDurListVectorFromCursor(dbObject: Imports.MongoDBObject, timeOffSet:Int): Vector[(Int, Int, Long, Int, Double)] = {
       dbObject.get(collection.DURATION_LIST).get.asInstanceOf[Imports.BasicDBList].map(y => {
         (y.asInstanceOf[Imports.BasicDBObject].getInt(collection.DURATION),
           y.asInstanceOf[Imports.BasicDBObject].getInt(collection.TIME_OFFSET),
           y.asInstanceOf[Imports.BasicDBObject].getLong(collection.TIME_STAMP),
-          math.abs(y.asInstanceOf[Imports.BasicDBObject].getInt(collection.TIME_OFFSET) - timeOffSet))
+          math.abs(y.asInstanceOf[Imports.BasicDBObject].getInt(collection.TIME_OFFSET) - timeOffSet),
+          y.asInstanceOf[Imports.BasicDBObject].getDouble(collection.RAINFALL))
       })
         .toVector
         .sortBy(_._4)
