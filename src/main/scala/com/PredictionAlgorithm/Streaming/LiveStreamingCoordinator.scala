@@ -33,7 +33,7 @@ object LiveStreamingCoordinator extends LiveStreamingCoordinatorInterface {
 
           val newVehicleActor: ActorRef = actorSystem.actorOf(Props(new VehicleActor(vehicleReg)), vehicleReg)
           this.synchronized {
-            liveActors = liveActors + (vehicleReg ->(newVehicleActor, System.currentTimeMillis()))
+            liveActors = liveActors + (vehicleReg ->(newVehicleActor, liveSourceLine.route_ID, System.currentTimeMillis()))
           }
           newVehicleActor ! liveSourceLine //Start it off
         }

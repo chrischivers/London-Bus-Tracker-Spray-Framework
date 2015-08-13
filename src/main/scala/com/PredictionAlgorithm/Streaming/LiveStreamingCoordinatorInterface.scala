@@ -11,7 +11,7 @@ case class livePositionData(routeID: String, directionID: Int, pointSequence: In
 
 trait LiveStreamingCoordinatorInterface {
 
-  var liveActors = Map[String, (ActorRef, Long)]()
+  var liveActors = Map[String, (ActorRef, String, Long)]()
   implicit val actorSystem = ActorSystem("live_streaming")
   @volatile var streamList:mutable.ListBuffer[FIFOStreamImplementation] = ListBuffer()
   implicit val timeout = 1000
@@ -36,9 +36,10 @@ trait LiveStreamingCoordinatorInterface {
 
   def getNumberLiveActors = liveActors.size
 
-  def updateLiveActorTimestamp(reg: String) = {
+  def updateLiveActorTimestamp(reg: String, routeID: String, timeStamp: Long) = {
     this.synchronized {
-      liveActors = liveActors + (reg ->(liveActors(reg)._1, System.currentTimeMillis()))
+      val currentValue = liveActors.get(reg)
+      if (currentValue.isDefined) liveActors = liveActors + (reg -> (currentValue.get._1, routeID, timeStamp))
       if (!cleaningInProgress && System.currentTimeMillis() - TIME_OF_LAST_CLEANUP > TIME_BETWEEN_CLEANUPS) cleanUpLiveActorsList
     }
 
@@ -48,18 +49,21 @@ trait LiveStreamingCoordinatorInterface {
   }
 
   def cleanUpLiveActorsList = {
-    this.synchronized {
       cleaningInProgress = true
       TIME_OF_LAST_CLEANUP = System.currentTimeMillis()
-      val actorsToKill = liveActors.filter(x => x._2._2 < (System.currentTimeMillis() - IDLE_TIME_UNTIL_ACTOR_KILLED))
+      val cutOffThreshold = System.currentTimeMillis() - IDLE_TIME_UNTIL_ACTOR_KILLED
+      val actorsToKill = liveActors.filter(x => x._2._3 < cutOffThreshold)
       actorsToKill.foreach(x => {
-        x._2._1 ! PoisonPill //Kill actor
-        enqueue(new PackagedStreamObject("","",Array(),"",0,"","","")) //Send kill to stream Queue
-        liveActors = liveActors - x._1
-        println("ActorKilled: " + x._1)
+        killActor(x._1, x._2._2)//Kill actor
       })
       cleaningInProgress = false
-    }
+  }
+
+  def killActor(reg: String, routeID: String ) = {
+    val value = liveActors.get(reg)
+      if (value.isDefined) value.get._1 ! PoisonPill
+      enqueue(new PackagedStreamObject(reg,"kill",Array(),routeID ,0,"0","0","0")) //Send kill to stream Queue
+      liveActors = liveActors - reg
   }
 
 }

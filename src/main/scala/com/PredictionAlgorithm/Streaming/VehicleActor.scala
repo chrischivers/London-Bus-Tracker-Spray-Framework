@@ -1,6 +1,6 @@
 package com.PredictionAlgorithm.Streaming
 
-import akka.actor.Actor
+import akka.actor.{PoisonPill, Actor}
 import com.PredictionAlgorithm.Commons.Commons
 import com.PredictionAlgorithm.DataDefinitions.TFL.{StopDefinitionFields, TFLDefinitions}
 import com.PredictionAlgorithm.DataSource.TFL.TFLSourceLine
@@ -12,17 +12,23 @@ class VehicleActor(vehicle_ID: String) extends Actor {
 
   import context.dispatcher
   val DEFAULT_DURATION_WHERE_PREDICTION_NOT_AVAILABLE:Double = 45
+  val SPEED_UP_MODE_TIME_MULTIPLIER = 0.5
 
   var StopList: List[String] = List()
   var receivedFirstLine = false
+  var pauseAutoProcessing:Boolean = false
+  var speedUpNumber = 0
   var lastIndexSentForProcessing = -1
   var nextStopArrivalDueAt: Long = -1
   var currentRouteID:String = _
   var currentDirectionID:Int = _
 
   override def receive: Actor.Receive = {
-    case sourceLine: TFLSourceLine => if(receivedLineValid(sourceLine)) process(sourceLine.route_ID,sourceLine.direction_ID,sourceLine.arrival_TimeStamp,sourceLine.stop_Code)
-    case indexOfNextStopToCalculate:Int => handleNextStopCalculation(indexOfNextStopToCalculate)
+    case sourceLine: TFLSourceLine => if(receivedLineValid(sourceLine)) {
+      process(sourceLine.route_ID,sourceLine.direction_ID,sourceLine.arrival_TimeStamp,sourceLine.stop_Code)
+      pauseAutoProcessing = false
+    }
+    case indexOfNextStopToCalculate:Int => if (!pauseAutoProcessing) handleNextStopCalculation(indexOfNextStopToCalculate)
   }
 
   def buildStopList (routeID: String, directionID: Int) = {
@@ -35,32 +41,58 @@ class VehicleActor(vehicle_ID: String) extends Actor {
     if (receivedFirstLine) {
       val indexOfStopCode = StopList.indexOf(sourceLine.stop_Code)
       if (sourceLine.route_ID == currentRouteID && sourceLine.direction_ID== currentDirectionID) {
+
         if (indexOfStopCode == lastIndexSentForProcessing + 1 && indexOfStopCode != StopList.length - 1) true
-        else false
+
+        else if (indexOfStopCode <= lastIndexSentForProcessing && indexOfStopCode != StopList.length - 1) {
+          // Auto processing ahead of live stream, needs to pause to allow catch up
+          if (sourceLine.route_ID == "3") println("Running ahead")
+          pauseAutoProcessing = true
+          false
+
+        } else if (indexOfStopCode > lastIndexSentForProcessing + 1 && indexOfStopCode != StopList.length - 1) {
+          // Auto processing behind, needs to speed up to allow catch up
+          val stopsDifference = indexOfStopCode - (lastIndexSentForProcessing + 1)
+          for (i <- 1 to stopsDifference) {
+            speedUpNumber = speedUpNumber + 1
+            self ! lastIndexSentForProcessing + i
+          }
+          if (sourceLine.route_ID == "3")  println("Running Behind. SpeedUpNumber = " + speedUpNumber)
+          true
+        } else if (indexOfStopCode == StopList.length - 1) {
+          endOfRouteKill//Handle last stop
+          false
+        } else false
+
+      }else {
+          receivedFirstLine = false
+          receivedLineValid(sourceLine)
+        }
       } else {
-        receivedFirstLine = false
-        receivedLineValid(sourceLine)
+        receivedFirstLine = true
+        currentRouteID = sourceLine.route_ID
+        currentDirectionID = sourceLine.direction_ID
+        buildStopList(currentRouteID, currentDirectionID)
+        val indexOfStopCode = StopList.indexOf(sourceLine.stop_Code)
+        if (indexOfStopCode != StopList.length - 1) true
+        else false
       }
-    } else {
-      receivedFirstLine = true
-      currentRouteID = sourceLine.route_ID
-      currentDirectionID = sourceLine.direction_ID
-      buildStopList(currentRouteID, currentDirectionID)
-      val indexOfStopCode = StopList.indexOf(sourceLine.stop_Code)
-      if (indexOfStopCode != StopList.length - 1) true
-      else false
     }
-  }
 
 
   def handleNextStopCalculation(nextStopIndex:Int) = {
     if (nextStopIndex == lastIndexSentForProcessing + 1 && nextStopIndex != StopList.length - 1) {
       val routeID = currentRouteID
       val directionID = currentDirectionID
-      val arrivalTime = nextStopArrivalDueAt
+      val arrivalTime =nextStopArrivalDueAt
       val stopCode = StopList(nextStopIndex)
       process(routeID,directionID,arrivalTime,stopCode)
-    }
+    } else if (nextStopIndex == StopList.length - 1) endOfRouteKill
+
+  }
+
+  def endOfRouteKill = {
+    LiveStreamingCoordinator.killActor(vehicle_ID, currentRouteID)
   }
 
   def process(routeID:String, directionID:Int, arrivalTime:Long, stopCode:String) = {
@@ -82,17 +114,23 @@ class VehicleActor(vehicle_ID: String) extends Actor {
 
     in(Duration(transmitTime - System.currentTimeMillis() + 2000, MILLISECONDS)) {
 
-      nextStopArrivalDueAt = arrivalTime + predictedDurtoNextStop_MS.toLong
+      val addedTime = if (speedUpNumber > 0) (predictedDurtoNextStop_MS.toLong * SPEED_UP_MODE_TIME_MULTIPLIER).toLong else predictedDurtoNextStop_MS.toLong
+      nextStopArrivalDueAt = arrivalTime + addedTime
+      if (speedUpNumber > 0) speedUpNumber  = speedUpNumber - 1
 
       // println("Veh: " + vehicle_ID + ". Relative duration: " + relativeDuration)
       val movementDataArray = Commons.getMovementDataArray(polyLineToNextStop,routeID)
       val pso = new PackagedStreamObject(vehicle_ID,nextStopArrivalDueAt.toString,movementDataArray,routeID,directionID,"TODO",stopCode, TFLDefinitions.StopDefinitions(stopCode).stopPointName)
       LiveStreamingCoordinator.enqueue(pso)
-      LiveStreamingCoordinator.updateLiveActorTimestamp(vehicle_ID)
+      LiveStreamingCoordinator.updateLiveActorTimestamp(vehicle_ID, routeID, System.currentTimeMillis())
 
       val relativeDuration = nextStopArrivalDueAt - System.currentTimeMillis()
-      in(Duration(relativeDuration, MILLISECONDS)) {
-        self ! indexOfNextStopCode
+      try {
+        in(Duration(relativeDuration, MILLISECONDS)) {
+          self ! indexOfNextStopCode
+        }
+      } catch {
+        case e:NullPointerException => //Actor already killed. Do nothing
       }
     }
 

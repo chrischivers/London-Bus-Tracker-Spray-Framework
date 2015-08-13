@@ -21,7 +21,8 @@ object StreamProcessingControlInterface extends StartStopControlInterface {
 
   override def getVariableArray: Array[String] = {
     val numberLinesRead = TFLIterateOverArrivalStream.numberProcessed.toString
-    Array(numberLinesRead)
+    val currentRainfall = TFLProcessSourceLines.currentRainFall.rainfall.toString
+    Array(numberLinesRead, currentRainfall)
   }
 
 

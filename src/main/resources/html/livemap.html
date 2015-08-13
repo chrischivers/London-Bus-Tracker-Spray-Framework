@@ -50,7 +50,7 @@
             var source = new EventSource("/stream?routeIDs=" + routeSelection);
             source.onmessage = function(event) {
                 var parsedJson = JSON.parse(event.data);
-                if (parsedJson.nextArr != "0") {
+                if (parsedJson.nextArr != "kill") {
                     setNewLocation(parsedJson.reg, parsedJson.nextArr, parsedJson.movementData, parsedJson.routeID, parsedJson.directionID, parsedJson.towards, parsedJson.nextStopID, parsedJson.nextStopName);
                 }else {
                     deleteVehicle(parsedJson.reg);
@@ -76,7 +76,6 @@
                 rotationArray[i] = parseInt(splitArray[2]);
                 proportionalDurationArray[i] = splitArray[3];
                 labelPosArray[i] = new google.maps.Point(splitArray[4], splitArray[5]);
-                //alert("latLng: " + latLngArray[i] + ", rotation: " + rotationArray[i] + ", propotional dist: " + proportionalDurationArray[i] + ", laelposArray: " + labelPosArray[i])
             }
 
             if(reg in markerArray) {
@@ -120,7 +119,6 @@
             nextArrivalTimeArray[reg] = nextArrivalTime;
 
             function timeoutFunc(reg, actualDuration, position, labelPosition, rotation, timeOut){
-                alert(rotation);
                 setTimeout(function(){
                     if (timeOut > 0) { markerArray[reg].setVisible(true);}
                     markerArray[reg].setDuration(actualDuration);

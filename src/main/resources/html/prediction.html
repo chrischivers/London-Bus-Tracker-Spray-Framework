@@ -3,12 +3,39 @@
 <HEAD>
     <TITLE>TFL Prediction</TITLE>
     <SCRIPT>
-        var routeIdCombo = document.getElementById("routeIDCombo");
-        window.onload =loadRouteIDs;
-        routeIdCombo.onchange= loadDirections;
 
-        function loadRouteIDs()
-        {
+        window.onload =loadRouteIDs;
+
+
+        function loadRouteIDs() {
+            var routeIdCombo = document.getElementById("routeIDCombo");
+            var xmlhttp;
+            if (window.XMLHttpRequest) {// code for IE7+, Firefox, Chrome, Opera, Safari
+                xmlhttp = new XMLHttpRequest();
+            }
+            else {// code for IE6, IE5
+                xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+            }
+            xmlhttp.onreadystatechange = function () {
+                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                    var parsedJson = JSON.parse(xmlhttp.responseText);
+                    var routeArray = parsedJson.routeList;
+
+                    for (var i = 0; i < routeArray.length; i++) {
+                        var opt = routeArray[i];
+                        var el = document.createElement("option");
+                        el.textContent = opt;
+                        el.value = opt;
+                        routeIdCombo.appendChild(el);
+                    }
+                }
+            };
+            xmlhttp.open("GET", "route_list_request.asp", true);
+            xmlhttp.send();
+            routeIdCombo.onchange= loadDirections;
+        }
+
+        function loadDirections(routeID) {
             var xmlhttp =new XMLHttpRequest();
             xmlhttp.onreadystatechange=function()
             {
@@ -16,7 +43,6 @@
                 {
                     var parsedJson = JSON.parse(xmlhttp.responseText);
                     var routeArray = parsedJson.routeList;
-
                     for(var i = 0; i < routeArray.length; i++) {
                         var opt = routeArray[i];
                         var el = document.createElement("option");
@@ -26,41 +52,18 @@
                     }
                 }
             };
-            xmlhttp.open("GET","route_list_request.asp",true);
-            xmlhttp.send();
-        }
-
-        function loadDirections(routeID) {
-            var xmlhttp =new XMLHttpRequest();
-                xmlhttp.onreadystatechange=function()
-                {
-                    if (xmlhttp.readyState==4 && xmlhttp.status==200)
-                    {
-                        var parsedJson = JSON.parse(xmlhttp.responseText);
-                        var routeArray = parsedJson.routeList;
-
-                        for(var i = 0; i < routeArray.length; i++) {
-                            var opt = routeArray[i];
-                            var el = document.createElement("option");
-                            el.textContent = opt;
-                            el.value = opt;
-                            routeIdCombo.appendChild(el);
-                        }
-                    }
-                };
             xmlhttp.open("GET","direction_list_request.asp?route=" + routeID,true);
             xmlhttp.send();
-
         }
+
     </SCRIPT>
 
 </HEAD>
-<BODY style="font-family: sans-serif">
-
+<BODY>
 <fieldset>
     <legend>TFL Bus Prediction</legend>
     <br/>
-    RouteID: <select name="routeIDCombo" id="routeIDCombo"></select>
+    RouteID <select name="routeIDCombo" id="routeIDCombo"></select>
     DirectionID: <select name="directionIDCombo" id="directionIDCombo"></select>
 </fieldset>
 </BODY>
