@@ -24,8 +24,8 @@ object RoutePredictionMapping {
         val from = rl(a)._2
         val to = rl(a + 1)._2
         val duration = KNNPrediction.makePredictionBetweenConsecutivePoints(new PredictionRequest(routeID,direction,from,to,dayOfWeeK,cumulativeTimeOffset.toInt))
-        tempList = tempList :+ new RouteListVariables(point,from,to,duration.getOrElse(return None))
-        cumulativeTimeOffset += duration.get
+        tempList = tempList :+ new RouteListVariables(point,from,to,duration.getOrElse(return None)._1)
+        cumulativeTimeOffset += duration.get._1
       }
       Some(tempList)
     }

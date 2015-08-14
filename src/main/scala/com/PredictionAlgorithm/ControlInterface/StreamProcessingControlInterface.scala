@@ -3,6 +3,7 @@ package com.PredictionAlgorithm.ControlInterface
 import akka.actor.{Props, ActorSystem}
 import com.PredictionAlgorithm.Database.TFL.TFLInsertPointToPointDuration
 import com.PredictionAlgorithm.Processes.TFL.{TFLProcessSourceLines, TFLIterateOverArrivalStream}
+import com.PredictionAlgorithm.Processes.Weather.Weather
 
 
 object StreamProcessingControlInterface extends StartStopControlInterface {
@@ -21,7 +22,7 @@ object StreamProcessingControlInterface extends StartStopControlInterface {
 
   override def getVariableArray: Array[String] = {
     val numberLinesRead = TFLIterateOverArrivalStream.numberProcessed.toString
-    val currentRainfall = TFLProcessSourceLines.currentRainFall.rainfall.toString
+    val currentRainfall = Weather.getCurrentRainfall.toString
     Array(numberLinesRead, currentRainfall)
   }
 

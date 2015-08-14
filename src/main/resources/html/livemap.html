@@ -60,6 +60,7 @@
 
 
         function deleteVehicle(reg) {
+            markerArray[reg].setMap(null);
             delete markerArray[reg];
             delete nextArrivalTimeArray[reg];
         }

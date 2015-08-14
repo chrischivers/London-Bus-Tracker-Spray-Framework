@@ -106,7 +106,7 @@ class VehicleActor(vehicle_ID: String) extends Actor {
     val indexOfNextStopCode = indexOfStopCode + 1
 
     val predictionRequest = new PredictionRequest(routeID, directionID, stopCode, nextStopCode, Commons.getDayCode(arrivalTime), Commons.getTimeOffset(arrivalTime))
-    val predictedDurtoNextStop_MS = KNNPrediction.makePredictionBetweenConsecutivePoints(predictionRequest).getOrElse(DEFAULT_DURATION_WHERE_PREDICTION_NOT_AVAILABLE) * 1000
+    val predictedDurtoNextStop_MS = KNNPrediction.makePredictionBetweenConsecutivePoints(predictionRequest).getOrElse(DEFAULT_DURATION_WHERE_PREDICTION_NOT_AVAILABLE, 1)._1 * 1000
 
     //Holds back until previous has finished (prevents interuptions)
     val transmitTime = if (arrivalTime < nextStopArrivalDueAt) nextStopArrivalDueAt else arrivalTime
