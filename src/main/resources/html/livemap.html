@@ -25,6 +25,7 @@
         var infoBoxArray = {};
 
 
+
         function initialize() {
             loadRouteIDs();
             var startingPoint = new google.maps.LatLng(51.504041, -0.124283);
@@ -99,6 +100,19 @@
                     labelClass: "labels",
                     visible: false,
                     easing: "linear"
+                });
+
+                var infowindow =  new google.maps.InfoWindow({
+                    content: 'Hello World!',
+                    map: map
+                });
+
+                google.maps.event.addListener( markerArray[reg], 'mouseover', function() {
+                    infowindow.open(map, this);
+                });
+
+                google.maps.event.addListener( markerArray[reg], 'mouseout', function() {
+                    infowindow.close();
                 });
                 moveMarker(reg, latLngArray, rotationArray, proportionalDurationArray, labelPosArray, nextArr, routeID, directionID, towards, nextStopID, nextStopName);
             }

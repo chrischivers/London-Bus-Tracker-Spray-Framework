@@ -92,7 +92,7 @@ class VehicleActor(vehicle_ID: String) extends Actor {
   }
 
   def endOfRouteKill = {
-    LiveStreamingCoordinator.killActor(vehicle_ID, currentRouteID)
+    LiveStreamingCoordinator.killActor(new KillMessage(vehicle_ID,currentRouteID))
   }
 
   def process(routeID:String, directionID:Int, arrivalTime:Long, stopCode:String) = {
@@ -122,7 +122,6 @@ class VehicleActor(vehicle_ID: String) extends Actor {
       val movementDataArray = Commons.getMovementDataArray(polyLineToNextStop,routeID)
       val pso = new PackagedStreamObject(vehicle_ID,nextStopArrivalDueAt.toString,movementDataArray,routeID,directionID,"TODO",stopCode, TFLDefinitions.StopDefinitions(stopCode).stopPointName)
       LiveStreamingCoordinator.enqueue(pso)
-      LiveStreamingCoordinator.updateLiveActorTimestamp(vehicle_ID, routeID, System.currentTimeMillis())
 
       val relativeDuration = nextStopArrivalDueAt - System.currentTimeMillis()
       try {
@@ -138,4 +137,5 @@ class VehicleActor(vehicle_ID: String) extends Actor {
   }
   def in[U](duration: FiniteDuration)(body: => U): Unit =
     LiveStreamingCoordinator.actorSystem.scheduler.scheduleOnce(duration)(body)
+
 }
