@@ -19,6 +19,7 @@ import org.json4s.JsonDSL._
 
 
 object SimpleServer extends MySslConfiguration {
+  //This code is based on example from https://github.com/wandoulabs/spray-websocket
 
   final case class Push(routeID: String, msg: String)
 
@@ -94,9 +95,6 @@ object SimpleServer extends MySslConfiguration {
         } ~
         path("map") {
           getFromResource("html/livemap.html")
-        } ~
-        path("webapp") {
-          getFromResource("html/websocket.html")
         } ~
         path("prediction") {
           getFromResource("html/prediction.html")

@@ -115,16 +115,18 @@
                 timeOutAcc  = timeOutAcc + actualDuration;
             }
 
+            //infoBoxArray[reg].close();
             delete markerOverListenerArray[reg];
             delete markerOutListenerArray[reg];
             delete infoBoxArray[reg];
 
+            infoBoxArray[reg] = new google.maps.InfoWindow({
+                content: "Route: " + routeID + "<br />" + "Direction: " + directionID + "<br />" +  "Towards: "+ towards + "<br />" +  "Next Stop ID: " + nextStopID + "<br />" +  "Next Stop Name: " + nextStopName,
+            });
+
+
 
             markerOverListenerArray[reg] = google.maps.event.addListener( markerArray[reg], 'mouseover', function() {
-                infoBoxArray[reg] = new google.maps.InfoWindow({
-                    content: "Route: " + routeID + "<br />" + "Direction: " + directionID + "<br />" +  "Towards: "+ towards + "<br />" +  "Next Stop ID: " + nextStopID + "<br />" +  "Next Stop Name: " + nextStopName,
-                    map: map
-                });
                 infoBoxArray[reg].open(map, this);
             });
 

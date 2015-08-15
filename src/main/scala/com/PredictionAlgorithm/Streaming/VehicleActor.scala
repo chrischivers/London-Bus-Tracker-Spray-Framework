@@ -120,7 +120,7 @@ class VehicleActor(vehicle_ID: String) extends Actor {
 
       // println("Veh: " + vehicle_ID + ". Relative duration: " + relativeDuration)
       val movementDataArray = Commons.getMovementDataArray(polyLineToNextStop,routeID)
-      val pso = new PackagedStreamObject(vehicle_ID,nextStopArrivalDueAt.toString,movementDataArray,routeID,directionID,"TODO",nextStopCode, TFLDefinitions.StopDefinitions(nextStopCode).stopPointName)
+      val pso = new PackagedStreamObject(vehicle_ID,nextStopArrivalDueAt.toString,movementDataArray,routeID,directionID,TFLDefinitions.StopDefinitions(StopList.last).stopPointName,nextStopCode, TFLDefinitions.StopDefinitions(nextStopCode).stopPointName)
       LiveStreamingCoordinator.enqueue(pso)
 
       val relativeDuration = nextStopArrivalDueAt - System.currentTimeMillis()

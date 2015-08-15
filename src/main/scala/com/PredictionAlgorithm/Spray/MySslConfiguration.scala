@@ -4,6 +4,8 @@ import java.security.{ SecureRandom, KeyStore }
 import javax.net.ssl.{ KeyManagerFactory, SSLContext, TrustManagerFactory }
 import spray.io._
 
+//This code comes from https://github.com/wandoulabs/spray-websocket
+
 // for SSL support (if enabled in application.conf)
 trait MySslConfiguration {
 
