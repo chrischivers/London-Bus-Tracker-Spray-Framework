@@ -7,12 +7,14 @@ import akka.io.IO
 import akka.util.Timeout
 import com.PredictionAlgorithm.ControlInterface._
 import com.PredictionAlgorithm.DataDefinitions.TFL.{TFLDefinitions, LoadStopDefinitions}
-import com.PredictionAlgorithm.Spray.{MyServiceActor, Boot}
+import com.PredictionAlgorithm.Spray.SimpleServer.WebSocketServer
+import com.PredictionAlgorithm.Spray.{SimpleServer}
 import com.PredictionAlgorithm.UI.{MonitoringUI}
 import akka.io.IO
 import spray.can.Http
 import akka.pattern.ask
 import akka.util.Timeout
+import spray.can.server.UHttp
 import scala.concurrent.duration._
 
 
@@ -37,12 +39,19 @@ object Main extends App {
     }
   })
 
+  implicit val system = ActorSystem("websocket")
+  import system.dispatcher
 
+  val server = system.actorOf(WebSocketServer.props(), "websocket")
+
+  IO(UHttp) ! Http.Bind(server, "localhost", 8080)
+
+/*
   // we need an ActorSystem to host our application in
   implicit val system = ActorSystem("on-spray-can")
 
   // create and start our service actor
-  val service = system.actorOf(Props[MyServiceActor], "routingActor")
+  val service = system.actorOf(Props[SimpleServer], "routingActor")
 
   implicit val timeout = Timeout(5.seconds)
   // start a new HTTP server on port 8080 with our service actor as the handler
@@ -51,5 +60,5 @@ object Main extends App {
 
 
   //println(RoutePredictionMapping.getRoutePredictionMap("3",1,"THU",75600))
-
+*/
 }

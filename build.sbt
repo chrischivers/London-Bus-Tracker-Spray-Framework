@@ -3,7 +3,7 @@ import sbtassembly.AssemblyKeys
 
 name := "BbkProject"
 
-version := "1.08"
+version := "1.09"
 
 scalaVersion := "2.11.7"
 
@@ -22,7 +22,7 @@ libraryDependencies ++= {
   val sprayV = "1.3.3"
   Seq(
     "io.spray"            %%  "spray-can"     % sprayV,
-    "io.spray"            %%  "spray-routing" % sprayV,
+    "io.spray"            %%  "spray-routing-shapeless2" % sprayV,
     "io.spray"            %%  "spray-testkit" % sprayV  % "test",
   //  "io.spray"            %%  "spray-json"    % "1.3.2",
     "com.typesafe.akka"   %%  "akka-actor"    % akkaV,
@@ -30,6 +30,8 @@ libraryDependencies ++= {
     "org.specs2"          %%  "specs2-core"   % "2.3.11" % "test"
   )
 }
+
+libraryDependencies += "com.wandoulabs.akka" %% "spray-websocket" % "0.1.4"
 
 libraryDependencies ++= Seq("org.slf4j" % "slf4j-api" % "1.7.5",
   "org.slf4j" % "slf4j-simple" % "1.7.5",

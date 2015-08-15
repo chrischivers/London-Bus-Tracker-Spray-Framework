@@ -47,10 +47,7 @@ class LiveVehicleSupervisor extends Actor {
   def receive = {
     case liveSourceLine: TFLSourceLine => processLine(liveSourceLine)
     case km: KillMessage => killActor(km)
-    case actor: Terminated => {
-      println("Terminated received: " + actor.getActor.path.name)
-      liveActors = liveActors - actor.getActor.path.name
-    }
+    case actor: Terminated =>  liveActors = liveActors - actor.getActor.path.name
   }
 
   def processLine(liveSourceLine:TFLSourceLine) = {
@@ -60,7 +57,7 @@ class LiveVehicleSupervisor extends Actor {
       updateLiveActorTimestamp(vehicle_Reg,liveSourceLine.route_ID,System.currentTimeMillis())
       liveActors(vehicle_Reg)._1 ! liveSourceLine
     } else {
-      val newVehicleActor = actorSystem.actorOf(Props(new VehicleActor(vehicle_Reg)), vehicle_Reg)
+      val newVehicleActor = vehicleSystem.actorOf(Props(new VehicleActor(vehicle_Reg)), vehicle_Reg)
       liveActors = liveActors + (vehicle_Reg ->(newVehicleActor, liveSourceLine.route_ID, System.currentTimeMillis()))
       newVehicleActor ! liveSourceLine
       context.watch(newVehicleActor)

@@ -1,4 +1,4 @@
-package com.PredictionAlgorithm.Spray
+/*package com.PredictionAlgorithm.Spray
 
 
 import akka.actor.{ActorSystem, ActorLogging, Props, Actor}
@@ -50,54 +50,6 @@ trait MyService extends HttpService {
   MediaTypes.register(`text/event-stream`)
 
 
-  val thisRoute = {
-
-    pathPrefix("css") {
-      get {
-        getFromResourceDirectory("css")
-      }
-    } ~
-      pathPrefix("js") {
-        get {
-          getFromResourceDirectory("js")
-        }
-      } ~
-      pathPrefix("images") {
-        get {
-          getFromResourceDirectory("images")
-        }
-      } ~
-      path("map") {
-        getFromResource("html/livemap.html")
-      } ~
-    path("prediction") {
-            getFromResource("html/prediction.html")
-      } ~
-        post {
-          formFields('route_ID, 'direction_ID, 'from_ID, 'to_ID, 'day_code) { (route: String, dir: String, from: String, to: String, day: String) => {
-            val result = new QueryController().makePrediction(route, dir.toInt, from, to, day, Commons.getTimeOffset(System.currentTimeMillis))
-            complete(<h1>Prediction:
-              {result}
-            </h1>)
-          }
-          }
-      } ~
-      path("stream") {
-        parameters("routeIDs".?) { (routeIDs) =>
-          respondAsEventStream {
-            if (routeIDs.isDefined) new sendStream(routeIDs.get.split(",")).sendSSE
-            else new sendStream(Array()).sendSSE
-          }
-        }
-      } ~
-    path ("route_list_request.asp") {
-      get {
-        complete{
-          sendRouteList
-        }
-      }
-    }
-  }
 
   class sendStream(routeIDs:Array[String]) {
 
@@ -152,11 +104,7 @@ trait MyService extends HttpService {
       respondWithHeader(`Connection`("Keep-Alive")) &
       respondWithMediaType(`text/event-stream`)
 
-  def sendRouteList: String = {
-    val routeList: List[String] = TFLDefinitions.RouteDefinitionMap.map(x=>x._1._1).toSet.toList.sorted
-    val jsonMap = Map("routeList" -> routeList)
-    compact(render(jsonMap))
-  }
+
 
 }
-
+*/

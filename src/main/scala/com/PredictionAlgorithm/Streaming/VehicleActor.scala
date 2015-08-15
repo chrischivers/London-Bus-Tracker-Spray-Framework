@@ -136,6 +136,6 @@ class VehicleActor(vehicle_ID: String) extends Actor {
 
   }
   def in[U](duration: FiniteDuration)(body: => U): Unit =
-    LiveStreamingCoordinator.actorSystem.scheduler.scheduleOnce(duration)(body)
+    LiveStreamingCoordinator.vehicleSystem.scheduler.scheduleOnce(duration)(body)
 
 }

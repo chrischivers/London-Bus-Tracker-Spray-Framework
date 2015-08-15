@@ -19,6 +19,7 @@
     <script src="js/markerwithlabel.terikon.js"></script>
 
     <script>
+        var wsUri = "ws://localhost:8080/";
         var map;
         var markerArray = {};
         var nextArrivalTimeArray = {};
@@ -38,26 +39,16 @@
 
             document.getElementById("runButton").addEventListener("click", function(){
                 var selectedValues = $('#routeIDOption').val();
-                startStream(selectedValues.join());
+                setUpWebSocket(selectedValues.join());
                 $('#settings_canvas').css('visibility', 'hidden');
             });
+
+
 
         }
         $(function () {
             initialize();
         });
-
-        function startStream(routeSelection) {
-            var source = new EventSource("/stream?routeIDs=" + routeSelection);
-            source.onmessage = function(event) {
-                var parsedJson = JSON.parse(event.data);
-                if (parsedJson.nextArr != "kill") {
-                    setNewLocation(parsedJson.reg, parsedJson.nextArr, parsedJson.movementData, parsedJson.routeID, parsedJson.directionID, parsedJson.towards, parsedJson.nextStopID, parsedJson.nextStopName);
-                }else {
-                    deleteVehicle(parsedJson.reg);
-                }
-            };
-        }
 
 
         function deleteVehicle(reg) {
@@ -102,18 +93,16 @@
                     easing: "linear"
                 });
 
-                var infowindow =  new google.maps.InfoWindow({
-                    content: 'Hello World!',
-                    map: map
-                });
 
-                google.maps.event.addListener( markerArray[reg], 'mouseover', function() {
-                    infowindow.open(map, this);
+
+              /*  google.maps.event.addListener( markerArray[reg], 'mouseover', function() {
+                    infoBoxArray[reg].open(map, this);
                 });
 
                 google.maps.event.addListener( markerArray[reg], 'mouseout', function() {
-                    infowindow.close();
-                });
+                    infoBoxArray[reg].close();
+                });*/
+
                 moveMarker(reg, latLngArray, rotationArray, proportionalDurationArray, labelPosArray, nextArr, routeID, directionID, towards, nextStopID, nextStopName);
             }
         }
@@ -130,6 +119,11 @@
                 timeoutFunc(reg,actualDuration,latLngArray[i],labelPosArray[i], rotationArray[i], timeOutAcc);
                 timeOutAcc  = timeOutAcc + actualDuration;
             }
+
+           /* infoBoxArray[reg] =  new google.maps.InfoWindow({
+                content: "Route: " + routeID + "<br />" + "Direction: " + directionID + "<br />" +  "Towards: "+ towards + "<br />" +  "Next Stop ID: " + nextStopID + "<br />" +  "Next Stop Name: " + nextStopName,
+                map: map
+            });*/
 
             nextArrivalTimeArray[reg] = nextArrivalTime;
 
@@ -172,6 +166,46 @@
             };
             xmlhttp.open("GET","route_list_request.asp",true);
             xmlhttp.send();
+        }
+
+        function setUpWebSocket(routeSelection) {
+            websocket = new WebSocket(wsUri);
+            websocket.onopen = function(evt) {
+                onOpen(evt, routeSelection)
+            };
+            websocket.onclose = function(evt) {
+                onClose(evt)
+            };
+            websocket.onmessage = function(evt) {
+                onMessage(evt)
+            };
+            websocket.onerror = function(evt) {
+                onError(evt)
+            };
+        }
+        function onOpen(evt, routeSelection) {
+
+            alert("CONNECTED");
+            doSend(routeSelection);
+        }
+        function onClose(evt) {
+            alert("DISCONNECTED");
+        }
+        function onMessage(evt) {
+            alert(evt.data);
+                var parsedJson = JSON.parse(evt.data);
+                if (parsedJson.nextArr != "kill") {
+                    setNewLocation(parsedJson.reg, parsedJson.nextArr, parsedJson.movementData, parsedJson.routeID, parsedJson.directionID, parsedJson.towards, parsedJson.nextStopID, parsedJson.nextStopName);
+                }else {
+                    deleteVehicle(parsedJson.reg);
+                }
+            }
+        function onError(evt) {
+            alert("ERROR: " + evt.data);
+            //writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
+        }
+        function doSend(message) {
+            websocket.send(message);
         }
 
     </script>
