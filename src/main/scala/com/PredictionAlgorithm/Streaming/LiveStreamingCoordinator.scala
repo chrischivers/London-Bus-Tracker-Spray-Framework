@@ -6,7 +6,6 @@ import akka.actor.Status.{Failure, Success}
 import akka.actor._
 import com.PredictionAlgorithm.DataSource.TFL.TFLSourceLine
 import com.PredictionAlgorithm.Prediction.{PredictionRequest, KNNPrediction}
-import com.PredictionAlgorithm.Spray.FIFOStreamImplementation
 import com.PredictionAlgorithm.Streaming.LiveStreamingCoordinator._
 
 import scala.collection.mutable.ListBuffer

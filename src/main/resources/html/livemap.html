@@ -19,11 +19,13 @@
     <script src="js/markerwithlabel.terikon.js"></script>
 
     <script>
-        var wsUri = "ws://localhost:8080/";
+        var wsUri = "ws://0.0.0.0:8080/";
         var map;
         var markerArray = {};
         var nextArrivalTimeArray = {};
         var infoBoxArray = {};
+        var markerOverListenerArray = {};
+        var markerOutListenerArray = {};
 
 
 
@@ -43,8 +45,6 @@
                 $('#settings_canvas').css('visibility', 'hidden');
             });
 
-
-
         }
         $(function () {
             initialize();
@@ -55,6 +55,9 @@
             markerArray[reg].setMap(null);
             delete markerArray[reg];
             delete nextArrivalTimeArray[reg];
+            delete infoBoxArray[reg];
+            delete markerOverListenerArray[reg];
+            delete markerOutListenerArray[reg];
         }
         function setNewLocation(reg, nextArr, movementData, routeID, directionID, towards, nextStopID, nextStopName) {
             var latLngArray = [];
@@ -95,14 +98,6 @@
 
 
 
-              /*  google.maps.event.addListener( markerArray[reg], 'mouseover', function() {
-                    infoBoxArray[reg].open(map, this);
-                });
-
-                google.maps.event.addListener( markerArray[reg], 'mouseout', function() {
-                    infoBoxArray[reg].close();
-                });*/
-
                 moveMarker(reg, latLngArray, rotationArray, proportionalDurationArray, labelPosArray, nextArr, routeID, directionID, towards, nextStopID, nextStopName);
             }
         }
@@ -120,10 +115,22 @@
                 timeOutAcc  = timeOutAcc + actualDuration;
             }
 
-           /* infoBoxArray[reg] =  new google.maps.InfoWindow({
-                content: "Route: " + routeID + "<br />" + "Direction: " + directionID + "<br />" +  "Towards: "+ towards + "<br />" +  "Next Stop ID: " + nextStopID + "<br />" +  "Next Stop Name: " + nextStopName,
-                map: map
-            });*/
+            delete markerOverListenerArray[reg];
+            delete markerOutListenerArray[reg];
+            delete infoBoxArray[reg];
+
+
+            markerOverListenerArray[reg] = google.maps.event.addListener( markerArray[reg], 'mouseover', function() {
+                infoBoxArray[reg] = new google.maps.InfoWindow({
+                    content: "Route: " + routeID + "<br />" + "Direction: " + directionID + "<br />" +  "Towards: "+ towards + "<br />" +  "Next Stop ID: " + nextStopID + "<br />" +  "Next Stop Name: " + nextStopName,
+                    map: map
+                });
+                infoBoxArray[reg].open(map, this);
+            });
+
+            markerOutListenerArray[reg] = google.maps.event.addListener( markerArray[reg], 'mouseout', function() {
+                infoBoxArray[reg].close();
+            });
 
             nextArrivalTimeArray[reg] = nextArrivalTime;
 
@@ -185,14 +192,13 @@
         }
         function onOpen(evt, routeSelection) {
 
-            alert("CONNECTED");
+           // alert("CONNECTED");
             doSend(routeSelection);
         }
         function onClose(evt) {
             alert("DISCONNECTED");
         }
         function onMessage(evt) {
-            alert(evt.data);
                 var parsedJson = JSON.parse(evt.data);
                 if (parsedJson.nextArr != "kill") {
                     setNewLocation(parsedJson.reg, parsedJson.nextArr, parsedJson.movementData, parsedJson.routeID, parsedJson.directionID, parsedJson.towards, parsedJson.nextStopID, parsedJson.nextStopName);

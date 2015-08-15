@@ -3,7 +3,7 @@ import sbtassembly.AssemblyKeys
 
 name := "BbkProject"
 
-version := "1.09"
+version := "1.10"
 
 scalaVersion := "2.11.7"
 
@@ -24,7 +24,6 @@ libraryDependencies ++= {
     "io.spray"            %%  "spray-can"     % sprayV,
     "io.spray"            %%  "spray-routing-shapeless2" % sprayV,
     "io.spray"            %%  "spray-testkit" % sprayV  % "test",
-  //  "io.spray"            %%  "spray-json"    % "1.3.2",
     "com.typesafe.akka"   %%  "akka-actor"    % akkaV,
     "com.typesafe.akka"   %%  "akka-testkit"  % akkaV   % "test",
     "org.specs2"          %%  "specs2-core"   % "2.3.11" % "test"

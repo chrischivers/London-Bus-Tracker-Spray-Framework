@@ -40,6 +40,7 @@ object Weather {
         val hour = line.substring(timeToStartPoint + 11, timeToStartPoint + 13).toInt
 
         val cal = Calendar.getInstance()
+
         cal.set(Calendar.YEAR, year)
         cal.set(Calendar.MONTH, month - 1)
         cal.set(Calendar.DAY_OF_MONTH, day)
@@ -47,10 +48,11 @@ object Weather {
         cal.set(Calendar.MINUTE, 0)
         cal.set(Calendar.SECOND, 0)
         cal.set(Calendar.MILLISECOND, 0)
+        println(cal.getTimeInMillis)
 
         if (cal.getTimeInMillis - System.currentTimeMillis() < 0) helper(timeToStartPoint)
         else {
-          if (line.indexOf("<precipitation/>", timeToStartPoint) != -1 && line.indexOf("<precipitation/>", timeToStartPoint) < line.indexOf("<precipitation", timeToStartPoint)) {
+          if (line.indexOf("<precipitation/>", timeToStartPoint) != -1 || line.indexOf("<precipitation/>", timeToStartPoint) < line.indexOf("<precipitation", timeToStartPoint)) {
             lastRainfall = DEFAULT_IF_UNAVAILABLE
             lastValidTo = System.currentTimeMillis() + DEFAULT_VALID_TO_IF_UNAVAILABLE
           }

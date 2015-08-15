@@ -3,7 +3,7 @@ package com.PredictionAlgorithm.Streaming
 import akka.actor.{Props, PoisonPill, ActorSystem, ActorRef}
 import com.PredictionAlgorithm.DataSource.TFL.TFLSourceLine
 import com.PredictionAlgorithm.Main
-import com.PredictionAlgorithm.Spray.{SimpleServer, FIFOStreamImplementation}
+import com.PredictionAlgorithm.Spray.SimpleServer
 import com.PredictionAlgorithm.Spray.SimpleServer.{PushToChildren, WebSocketServer}
 import com.PredictionAlgorithm.Streaming.LiveStreamingCoordinator._
 

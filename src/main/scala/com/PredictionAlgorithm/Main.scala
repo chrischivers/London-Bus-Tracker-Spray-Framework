@@ -34,31 +34,15 @@ object Main extends App {
       ui.setUpdateStopDefinitions(UpdateStopDefinitionsControlInterface)
       ui.setAddPolyLines(AddPolyLinesControlInterface)
       ui.setCleanUpPointToPoint(CleanUpPointToPointControlInterface)
-      ui.createAndDisplayGUI
+      ui.createAndDisplayGUI()
 
     }
   })
 
   implicit val system = ActorSystem("websocket")
-  import system.dispatcher
 
   val server = system.actorOf(WebSocketServer.props(), "websocket")
 
-  IO(UHttp) ! Http.Bind(server, "localhost", 8080)
+  IO(UHttp) ! Http.Bind(server, interface = "0.0.0.0", port = 8080)
 
-/*
-  // we need an ActorSystem to host our application in
-  implicit val system = ActorSystem("on-spray-can")
-
-  // create and start our service actor
-  val service = system.actorOf(Props[SimpleServer], "routingActor")
-
-  implicit val timeout = Timeout(5.seconds)
-  // start a new HTTP server on port 8080 with our service actor as the handler
- IO(Http) ? Http.Bind(service, interface = "0.0.0.0", port = 8080)
- // IO(Http) ? Http.Bind(service, interface = "localhost", port = 8080)
-
-
-  //println(RoutePredictionMapping.getRoutePredictionMap("3",1,"THU",75600))
-*/
 }
