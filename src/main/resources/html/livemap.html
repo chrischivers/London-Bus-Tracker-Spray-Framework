@@ -19,7 +19,8 @@
     <script src="js/markerwithlabel.terikon.js"></script>
 
     <script>
-        var wsUri = "ws://0.0.0.0:8080/";
+       var wsUri = "ws://bbkproject.cloudapp.net/";
+        //var wsUri = "ws://localhost:8080/";
         var map;
         var markerArray = {};
         var nextArrivalTimeArray = {};
@@ -193,8 +194,6 @@
             };
         }
         function onOpen(evt, routeSelection) {
-
-           // alert("CONNECTED");
             doSend(routeSelection);
         }
         function onClose(evt) {
@@ -210,7 +209,6 @@
             }
         function onError(evt) {
             alert("ERROR: " + evt.data);
-            //writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
         }
         function doSend(message) {
             websocket.send(message);

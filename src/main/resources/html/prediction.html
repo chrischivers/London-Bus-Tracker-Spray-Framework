@@ -8,6 +8,7 @@
 
 
         function loadRouteIDs() {
+
             var routeIdCombo = document.getElementById("routeIDCombo");
             var xmlhttp;
             if (window.XMLHttpRequest) {// code for IE7+, Firefox, Chrome, Opera, Safari
@@ -35,25 +36,85 @@
             routeIdCombo.onchange= loadDirections;
         }
 
-        function loadDirections(routeID) {
-            var xmlhttp =new XMLHttpRequest();
+        function loadDirections() {
+            var routeIdCombo = document.getElementById("routeIDCombo");
+            var routeID = routeIdCombo.options[routeIdCombo.selectedIndex].value;
+
+            var directionIdCombo = document.getElementById("directionIDCombo");
+
+            // Clear all options
+            var length = directionIdCombo.options.length;
+            for (i = 0; i < length; i++) {
+                directionIdCombo.options[i] = null;
+            }
+
+            var xmlhttp;
+            if (window.XMLHttpRequest) {// code for IE7+, Firefox, Chrome, Opera, Safari
+                xmlhttp = new XMLHttpRequest();
+            }
+            else {// code for IE6, IE5
+                xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+            }
             xmlhttp.onreadystatechange=function()
             {
                 if (xmlhttp.readyState==4 && xmlhttp.status==200)
                 {
                     var parsedJson = JSON.parse(xmlhttp.responseText);
-                    var routeArray = parsedJson.routeList;
-                    for(var i = 0; i < routeArray.length; i++) {
-                        var opt = routeArray[i];
+                    var directionArray = parsedJson.directionList;
+                    for(var i = 0; i < directionArray.length; i++) {
+                        var opt = directionArray[i].split(",");
                         var el = document.createElement("option");
-                        el.textContent = opt;
-                        el.value = opt;
-                        routeIdCombo.appendChild(el);
+                        el.value = opt[0];
+                        el.textContent = opt[1];
+                        directionIdCombo.appendChild(el);
                     }
                 }
             };
             xmlhttp.open("GET","direction_list_request.asp?route=" + routeID,true);
             xmlhttp.send();
+           directionIdCombo.onchange= LoadFrom;
+        }
+
+     function LoadFrom() {
+            var routeIdCombo = document.getElementById("routeIDCombo");
+            var routeID = routeIdCombo.options[routeIdCombo.selectedIndex].value;
+
+            var directionIdCombo = document.getElementById("directionIDCombo");
+            var directionID  = directionIdCombo.options[directionIdCombo.selectedIndex].value;
+
+            var fromCombo = document.getElementById("fromCombo");
+
+            // Clear all options
+            var length = fromCombo.options.length;
+            for (i = 0; i < length; i++) {
+                fromCombo.options[i] = null;
+            }
+
+            var xmlhttp;
+            if (window.XMLHttpRequest) {// code for IE7+, Firefox, Chrome, Opera, Safari
+                xmlhttp = new XMLHttpRequest();
+            }
+            else {// code for IE6, IE5
+                xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+            }
+            xmlhttp.onreadystatechange=function()
+            {
+                if (xmlhttp.readyState==4 && xmlhttp.status==200)
+                {
+                    var parsedJson = JSON.parse(xmlhttp.responseText);
+                    var stopArray = parsedJson.stopList;
+                    for(var i = 0; i < stopArray.length; i++) {
+                        var opt = stopArray[i].split(",");
+                        var el = document.createElement("option");
+                        el.value = opt[0];
+                        el.textContent = opt[1];
+                        fromCombo.appendChild(el);
+                    }
+                }
+            };
+            xmlhttp.open("GET","stop_list_request.asp?route=" + routeID + ",direction=" + directionID,true);
+            xmlhttp.send();
+            //directionIdCombo.onchange= loadDirections;
         }
 
     </SCRIPT>
@@ -63,8 +124,9 @@
 <fieldset>
     <legend>TFL Bus Prediction</legend>
     <br/>
-    RouteID <select name="routeIDCombo" id="routeIDCombo"></select>
-    DirectionID: <select name="directionIDCombo" id="directionIDCombo"></select>
+    RouteID <select name="routeIDCombo" id="routeIDCombo"></select></br>
+    DirectionID: <select name="directionIDCombo" id="directionIDCombo"></select></br>
+    From: <select name="fromCombo" id="fromCombo"></select></br>
 </fieldset>
 </BODY>
 </HTML>

@@ -12,7 +12,7 @@ trait MySslConfiguration {
   // if there is no SSLContext in scope implicitly the HttpServer uses the default SSLContext,
   // since we want non-default settings in this example we make a custom SSLContext available here
   implicit def sslContext: SSLContext = {
-    val keyStoreResource = "/ssl-test-keystore.jks"
+    val keyStoreResource = "keystore/ssl-test-keystore.jks"
     val password = ""
 
     val keyStore = KeyStore.getInstance("jks")

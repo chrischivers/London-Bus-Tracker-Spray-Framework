@@ -54,7 +54,7 @@ object Weather {
         else {
           if (line.indexOf("<precipitation/>", timeToStartPoint) != -1 || line.indexOf("<precipitation/>", timeToStartPoint) < line.indexOf("<precipitation", timeToStartPoint)) {
             lastRainfall = DEFAULT_IF_UNAVAILABLE
-            lastValidTo = System.currentTimeMillis() + DEFAULT_VALID_TO_IF_UNAVAILABLE
+            lastValidTo = cal.getTimeInMillis
           }
           else {
             val lineStartPoint = line.indexOf("<precipitation", timeToStartPoint)

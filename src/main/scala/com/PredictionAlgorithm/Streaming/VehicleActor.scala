@@ -46,7 +46,6 @@ class VehicleActor(vehicle_ID: String) extends Actor {
 
         else if (indexOfStopCode <= lastIndexSentForProcessing && indexOfStopCode != StopList.length - 1) {
           // Auto processing ahead of live stream, needs to pause to allow catch up
-          if (sourceLine.route_ID == "3") println("Running ahead")
           pauseAutoProcessing = true
           false
 
@@ -57,11 +56,10 @@ class VehicleActor(vehicle_ID: String) extends Actor {
             speedUpNumber = speedUpNumber + 1
             self ! lastIndexSentForProcessing + i
           }
-          if (sourceLine.route_ID == "3")  println("Running Behind. SpeedUpNumber = " + speedUpNumber)
           true
         } else if (indexOfStopCode == StopList.length - 1) {
-          endOfRouteKill//Handle last stop
-          false
+           endOfRouteKill//Handle last stop
+            false
         } else false
 
       }else {

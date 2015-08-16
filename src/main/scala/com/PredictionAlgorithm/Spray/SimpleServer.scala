@@ -83,6 +83,11 @@ object SimpleServer extends MySslConfiguration {
           getFromResourceDirectory("css")
         }
       } ~
+        pathPrefix("keystore") {
+          get {
+            getFromResourceDirectory("keystore")
+          }
+        } ~
         pathPrefix("js") {
           get {
             getFromResourceDirectory("js")
@@ -102,7 +107,25 @@ object SimpleServer extends MySslConfiguration {
         path("route_list_request.asp") {
           get {
             complete {
-              sendRouteList
+              getRouteList
+            }
+          }
+        }~
+        path("direction_list_request.asp") {
+          get {
+            parameters("route") { route =>
+              complete{
+                getDirectionList(route)
+              }
+            }
+          }
+        }~
+        path("stop_list_request.asp") {
+          get {
+            parameters('route.as[String], 'direction.as[Int]) {(route, direction) =>
+              complete{
+                getStopList(route, direction)
+              }
             }
           }
         }
@@ -110,13 +133,23 @@ object SimpleServer extends MySslConfiguration {
 
   }
 
-
-  def sendRouteList: String = {
+  def getRouteList: String = {
     val routeList: List[String] = TFLDefinitions.RouteDefinitionMap.map(x => x._1._1).toSet.toList.sorted
     val jsonMap = Map("routeList" -> routeList)
     compact(render(jsonMap))
+  }
 
+  def getDirectionList(routeID:String): String = {
+    val outwardDirection = TFLDefinitions.StopDefinitions(TFLDefinitions.RouteDefinitionMap.get(routeID,1).get.last._2).stopPointName
+    val returnDirection = TFLDefinitions.StopDefinitions(TFLDefinitions.RouteDefinitionMap.get(routeID,2).get.last._2).stopPointName
+    val jsonMap = Map("directionList" -> List("1," + outwardDirection, "2," + returnDirection))
+    compact(render(jsonMap))
+  }
 
+  def getStopList(routeID:String,directionID:Int):String = {
+    val stopList = TFLDefinitions.RouteDefinitionMap(routeID,directionID).map(x=> x._2 + "," + TFLDefinitions.StopDefinitions(x._2).stopPointName)
+    val jsonMap = Map("stopList" -> stopList)
+    compact(render(jsonMap))
   }
 
 

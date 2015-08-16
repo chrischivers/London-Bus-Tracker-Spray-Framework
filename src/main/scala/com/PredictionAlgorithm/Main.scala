@@ -39,10 +39,4 @@ object Main extends App {
     }
   })
 
-  implicit val system = ActorSystem("websocket")
-
-  val server = system.actorOf(WebSocketServer.props(), "websocket")
-
-  IO(UHttp) ! Http.Bind(server, interface = "0.0.0.0", port = 8080)
-
 }

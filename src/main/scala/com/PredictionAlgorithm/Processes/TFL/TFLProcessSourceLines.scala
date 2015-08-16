@@ -34,7 +34,7 @@ object TFLProcessSourceLines {
 
     if (validateLine(newLine)) {
       // Send to Live Streaming Coordinator if Enabled
-      if (liveStreamCollectionEnabled) LiveStreamingCoordinator.setObjectPosition(newLine)
+      if (liveStreamCollectionEnabled) LiveStreamingCoordinator.processSourceLine(newLine)
       if (historicalDataStoringEnabled) {
         if (!isFinalStop(newLine)) {
           if (!holdingBuffer.contains(newLine.route_ID, newLine.vehicle_Reg, newLine.direction_ID)) {
