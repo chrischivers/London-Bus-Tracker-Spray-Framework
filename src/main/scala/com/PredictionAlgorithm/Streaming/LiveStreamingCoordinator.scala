@@ -3,6 +3,7 @@ package com.PredictionAlgorithm.Streaming
 import java.util.concurrent.{LinkedBlockingQueue, BlockingQueue}
 
 import akka.actor.Status.{Failure, Success}
+import akka.actor.SupervisorStrategy.{Escalate, Restart}
 import akka.actor._
 import com.PredictionAlgorithm.DataSource.TFL.TFLSourceLine
 import com.PredictionAlgorithm.Prediction.{PredictionRequest, KNNPrediction}
@@ -36,30 +37,47 @@ object LiveStreamingCoordinator extends LiveStreamingCoordinatorInterface {
 
 class LiveVehicleSupervisor extends Actor {
 
-  var TIME_OF_LAST_CLEANUP:Long = 0
+  var TIME_OF_LAST_CLEANUP:Long = System.currentTimeMillis()
   val TIME_BETWEEN_CLEANUPS = 60000
   
-  var liveActors = mutable.Map[String, (ActorRef, String, Long)]()
+  @volatile var liveActors = mutable.Map[String, (ActorRef, String, Long)]()
 
-  def receive = {
+  override def receive = {
     case liveSourceLine: TFLSourceLine => processLine(liveSourceLine)
     case km: KillMessage => killActor(km)
-    case actor: Terminated =>  liveActors.remove(actor.getActor.path.name)
+    case actor: Terminated =>  {
+      this.synchronized {
+        liveActors.remove(actor.getActor.path.name)
+        context.unwatch(actor.getActor)
+      }
+    }
   }
 
-  def processLine(liveSourceLine:TFLSourceLine) = {
-
-    val vehicle_Reg = liveSourceLine.vehicle_Reg
-    if (liveActors.contains(vehicle_Reg)) {
-      updateLiveActorTimestamp(vehicle_Reg,liveSourceLine.route_ID,System.currentTimeMillis())
-      liveActors(vehicle_Reg)._1 ! liveSourceLine
-    } else {
-      val newVehicleActor = vehicleSystem.actorOf(Props(new VehicleActor(vehicle_Reg)), vehicle_Reg)
-      liveActors += (vehicle_Reg ->(newVehicleActor, liveSourceLine.route_ID, System.currentTimeMillis()))
-      newVehicleActor ! liveSourceLine
-      context.watch(newVehicleActor)
+  override val supervisorStrategy =
+    OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
+      case _: Exception => {
+        println("Vehicle actor exception")
+        Escalate
+      }
+      case t =>
+        super.supervisorStrategy.decider.applyOrElse(t, (_: Any) => Escalate)
     }
-    numberLiveActors = liveActors.size //Update variable
+
+  def processLine(liveSourceLine:TFLSourceLine) = {
+    this.synchronized {
+      val vehicle_Reg = liveSourceLine.vehicle_Reg
+      if (liveActors.contains(vehicle_Reg)) {
+        updateLiveActorTimestamp(vehicle_Reg, liveSourceLine.route_ID, System.currentTimeMillis())
+        liveActors(vehicle_Reg)._1 ! liveSourceLine
+      } else {
+        val newVehicleActor = vehicleSystem.actorOf(Props(new VehicleActor(vehicle_Reg)), vehicle_Reg)
+        context.watch(newVehicleActor)
+        liveActors += (vehicle_Reg ->(newVehicleActor, liveSourceLine.route_ID, System.currentTimeMillis()))
+        newVehicleActor ! liveSourceLine
+
+      }
+      numberLiveActors = liveActors.size //Update variable
+    }
   }
 
   def updateLiveActorTimestamp(reg: String, routeID: String, timeStamp: Long) = {

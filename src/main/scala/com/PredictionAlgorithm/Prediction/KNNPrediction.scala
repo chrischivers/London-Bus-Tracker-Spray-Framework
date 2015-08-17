@@ -41,7 +41,7 @@ object KNNPrediction extends PredictionInterface {
       cumulativeDuration += duration._1
 
     }
-    Some(accumulatedPrediction)
+    Some(round(accumulatedPrediction, 2))
   }
 
   def makePredictionBetweenConsecutivePoints(pr: PredictionRequest): Option[(Double, Double)] = {
@@ -116,6 +116,10 @@ object KNNPrediction extends PredictionInterface {
       durationDistanceVector.foreach(x => acc.addValue(x._1))
       Some(acc.getMean, acc.getStandardDeviation)
     }
+  }
+
+  def round(number: Double, decimalPlaces: Int): Double = {
+    BigDecimal(number).setScale(decimalPlaces, BigDecimal.RoundingMode.HALF_UP).toDouble
   }
 
   }

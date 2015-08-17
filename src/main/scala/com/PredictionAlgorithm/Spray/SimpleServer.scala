@@ -5,6 +5,7 @@ import akka.io.IO
 import com.PredictionAlgorithm.Commons.Commons
 import com.PredictionAlgorithm.ControlInterface.QueryController
 import com.PredictionAlgorithm.DataDefinitions.TFL.TFLDefinitions
+import com.PredictionAlgorithm.Prediction.{KNNPrediction, PredictionRequest}
 import com.PredictionAlgorithm.Streaming.PackagedStreamObject
 import org.json4s.native.JsonMethods._
 import spray.can.server.UHttp
@@ -55,11 +56,11 @@ object SimpleServer extends MySslConfiguration {
     def businessLogic: Receive = {
       case x@(_: TextFrame) =>
         //sender() ! x
-        val splitReceive =  x.payload.utf8String.split(",").toList
+        val splitReceive = x.payload.utf8String.split(",").toList
         routeList = routeList ++ splitReceive
         println(routeList)
 
-      case Push(routeID:String, message:String) => {
+      case Push(routeID: String, message: String) => {
         if (routeList.contains(routeID)) {
           send(TextFrame(message))
         }
@@ -110,28 +111,46 @@ object SimpleServer extends MySslConfiguration {
               getRouteList
             }
           }
-        }~
+        } ~
         path("direction_list_request.asp") {
           get {
             parameters("route") { route =>
-              complete{
+              complete {
                 getDirectionList(route)
               }
             }
           }
-        }~
+        } ~
         path("stop_list_request.asp") {
           get {
-            parameters('route.as[String], 'direction.as[Int]) {(route, direction) =>
-              complete{
-                getStopList(route, direction)
+            parameters("route") { (route) =>
+              parameters("direction") { (direction) =>
+                complete {
+                  getStopList(route, direction.toInt)
+                }
+              }
+            }
+          }
+        }~
+        path("prediction_request.asp") {
+          get {
+            parameters("route") { (route) =>
+              parameters("direction") { (direction) =>
+                parameters("fromStop") { (fromStop) =>
+                  parameters("toStop") { (toStop) =>
+                    println(route + "," + direction + "," +fromStop + "," + toStop)
+                    complete {
+                      makePrediction(route, direction.toInt, fromStop,toStop)
+                    }
+                  }
+                }
               }
             }
           }
         }
     }
-
   }
+
 
   def getRouteList: String = {
     val routeList: List[String] = TFLDefinitions.RouteDefinitionMap.map(x => x._1._1).toSet.toList.sorted
@@ -150,6 +169,12 @@ object SimpleServer extends MySslConfiguration {
     val stopList = TFLDefinitions.RouteDefinitionMap(routeID,directionID).map(x=> x._2 + "," + TFLDefinitions.StopDefinitions(x._2).stopPointName)
     val jsonMap = Map("stopList" -> stopList)
     compact(render(jsonMap))
+  }
+
+  def makePrediction(routeID:String, directionID:Int, fromStop: String, toStop: String): String = {
+    val pr = new PredictionRequest(routeID,directionID,fromStop,toStop,Commons.getDayCode(System.currentTimeMillis()),Commons.getTimeOffset(System.currentTimeMillis()))
+    val prediction = KNNPrediction.makePrediction(pr)
+    if (prediction.isDefined) prediction.get.toString else "Unable to make a prediction at this time"
   }
 
 

@@ -16,6 +16,7 @@ object Weather {
   def getCurrentRainfall = {
     if (lastValidTo -System.currentTimeMillis() < 0) {
       getCurrentRainFallFromWeb
+      println("weather fetched: " + lastRainfall)
       lastRainfall
     } else lastRainfall
   }
@@ -26,10 +27,9 @@ object Weather {
     try {
       val s = Source.fromURL(WEATHER_API_URL)
       val line = s.getLines.next()
-      println(line)
 
       def helper(startIndex: Int): Unit = {
-        println("weather fetched")
+
 
 
         val timeFromStartPoint = line.indexOf("time from=", startIndex)
@@ -48,7 +48,6 @@ object Weather {
         cal.set(Calendar.MINUTE, 0)
         cal.set(Calendar.SECOND, 0)
         cal.set(Calendar.MILLISECOND, 0)
-        println(cal.getTimeInMillis)
 
         if (cal.getTimeInMillis - System.currentTimeMillis() < 0) helper(timeToStartPoint)
         else {

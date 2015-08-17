@@ -4,24 +4,28 @@
     <TITLE>TFL Prediction</TITLE>
     <SCRIPT>
 
-        window.onload =loadRouteIDs;
+        window.onload = loadRouteIDs;
 
+
+        var xmlhttp;
+        if (window.XMLHttpRequest) {// code for IE7+, Firefox, Chrome, Opera, Safari
+            xmlhttp = new XMLHttpRequest();
+        }
+        else {// code for IE6, IE5
+            xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+        }
 
         function loadRouteIDs() {
-
             var routeIdCombo = document.getElementById("routeIDCombo");
-            var xmlhttp;
-            if (window.XMLHttpRequest) {// code for IE7+, Firefox, Chrome, Opera, Safari
-                xmlhttp = new XMLHttpRequest();
-            }
-            else {// code for IE6, IE5
-                xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
-            }
+
+            document.getElementById("runButton").style.display="none";
+
             xmlhttp.onreadystatechange = function () {
                 if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
                     var parsedJson = JSON.parse(xmlhttp.responseText);
                     var routeArray = parsedJson.routeList;
 
+                    routeIdCombo.appendChild(document.createElement("option"));
                     for (var i = 0; i < routeArray.length; i++) {
                         var opt = routeArray[i];
                         var el = document.createElement("option");
@@ -33,7 +37,7 @@
             };
             xmlhttp.open("GET", "route_list_request.asp", true);
             xmlhttp.send();
-            routeIdCombo.onchange= loadDirections;
+            routeIdCombo.onchange = loadDirections;
         }
 
         function loadDirections() {
@@ -43,78 +47,119 @@
             var directionIdCombo = document.getElementById("directionIDCombo");
 
             // Clear all options
-            var length = directionIdCombo.options.length;
-            for (i = 0; i < length; i++) {
-                directionIdCombo.options[i] = null;
-            }
+           directionIdCombo.options.length = 0;
+            document.getElementById("fromCombo").options.length = 0;
+            document.getElementById("toCombo").options.length = 0;
+            document.getElementById("runButton").style.display="none";
 
-            var xmlhttp;
-            if (window.XMLHttpRequest) {// code for IE7+, Firefox, Chrome, Opera, Safari
-                xmlhttp = new XMLHttpRequest();
-            }
-            else {// code for IE6, IE5
-                xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
-            }
-            xmlhttp.onreadystatechange=function()
-            {
-                if (xmlhttp.readyState==4 && xmlhttp.status==200)
-                {
-                    var parsedJson = JSON.parse(xmlhttp.responseText);
-                    var directionArray = parsedJson.directionList;
-                    for(var i = 0; i < directionArray.length; i++) {
-                        var opt = directionArray[i].split(",");
-                        var el = document.createElement("option");
-                        el.value = opt[0];
-                        el.textContent = opt[1];
-                        directionIdCombo.appendChild(el);
+            if (routeIdCombo.selectedIndex != 0) {
+
+                xmlhttp.onreadystatechange = function () {
+                    if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                        var parsedJson = JSON.parse(xmlhttp.responseText);
+                        var directionArray = parsedJson.directionList;
+
+                        directionIdCombo.appendChild(document.createElement("option"));
+                        for (var i = 0; i < directionArray.length; i++) {
+                            var opt = directionArray[i].split(",");
+                            var el = document.createElement("option");
+                            el.value = opt[0];
+                            el.textContent = opt[1];
+                            directionIdCombo.appendChild(el);
+                        }
                     }
-                }
-            };
-            xmlhttp.open("GET","direction_list_request.asp?route=" + routeID,true);
-            xmlhttp.send();
-           directionIdCombo.onchange= LoadFrom;
+                };
+                xmlhttp.open("GET", "direction_list_request.asp?route=" + routeID, true);
+                xmlhttp.send();
+                directionIdCombo.onchange = LoadFrom;
+            }
         }
 
-     function LoadFrom() {
+        function LoadFrom() {
             var routeIdCombo = document.getElementById("routeIDCombo");
             var routeID = routeIdCombo.options[routeIdCombo.selectedIndex].value;
 
             var directionIdCombo = document.getElementById("directionIDCombo");
-            var directionID  = directionIdCombo.options[directionIdCombo.selectedIndex].value;
+            var directionID = directionIdCombo.options[directionIdCombo.selectedIndex].value;
 
             var fromCombo = document.getElementById("fromCombo");
 
-            // Clear all options
-            var length = fromCombo.options.length;
-            for (i = 0; i < length; i++) {
-                fromCombo.options[i] = null;
-            }
+            fromCombo.options.length = 0;
+            document.getElementById("toCombo").options.length = 0;
+            document.getElementById("runButton").style.display="none";
 
-            var xmlhttp;
-            if (window.XMLHttpRequest) {// code for IE7+, Firefox, Chrome, Opera, Safari
-                xmlhttp = new XMLHttpRequest();
-            }
-            else {// code for IE6, IE5
-                xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
-            }
-            xmlhttp.onreadystatechange=function()
-            {
-                if (xmlhttp.readyState==4 && xmlhttp.status==200)
-                {
-                    var parsedJson = JSON.parse(xmlhttp.responseText);
-                    var stopArray = parsedJson.stopList;
-                    for(var i = 0; i < stopArray.length; i++) {
-                        var opt = stopArray[i].split(",");
-                        var el = document.createElement("option");
-                        el.value = opt[0];
-                        el.textContent = opt[1];
-                        fromCombo.appendChild(el);
+            if (directionIdCombo.selectedIndex != 0) {
+
+                xmlhttp.onreadystatechange = function () {
+                    if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                        var parsedJson = JSON.parse(xmlhttp.responseText);
+                        var stopArray = parsedJson.stopList;
+
+                        fromCombo.appendChild(document.createElement("option"));
+                        for (var i = 0; i < stopArray.length; i++) {
+                            var opt = stopArray[i].split(",");
+                            var el = document.createElement("option");
+                            el.value = opt[0];
+                            el.textContent = opt[1];
+                            fromCombo.appendChild(el);
+                        }
                     }
+                };
+                xmlhttp.open("GET", "stop_list_request.asp?route=" + routeID + "&direction=" + directionID, true);
+                xmlhttp.send();
+                fromCombo.onchange = LoadTo;
+            }
+        }
+
+        function LoadTo() {
+
+            var fromCombo = document.getElementById("fromCombo");
+
+            var toCombo = document.getElementById("toCombo");
+
+            // Clear all options
+            toCombo.options.length = 0;
+            document.getElementById("runButton").style.display="none";
+
+            if (fromCombo.selectedIndex != 0) {
+
+                toCombo.appendChild(document.createElement("option"));
+                for (i = fromCombo.selectedIndex + 1; i < fromCombo.options.length; i++) {
+                    var el = document.createElement("option");
+                    el.value = fromCombo.options[i].value;
+                    el.textContent = fromCombo.options[i].textContent
+                    toCombo.appendChild(el);
+                }
+            }
+            toCombo.onchange = function() {
+                if (toCombo.selectedIndex != 0) {
+                    document.getElementById("runButton").style.display="block";
+                } else {
+                    document.getElementById("runButton").style.display="none";
                 }
             };
-            xmlhttp.open("GET","stop_list_request.asp?route=" + routeID + ",direction=" + directionID,true);
+        }
+
+        function ButtonClick() {
+            var routeIDCombo = document.getElementById("routeIDCombo");
+            var routeID = routeIDCombo.options[routeIDCombo.selectedIndex].value;
+            var directionIDCombo =  document.getElementById("directionIDCombo");
+            var directionID = directionIDCombo.options[directionIDCombo.selectedIndex].value;
+            var fromCombo = document.getElementById("fromCombo");
+            var fromValue = fromCombo.options[fromCombo.selectedIndex].value;
+            var toCombo = document.getElementById("toCombo");
+            var toValue = toCombo.options[toCombo.selectedIndex].value;
+
+            xmlhttp.onreadystatechange = function () {
+                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                    var prediction = xmlhttp.responseText;
+                    alert(prediction);
+                    document.getElementById("predictionResult").innerHTML = prediction +" seconds.";
+
+                }
+            };
+            xmlhttp.open("GET", "prediction_request.asp?route=" + routeID + "&direction=" + directionID + "&fromStop=" + fromValue + "&toStop=" + toValue, true);
             xmlhttp.send();
-            //directionIdCombo.onchange= loadDirections;
         }
 
     </SCRIPT>
@@ -124,9 +169,12 @@
 <fieldset>
     <legend>TFL Bus Prediction</legend>
     <br/>
-    RouteID <select name="routeIDCombo" id="routeIDCombo"></select></br>
-    DirectionID: <select name="directionIDCombo" id="directionIDCombo"></select></br>
+    Route <select name="routeIDCombo" id="routeIDCombo"></select></br>
+    Direction: <select name="directionIDCombo" id="directionIDCombo"></select></br>
     From: <select name="fromCombo" id="fromCombo"></select></br>
+    To: <select name="toCombo" id="toCombo"></select></br>
+    <button id="runButton" onclick="ButtonClick()">Get Predicted Journey Duration</button></br>
 </fieldset>
+<div id="predictionResult"></div>
 </BODY>
 </HTML>
