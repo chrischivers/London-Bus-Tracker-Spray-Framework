@@ -47,7 +47,7 @@ class LiveVehicleSupervisor extends Actor {
     case km: KillMessage => killActor(km)
     case actor: Terminated =>  {
         liveActors.remove(actor.getActor.path.name)
-        context.unwatch(actor.getActor)
+      //  context.unwatch(actor.getActor)
     }
   }
 

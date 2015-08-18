@@ -9,7 +9,7 @@ import scala.math.BigDecimal.RoundingMode
 
 object Commons {
 
-  val LABEL_DISTANCE = 50
+  val LABEL_DISTANCE = 40
   val LABEL_ROTATE_POINT_V_OFFSET = 10
 
 
@@ -150,9 +150,9 @@ object Commons {
   }
 
   def getLabelPosition(rotation:Int, routeIDLength:Int): (Double, Double) = {
-    val h = -(Math.sin(rad(rotation)) * -LABEL_DISTANCE) + ((routeIDLength / 2) * 8)
-    val v = Math.cos(rad(rotation))  * -LABEL_DISTANCE + LABEL_ROTATE_POINT_V_OFFSET
-    return (h, v)
+   // val h = -(Math.sin(rad(rotation)) * -LABEL_DISTANCE)  //+ ((routeIDLength / 2) * 8)
+   // val v = Math.cos(rad(rotation))  * -LABEL_DISTANCE
+    return (0, 0)
   }
 
 }

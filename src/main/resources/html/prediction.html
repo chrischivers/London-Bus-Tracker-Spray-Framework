@@ -16,7 +16,7 @@
         }
 
         function loadRouteIDs() {
-            var routeIdCombo = document.getElementById("routeIDCombo");
+            var routeIdCombo = document.getElementById("route");
 
             document.getElementById("runButton").style.display="none";
 
@@ -41,15 +41,15 @@
         }
 
         function loadDirections() {
-            var routeIdCombo = document.getElementById("routeIDCombo");
+            var routeIdCombo = document.getElementById("route");
             var routeID = routeIdCombo.options[routeIdCombo.selectedIndex].value;
 
-            var directionIdCombo = document.getElementById("directionIDCombo");
+            var directionIdCombo = document.getElementById("direction");
 
             // Clear all options
            directionIdCombo.options.length = 0;
-            document.getElementById("fromCombo").options.length = 0;
-            document.getElementById("toCombo").options.length = 0;
+            document.getElementById("from").options.length = 0;
+            document.getElementById("to").options.length = 0;
             document.getElementById("runButton").style.display="none";
 
             if (routeIdCombo.selectedIndex != 0) {
@@ -76,16 +76,16 @@
         }
 
         function LoadFrom() {
-            var routeIdCombo = document.getElementById("routeIDCombo");
+            var routeIdCombo = document.getElementById("route");
             var routeID = routeIdCombo.options[routeIdCombo.selectedIndex].value;
 
-            var directionIdCombo = document.getElementById("directionIDCombo");
+            var directionIdCombo = document.getElementById("direction");
             var directionID = directionIdCombo.options[directionIdCombo.selectedIndex].value;
 
-            var fromCombo = document.getElementById("fromCombo");
+            var fromCombo = document.getElementById("from");
 
             fromCombo.options.length = 0;
-            document.getElementById("toCombo").options.length = 0;
+            document.getElementById("to").options.length = 0;
             document.getElementById("runButton").style.display="none";
 
             if (directionIdCombo.selectedIndex != 0) {
@@ -113,9 +113,9 @@
 
         function LoadTo() {
 
-            var fromCombo = document.getElementById("fromCombo");
+            var fromCombo = document.getElementById("from");
 
-            var toCombo = document.getElementById("toCombo");
+            var toCombo = document.getElementById("to");
 
             // Clear all options
             toCombo.options.length = 0;
@@ -141,13 +141,13 @@
         }
 
         function ButtonClick() {
-            var routeIDCombo = document.getElementById("routeIDCombo");
+            var routeIDCombo = document.getElementById("route");
             var routeID = routeIDCombo.options[routeIDCombo.selectedIndex].value;
-            var directionIDCombo =  document.getElementById("directionIDCombo");
+            var directionIDCombo =  document.getElementById("direction");
             var directionID = directionIDCombo.options[directionIDCombo.selectedIndex].value;
-            var fromCombo = document.getElementById("fromCombo");
+            var fromCombo = document.getElementById("from");
             var fromValue = fromCombo.options[fromCombo.selectedIndex].value;
-            var toCombo = document.getElementById("toCombo");
+            var toCombo = document.getElementById("to");
             var toValue = toCombo.options[toCombo.selectedIndex].value;
 
             xmlhttp.onreadystatechange = function () {
@@ -163,18 +163,42 @@
 
     </SCRIPT>
 
+    <style>
+        #fieldselection  { display: table;      }
+        p     { display: table-row;  }
+        label { display: table-cell; }
+        select { display: table-cell; }
+        button { display: table-cell; }
+
+        </style>
+
 </HEAD>
 <BODY>
 <fieldset>
+    <div id="fieldselection">
     <legend>TFL Bus Prediction</legend>
+    <p>
+        <label for="route">Route:</label>
+        <select id="route" name="routeIDCombo" id="routeIDCombo"></select>
+    </p>
+    <p>
+        <label for="direction">Direction:</label>
+        <select id="direction" name="directionIDCombo" id="directionIDCombo"></select>
+    </p>
+    <p>
+        <label for="from">From:</label>
+        <select id="from" name="fromCombo" id="fromCombo"></select>
+    </p>
+    <p>
+        <label for="to">To:</label>
+         <select id="to" name="toCombo" id="toCombo"></select>
+        </p>
+    </div>
     <br/>
-    Route <select name="routeIDCombo" id="routeIDCombo"></select></br>
-    Direction: <select name="directionIDCombo" id="directionIDCombo"></select></br>
-    From: <select name="fromCombo" id="fromCombo"></select></br>
-    To: <select name="toCombo" id="toCombo"></select></br>
-    <button id="runButton" onclick="ButtonClick()">Get Predicted Journey Duration</button></br>
-
-<div id="predictionResult"></div>
+    <p>
+     <button id="runButton" onclick="ButtonClick()" >Get Predicted Journey Duration</button>
+    <div id="predictionResult"></div>
+    </p>
 </fieldset>
 </BODY>
 </HTML>
