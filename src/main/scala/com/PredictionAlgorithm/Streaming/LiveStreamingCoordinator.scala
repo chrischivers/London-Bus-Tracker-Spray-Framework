@@ -46,10 +46,8 @@ class LiveVehicleSupervisor extends Actor {
     case liveSourceLine: TFLSourceLine => processLine(liveSourceLine)
     case km: KillMessage => killActor(km)
     case actor: Terminated =>  {
-      this.synchronized {
         liveActors.remove(actor.getActor.path.name)
         context.unwatch(actor.getActor)
-      }
     }
   }
 
@@ -64,28 +62,25 @@ class LiveVehicleSupervisor extends Actor {
     }
 
   def processLine(liveSourceLine:TFLSourceLine) = {
-    this.synchronized {
       val vehicle_Reg = liveSourceLine.vehicle_Reg
       if (liveActors.contains(vehicle_Reg)) {
         updateLiveActorTimestamp(vehicle_Reg, liveSourceLine.route_ID, System.currentTimeMillis())
         liveActors(vehicle_Reg)._1 ! liveSourceLine
       } else {
-        val newVehicleActor = vehicleSystem.actorOf(Props(new VehicleActor(vehicle_Reg)), vehicle_Reg)
+        val newVehicleActor = context.actorOf(Props(new VehicleActor(vehicle_Reg)), vehicle_Reg)
         context.watch(newVehicleActor)
         liveActors += (vehicle_Reg ->(newVehicleActor, liveSourceLine.route_ID, System.currentTimeMillis()))
         newVehicleActor ! liveSourceLine
 
       }
       numberLiveActors = liveActors.size //Update variable
-    }
+      numberLiveChildren = context.children.size
   }
 
   def updateLiveActorTimestamp(reg: String, routeID: String, timeStamp: Long) = {
-    this.synchronized {
       val currentValue = liveActors.get(reg)
       if (currentValue.isDefined) liveActors += (reg -> (currentValue.get._1, routeID, timeStamp))
       if (System.currentTimeMillis() - TIME_OF_LAST_CLEANUP > TIME_BETWEEN_CLEANUPS) cleanUpLiveActorsList
-    }
 
   }
 

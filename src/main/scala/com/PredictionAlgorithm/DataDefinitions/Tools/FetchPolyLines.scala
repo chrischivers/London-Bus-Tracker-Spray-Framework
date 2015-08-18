@@ -116,8 +116,8 @@ object FetchPolyLines extends LoadResource {
                 //Only do if no polyline recorded
                 //INSERT
 
-                val thisStopCode = doc.get(collection.STOP_CODE).asInstanceOf[String]
-                val lastStopCode = docLastRead.get.get(collection.STOP_CODE).asInstanceOf[String]
+                val thisStopCode = doc.get(collection.POINT_ID).asInstanceOf[String]
+                val lastStopCode = docLastRead.get.get(collection.POINT_ID).asInstanceOf[String]
                 val polyLine = getPolyLineForTwoPoints(lastStopCode,thisStopCode)
                 addPolyLinetoIndexDBIfRequired(lastStopCode, thisStopCode, polyLine) //Updates previous with polyline route to next
                 addPolyLineToRouteDefDB(docLastRead.get, polyLine)
@@ -150,7 +150,7 @@ object FetchPolyLines extends LoadResource {
       val routeID = doc.get(collection.ROUTE_ID).asInstanceOf[String]
       val direction = doc.get(collection.DIRECTION_ID).asInstanceOf[Int]
       val sequence = doc.get(collection.SEQUENCE).asInstanceOf[Int]
-      val stopCode = doc.get(collection.STOP_CODE).asInstanceOf[String]
+      val stopCode = doc.get(collection.POINT_ID).asInstanceOf[String]
       val firstLast = if (doc.get(collection.FIRST_LAST) == null) None else Some(doc.get(collection.FIRST_LAST).asInstanceOf[String])
       val routeDocToUpdate = new ROUTE_DEFINITION_DOCUMENT(routeID, direction, sequence, stopCode, firstLast)
       TFLInsertUpdateRouteDefinition.updateDocumentWithPolyLine(routeDocToUpdate, polyLine)

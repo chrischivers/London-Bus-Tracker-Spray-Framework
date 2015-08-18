@@ -37,12 +37,12 @@ final case object ROUTE_DEFINITIONS_COLLECTION extends DatabaseCollections {
   val ROUTE_ID = "ROUTE_ID"
   val DIRECTION_ID = "DIRECTION_ID"
   val SEQUENCE = "SEQUENCE"
-  val STOP_CODE = "STOP_CODE"
+  val POINT_ID = "POINT_ID"
   val FIRST_LAST = "FIRST_LAST"
   val POLYLINE = "POLYLINE"
 
   override val name: String = "RouteDefinitions"
-  override val fieldsVector = Vector(ROUTE_ID, DIRECTION_ID, SEQUENCE, STOP_CODE, FIRST_LAST, POLYLINE)
+  override val fieldsVector = Vector(ROUTE_ID, DIRECTION_ID, SEQUENCE, POINT_ID, FIRST_LAST, POLYLINE)
   override val indexKeyList = List((ROUTE_ID, 1),(DIRECTION_ID, 1),(SEQUENCE, 1))
   override val uniqueIndex = true
 

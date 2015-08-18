@@ -17,7 +17,8 @@ object LiveStreamControlInterface extends StartStopControlInterface {
 
   override def getVariableArray: Array[String] = {
     val numberLiveActors  = LiveStreamingCoordinator.getNumberLiveActors.toString
-    Array(numberLiveActors)
+    val numberLiveChildren = LiveStreamingCoordinator.getNumberLiveChildren.toString
+    Array(numberLiveActors, numberLiveChildren)
   }
 
   override def stop: Unit = {

@@ -153,7 +153,6 @@
             xmlhttp.onreadystatechange = function () {
                 if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
                     var prediction = xmlhttp.responseText;
-                    alert(prediction);
                     document.getElementById("predictionResult").innerHTML = prediction +" seconds.";
 
                 }
@@ -174,7 +173,8 @@
     From: <select name="fromCombo" id="fromCombo"></select></br>
     To: <select name="toCombo" id="toCombo"></select></br>
     <button id="runButton" onclick="ButtonClick()">Get Predicted Journey Duration</button></br>
-</fieldset>
+
 <div id="predictionResult"></div>
+</fieldset>
 </BODY>
 </HTML>

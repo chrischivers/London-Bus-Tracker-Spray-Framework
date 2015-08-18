@@ -11,7 +11,7 @@ object TFLGetStopDefinitionDocument extends DatabaseQueryInterface{
   override protected val collection: DatabaseCollections = STOP_DEFINITIONS_COLLECTION
 
   def getDistinctStopCodes():Set[String] = {
-    TFLMongoDBConnection.getCollection(ROUTE_DEFINITIONS_COLLECTION).distinct(ROUTE_DEFINITIONS_COLLECTION.STOP_CODE).asInstanceOf[Seq[String]].toSet
+    TFLMongoDBConnection.getCollection(ROUTE_DEFINITIONS_COLLECTION).distinct(ROUTE_DEFINITIONS_COLLECTION.POINT_ID).asInstanceOf[Seq[String]].toSet
   }
 
 

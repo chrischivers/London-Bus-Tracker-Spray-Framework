@@ -35,7 +35,7 @@ object LoadRouteDefinitions extends LoadResource {
       val routeID = doc.get(collection.ROUTE_ID).asInstanceOf[String]
       val direction = doc.get(collection.DIRECTION_ID).asInstanceOf[Int]
       val sequence = doc.get(collection.SEQUENCE).asInstanceOf[Int]
-      val stop_code = doc.get(collection.STOP_CODE).asInstanceOf[String]
+      val stop_code = doc.get(collection.POINT_ID).asInstanceOf[String]
       val firstLast = doc.get(collection.FIRST_LAST).asInstanceOf[String]
       val polyLine = doc.get(collection.POLYLINE).asInstanceOf[String]
       val firstLastOption = if (firstLast == null) None else Some(firstLast)

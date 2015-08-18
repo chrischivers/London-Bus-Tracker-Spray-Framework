@@ -41,7 +41,7 @@ class TFLInsertUpdateRouteDefinition extends Actor {
       collection.ROUTE_ID -> doc.route_ID,
       collection.DIRECTION_ID -> doc.direction_ID,
       collection.SEQUENCE -> doc.sequence,
-      collection.STOP_CODE-> doc.stop_Code,
+      collection.POINT_ID -> doc.stop_Code,
       collection.FIRST_LAST-> doc.first_Last)
 
 
@@ -70,7 +70,7 @@ class TFLInsertUpdateRouteDefinition extends Actor {
       collection.ROUTE_ID -> doc.route_ID,
       collection.DIRECTION_ID -> doc.direction_ID,
       collection.SEQUENCE -> doc.sequence,
-      collection.STOP_CODE-> doc.stop_Code,
+      collection.POINT_ID-> doc.stop_Code,
       collection.FIRST_LAST -> doc.first_Last)
 
     val update = $set(collection.POLYLINE -> polyLineEncoded)
