@@ -15,7 +15,11 @@ object Weather {
 
   def getCurrentRainfall = {
     if (lastValidTo -System.currentTimeMillis() < 0) {
-      getCurrentRainFallFromWeb
+      try {
+        getCurrentRainFallFromWeb
+      } catch {
+        case e:Exception => DEFAULT_IF_UNAVAILABLE //Unable to fetch, returning default
+      }
       println("weather fetched: " + lastRainfall)
       lastRainfall
     } else lastRainfall

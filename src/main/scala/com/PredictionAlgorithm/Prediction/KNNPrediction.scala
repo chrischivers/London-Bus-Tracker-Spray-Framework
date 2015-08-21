@@ -8,7 +8,6 @@ import com.PredictionAlgorithm.Processes.Weather.Weather
 import com.mongodb.casbah.MongoCursor
 import com.mongodb.casbah.commons.{MongoDBList, Imports, MongoDBObject}
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics
-import scala.annotation.tailrec
 import scala.collection.JavaConversions._
 
 
@@ -21,8 +20,8 @@ object KNNPrediction extends PredictionInterface {
   val MINIMUM_K_TO_MAKE_PREDICTION = 5 //In Seconds
   val WEIGHTING_TIME_OFFSET = 0.3
   val WEIGHTING_DAY_OF_WEEK = 0.3
-  val WEIGHTING_RAINFALL = 0.3
-  val WEIGHTING_RECENT = 0.1
+  val WEIGHTING_RAINFALL = 0.2
+  val WEIGHTING_RECENT = 0.2
 
 
 
@@ -54,7 +53,7 @@ object KNNPrediction extends PredictionInterface {
 
 
 
-    if (cursor.size == 0) return None //If no entry in DB with route, direction, fromPoint and toPoint... return Nothing
+    if (cursor.size == 0) None //If no entry in DB with route, direction, fromPoint and toPoint... return Nothing
     else {
       getAverageAndSD(getSortedKNNDistances(cursor).take(K))
 
@@ -64,47 +63,86 @@ object KNNPrediction extends PredictionInterface {
   //returns Array(Duration, WeightedDistance)
   private def getSortedKNNDistances(cursor: MongoCursor):Vector[(Int, Double)] = {
 
-
-
     val currentTimeOffset = Commons.getTimeOffset(System.currentTimeMillis())
+    val currentDay = Commons.getDayCode(System.currentTimeMillis())
     val currentRainFall = Weather.getCurrentRainfall
     val currentTime = System.currentTimeMillis()
 
-    var weightedKNNArray:Vector[(Int, Double)] = Vector()
+    //var weightedKNNArray:Vector[(Int, Double)] = Vector()
+
+    var rawValueArrayAllDays: Vector[(Int, Int, Double, Double, Long)] = Vector()
 
     cursor.foreach(x => {
-      val day = x.get(coll.DAY).asInstanceOf[String]
-      val differenceArray = x.get(coll.DURATION_LIST).asInstanceOf[Imports.BasicDBList].map(y =>
+      val day = getDayOfWeekValue(x.get(coll.DAY).asInstanceOf[String])
+      val rawValueArray = x.get(coll.DURATION_LIST).asInstanceOf[Imports.BasicDBList].map(y =>
         (y.asInstanceOf[Imports.BasicDBObject].getInt(coll.DURATION),
-        math.abs(y.asInstanceOf[Imports.BasicDBObject].getInt(coll.TIME_OFFSET) - currentTimeOffset),
-        math.abs(y.asInstanceOf[Imports.BasicDBObject].getLong(coll.TIME_STAMP) - currentTime),
-      math.abs(y.asInstanceOf[Imports.BasicDBObject].getDouble(coll.RAINFALL)) - currentRainFall))
+          y.asInstanceOf[Imports.BasicDBObject].getInt(coll.TIME_OFFSET),
+          day,
+          y.asInstanceOf[Imports.BasicDBObject].getDouble(coll.RAINFALL),
+          y.asInstanceOf[Imports.BasicDBObject].getLong(coll.TIME_STAMP)))
 
-      val maxTimeOffsetDifference = differenceArray.maxBy(_._2)._2.toDouble
-      val maxTimeDifference = differenceArray.maxBy(_._3)._3.toDouble
-      val maxRainfallDifference = differenceArray.maxBy(_._4)._4
-
-      val durationDistanceArray:Vector[(Int, Double)] = differenceArray.map(z =>
-        (z._1,
-        (getDayOfWeekValue(day) * WEIGHTING_DAY_OF_WEEK) +
-          ((z._2 / maxTimeOffsetDifference) * WEIGHTING_TIME_OFFSET) +
-          ((z._3 / maxTimeDifference) * WEIGHTING_RECENT) +
-          ((z._4 / maxRainfallDifference) * WEIGHTING_RAINFALL))).toVector
-
-      weightedKNNArray = weightedKNNArray ++ durationDistanceArray
+      rawValueArrayAllDays = rawValueArrayAllDays ++ rawValueArray
     })
-      weightedKNNArray.sortBy(_._2)
+
+      val minTimeOffset = rawValueArrayAllDays.minBy(_._2)._2.toDouble
+      val maxTimeOffset = rawValueArrayAllDays.maxBy(_._2)._2.toDouble
+
+      val minDayOfWeek = rawValueArrayAllDays.minBy(_._3)._3
+      val maxDayOfWeek = rawValueArrayAllDays.maxBy(_._3)._3
+
+      val minRainfall = rawValueArrayAllDays.minBy(_._4)._4
+      val maxRainfall = rawValueArrayAllDays.maxBy(_._4)._4
+
+
+      val minTimeDifference = rawValueArrayAllDays.minBy(_._5)._5.toDouble
+      val maxTimeDifference = rawValueArrayAllDays.maxBy(_._5)._5.toDouble
+
+    val currentTimeOffsetNormalised = normaliseInt(currentTimeOffset, minTimeOffset, maxTimeOffset)
+    val currentDayNormalised = 0
+    val currentRainFallNormalised = normaliseDouble(currentRainFall, minRainfall, maxRainfall)
+    val currentTimeNormalised = normaliseLong(currentTime, minTimeDifference, maxTimeDifference)
+
+    //println("raw valuea array: "+ rawValueArrayAllDays)
+
+    val normalisedArray = rawValueArrayAllDays.map { case (duration, timeOffset, day, rainfall, timeStamp) =>
+      (duration,
+      normaliseInt(timeOffset, minTimeOffset, maxTimeOffset),
+      normaliseDouble(day, minDayOfWeek, maxDayOfWeek),
+      normaliseDouble(rainfall, minDayOfWeek, maxDayOfWeek),
+      normaliseLong(timeStamp,minTimeDifference,maxTimeDifference))
+    }
+   // println("normalised array: " + normalisedArray)
+
+    val durationWeightedDistanceArray = normalisedArray.map { case (duration, timeOffset, day, rainfall, timeStamp) =>
+      (duration, math.sqrt(
+        WEIGHTING_TIME_OFFSET * math.pow(currentTimeOffsetNormalised - timeOffset, 2) +
+          WEIGHTING_DAY_OF_WEEK * math.pow(currentDayNormalised - day, 2) +
+          WEIGHTING_RAINFALL * math.pow(currentRainFallNormalised - rainfall, 2) +
+          WEIGHTING_RECENT * math.pow(currentTimeNormalised - timeStamp, 2)))
+    }
+
+    val sortedDurationWeightedDistanceArray = durationWeightedDistanceArray.sortBy(_._2)
+
+  //  println("sortedDurationWeightedDistanceArray array: " + sortedDurationWeightedDistanceArray)
+
+    sortedDurationWeightedDistanceArray
   }
 
   private def getDayOfWeekValue(dayOfWeek:String):Double = {
     val weekDays = Vector("MON","TUE","WED","THU","FRI")
     val today = Commons.getDayCode(System.currentTimeMillis())
 
-    if (today == dayOfWeek) 0.5
-    else if(weekDays.contains(today) && weekDays.contains(dayOfWeek)) 0.6
-    else 0.8
+    if (today == dayOfWeek) 0
+    else if(weekDays.contains(today) && weekDays.contains(dayOfWeek)) 0.5
+    else 1
 
   }
+
+  private def normaliseInt(x:Int, min: Double, max: Double): Double = (x - min) / (max - min)
+  private def normaliseDouble(x:Double, min: Double, max: Double): Double = (x - min) / (max - min)
+  private def normaliseLong(x:Long, min: Double, max: Double): Double = (x - min) / (max - min)
+
+
 
 
 
