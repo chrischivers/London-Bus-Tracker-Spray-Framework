@@ -184,7 +184,7 @@ object SimpleServer extends MySslConfiguration {
     val nextList = Map(
       streamFields(0) -> next.reg,
       streamFields(1) -> next.nextArrivalTime,
-      streamFields(2) -> compact(render(next.markerMovementData.map({ case (lat, lng, rot, propDist, labx, laby) => lat + "," + lng + "," + rot + "," + propDist + "," + labx + "," + laby }).toList)),
+      streamFields(2) -> compact(render(next.markerMovementData.map({ case (lat, lng, rot, propDis) => lat + "," + lng + "," + rot + "," + propDis}).toList)),
       streamFields(3) -> next.route_ID,
       streamFields(4) -> next.direction_ID.toString,
       streamFields(5) -> next.towards,

@@ -9,9 +9,6 @@ import scala.math.BigDecimal.RoundingMode
 
 object Commons {
 
-  val LABEL_DISTANCE = 40
-  val LABEL_ROTATE_POINT_V_OFFSET = 10
-
 
   def getDayCode(arrivalTime: Long): String = {
     val cal: Calendar  = new GregorianCalendar()
@@ -38,11 +35,11 @@ object Commons {
   }
 
   // Returns array of Lat, Lng, Rotation To Here, Proportional Distance To Here, Label Position To Here Lat, Label Position To Here Lng
-  def getMovementDataArray(encodedPolyLine: String, routeID:String):Array[(String,String,String,String,String, String)] = {
+  def getMovementDataArray(encodedPolyLine: String, routeID:String):Array[(String,String,String,String)] = {
     val decodedPolyLine = decodePolyLine(encodedPolyLine)
 
-    var arrayBuild: Array[(Double,Double, Int, Double, Double, Double)] = Array()
-    arrayBuild = arrayBuild :+ (decodedPolyLine(0)._1, decodedPolyLine(0)._2, 0, 0.0,0.0,0.0) //Initial entry for first point
+    var arrayBuild: Array[(Double,Double, Int, Double)] = Array()
+    arrayBuild = arrayBuild :+ (decodedPolyLine(0)._1, decodedPolyLine(0)._2, 0, 0.0) //Initial entry for first point
 
     for(i <- 1 until decodedPolyLine.length) {
       val prevLat = decodedPolyLine(i - 1)._1
@@ -51,25 +48,23 @@ object Commons {
       val thisLng = decodedPolyLine(i)._2
       val rotationToHere = getRotation(prevLat, prevLng, thisLat, thisLng)
       val distanceToHere = getDistance(prevLat, prevLng, thisLat, thisLng)
-      val labelToHere = getLabelPosition(rotationToHere, routeID.length)
-      arrayBuild = arrayBuild :+ (thisLat, thisLng, rotationToHere, distanceToHere, labelToHere._1, labelToHere._2) //Initial entry for first point
+      arrayBuild = arrayBuild :+ (thisLat, thisLng, rotationToHere, distanceToHere) //Initial entry for first point
 
     }
     val sumOfDistances = arrayBuild.foldLeft(0.0) {(total, n) =>
       total + n._4
     }
 
-    arrayBuild.map{case (lat,lng,rot,dist,labx,laby) =>
+    arrayBuild.map { case (lat, lng, rot, dist) =>
       (BigDecimal(lat).setScale(6, RoundingMode.HALF_UP).toString(),
         BigDecimal(lng).setScale(6, RoundingMode.HALF_UP).toString(),
         rot.toString,
         try {
           BigDecimal(dist / sumOfDistances).setScale(2, RoundingMode.HALF_UP).toString()
         } catch {
-          case e:NumberFormatException => "0"
-        },
-        BigDecimal(labx).setScale(6, RoundingMode.HALF_UP).toString(),
-        BigDecimal(laby).setScale(6, RoundingMode.HALF_UP).toString())}
+          case e: NumberFormatException => "0"
+        })
+    }
   }
 
 
@@ -146,13 +141,7 @@ object Commons {
       Math.sin(lat1x) * Math.cos(lat2x) * Math.cos(dLon)
 
     val brng = Math.atan2(y, x)
-    (((brng * 180 / Math.PI) + 360) % 360).toInt
-  }
-
-  def getLabelPosition(rotation:Int, routeIDLength:Int): (Double, Double) = {
-   // val h = -(Math.sin(rad(rotation)) * -LABEL_DISTANCE)  //+ ((routeIDLength / 2) * 8)
-   // val v = Math.cos(rad(rotation))  * -LABEL_DISTANCE
-    return (0, 0)
+    (((brng * 180 / Math.PI) + 180) % 360).toInt
   }
 
 }

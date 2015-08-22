@@ -14,7 +14,7 @@ import scala.collection.{SortedMap, mutable}
 import scala.concurrent.duration._
 
 // Marker movement Data is Lat, Lng, Rotation To Here, Proportional Distance To Here, Label Position To Here Lat, Label Position To Here Lng
-case class PackagedStreamObject(reg: String, nextArrivalTime: String, markerMovementData: Array[(String, String, String, String, String, String)], route_ID: String, direction_ID: Int, towards: String, nextStopID: String, nextStopName: String)
+case class PackagedStreamObject(reg: String, nextArrivalTime: String, markerMovementData: Array[(String, String, String, String)], route_ID: String, direction_ID: Int, towards: String, nextStopID: String, nextStopName: String)
 case class KillMessage(vehicleID:String, routeID:String)
 
 object LiveStreamingCoordinator extends LiveStreamingCoordinatorInterface {
@@ -45,18 +45,16 @@ class LiveVehicleSupervisor extends Actor {
   override def receive = {
     case liveSourceLine: TFLSourceLine => processLine(liveSourceLine)
     case km: KillMessage => killActor(km)
-    case actor: Terminated =>  {
-        liveActors.remove(actor.getActor.path.name)
+    case actor: Terminated =>
+      liveActors.remove(actor.getActor.path.name)
       //  context.unwatch(actor.getActor)
-    }
   }
 
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
-      case _: Exception => {
+      case _: Exception =>
         println("Vehicle actor exception")
         Escalate
-      }
       case t =>
         super.supervisorStrategy.decider.applyOrElse(t, (_: Any) => Escalate)
     }
