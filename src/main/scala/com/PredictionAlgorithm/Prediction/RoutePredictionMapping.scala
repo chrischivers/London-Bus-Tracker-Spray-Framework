@@ -1,6 +1,5 @@
 package com.PredictionAlgorithm.Prediction
 
-import com.PredictionAlgorithm.ControlInterface.QueryController
 import com.PredictionAlgorithm.DataDefinitions.TFL.TFLDefinitions
 
 case class PredictionRequest(route_ID: String, direction_ID: Int, from_Point_ID: String, to_Point_ID: String, day_Of_Week: String, timeOffset: Int)
@@ -8,12 +7,11 @@ case class RouteListVariables(pointSeq: Int, fromStop:String, toStop:String, dur
 
 object RoutePredictionMapping {
 
-  private val predictionAlgorithm:PredictionInterface = KNNPrediction
 
   def getRoutePredictionMap(routeID: String, direction: Int, dayOfWeeK: String, timeOffset: Int):Option[List[RouteListVariables]] = {
 
     val routeList = TFLDefinitions.RouteDefinitionMap.get(routeID,direction)
-    if (routeList.isEmpty) return None
+    if (routeList.isEmpty) None
 
     else {
       val rl = routeList.get.sortBy(_._1)
@@ -35,7 +33,7 @@ object RoutePredictionMapping {
   private def validateRouteSequenceComplete(sortedRouteSequence:List[(Int,String,Option[String])]):Boolean = {
     val finalPointNumber = sortedRouteSequence.length - 1
 
-    if(sortedRouteSequence(0)._3.getOrElse(return false) != "FIRST" && sortedRouteSequence(finalPointNumber)._3.getOrElse(return false) != "LAST" ) return false
+    if(sortedRouteSequence.head._3.getOrElse(return false) != "FIRST" && sortedRouteSequence(finalPointNumber)._3.getOrElse(return false) != "LAST" ) return false
     for(a <- 0 until finalPointNumber) {
       if(sortedRouteSequence(a)._1 + 1 != sortedRouteSequence(a + 1)._1) return false
     }

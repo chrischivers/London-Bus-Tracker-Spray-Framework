@@ -16,9 +16,11 @@ object Weather {
   def getCurrentRainfall = {
     if (lastValidTo -System.currentTimeMillis() < 0) {
       try {
-        getCurrentRainFallFromWeb
+        loadCurrentRainFallFromWeb()
       } catch {
-        case e:Exception => DEFAULT_IF_UNAVAILABLE //Unable to fetch, returning default
+        case e:Exception =>
+          lastRainfall = DEFAULT_IF_UNAVAILABLE
+          lastValidTo = System.currentTimeMillis() + DEFAULT_VALID_TO_IF_UNAVAILABLE
       }
       println("weather fetched: " + lastRainfall)
       lastRainfall
@@ -27,10 +29,10 @@ object Weather {
 
 
 
-  private def getCurrentRainFallFromWeb = {
+  private def loadCurrentRainFallFromWeb() = {
     try {
       val s = Source.fromURL(WEATHER_API_URL)
-      val line = s.getLines.next()
+      val line = s.getLines().next()
 
       def helper(startIndex: Int): Unit = {
 
@@ -74,10 +76,9 @@ object Weather {
       helper(0)
     }
     catch {
-      case e: Exception => {
+      case e: Exception =>
         lastRainfall = DEFAULT_IF_UNAVAILABLE
         lastValidTo = System.currentTimeMillis() + DEFAULT_VALID_TO_IF_UNAVAILABLE
-      }
     }
   }
 

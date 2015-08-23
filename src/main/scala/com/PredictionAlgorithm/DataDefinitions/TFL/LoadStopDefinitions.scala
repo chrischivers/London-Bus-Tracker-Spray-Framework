@@ -1,14 +1,10 @@
 package com.PredictionAlgorithm.DataDefinitions.TFL
 
-import java.io._
-import java.net.{URL, HttpURLConnection}
-
 import akka.actor.{Props, Actor}
 import com.PredictionAlgorithm.ControlInterface.StreamProcessingControlInterface._
 import com.PredictionAlgorithm.DataDefinitions.LoadResource
-import com.PredictionAlgorithm.DataDefinitions.TFL.LoadRouteDefinitions._
-import com.PredictionAlgorithm.Database.{STOP_DEFINITIONS_COLLECTION, ROUTE_DEFINITIONS_COLLECTION, STOP_DEFINITION_DOCUMENT, ROUTE_DEFINITION_DOCUMENT}
-import com.PredictionAlgorithm.Database.TFL.{TFLGetStopDefinitionDocument, TFLGetRouteDefinitionDocument, TFLInsertStopDefinition}
+import com.PredictionAlgorithm.Database.{STOP_DEFINITIONS_COLLECTION, STOP_DEFINITION_DOCUMENT}
+import com.PredictionAlgorithm.Database.TFL.{TFLGetStopDefinitionDocument, TFLInsertStopDefinition}
 
 import scala.io.Source
 
@@ -25,13 +21,13 @@ object LoadStopDefinitions extends LoadResource {
 
   def getStopDefinitionMap: Map[String, StopDefinitionFields]  = {
     if (stopDefinitionMap.isEmpty) {
-      retrieveFromDB
+      retrieveFromDB()
       stopDefinitionMap
     } else stopDefinitionMap
   }
 
 
-  private def retrieveFromDB: Unit = {
+  private def retrieveFromDB(): Unit = {
     var tempMap: Map[String, StopDefinitionFields] = Map()
 
     val cursor = TFLGetStopDefinitionDocument.fetchAll()
@@ -52,7 +48,7 @@ object LoadStopDefinitions extends LoadResource {
     println("Number stop definitions fetched from DB: " + stopDefinitionMap.size)
   }
 
-  def updateFromWeb: Unit = {
+  def updateFromWeb() = {
     val streamActor = actorSystem.actorOf(Props[UpdateStopDefinitionsFromWeb], name = "UpdateStopeDefinitionsFromWeb")
     streamActor ! "start"
   }
@@ -60,12 +56,12 @@ object LoadStopDefinitions extends LoadResource {
   class UpdateStopDefinitionsFromWeb extends Actor {
 
     override def receive: Receive = {
-      case "start" => updateFromWeb
+      case "start" => updateFromWeb()
     }
 
-  def updateFromWeb: Unit = {
+  def updateFromWeb() = {
 
-    lazy val stopList: Set[String] = TFLGetStopDefinitionDocument.getDistinctStopCodes()
+    lazy val stopList: Set[String] = TFLGetStopDefinitionDocument.getDistinctStopCodes
     val totalNumberOfStops = stopList.size
     println("Number of stops: " + stopList.size)
     var numberLinesProcessed = 0
@@ -76,7 +72,7 @@ object LoadStopDefinitions extends LoadResource {
 
     stopList.foreach { x =>
       val s = Source.fromURL(tflURL(x))
-      s.getLines.drop(1).foreach(line => {
+      s.getLines().drop(1).foreach(line => {
         val split = splitLine(line)
         val lat = BigDecimal(split(6)).toString()
         val lng = BigDecimal(split(7)).toString()
@@ -89,7 +85,7 @@ object LoadStopDefinitions extends LoadResource {
     percentageComplete = 100
     println("Stop definitons from web loaded")
     stopDefinitionMap = tempMap
-    persistToDB
+    persistToDB()
   }
 
   private def splitLine(line: String) = line
@@ -100,13 +96,12 @@ object LoadStopDefinitions extends LoadResource {
     .tail // discards the first element (always '1')
 
 
-  private def persistToDB: Unit = {
+  private def persistToDB() = {
 
     stopDefinitionMap.foreach {
-      case ((stop_code), sdf: StopDefinitionFields) => {
+      case ((stop_code), sdf: StopDefinitionFields) =>
         val newDoc = new STOP_DEFINITION_DOCUMENT(stop_code, sdf.stopPointName, sdf.stopPointType, sdf.towards, sdf.bearing, sdf.stopPointIndicator, sdf.stopPointState, sdf.latitude, sdf.longitude)
         TFLInsertStopDefinition.insertDocument(newDoc)
-      }
     }
     println("Stop Definitons loaded from web and persisted to DB")
 

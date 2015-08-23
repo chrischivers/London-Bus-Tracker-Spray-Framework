@@ -21,12 +21,12 @@ class TFLIterateOverArrivalStream extends ProcessingInterface {
 
   val iteratingActor = context.actorOf(Props[IteratingActor])
 
-  override def start = {
+  override def start() = {
       iteratingActor ! "start"
       iteratingActor ! "next"
   }
 
-  override def stop = {
+  override def stop() = {
     iteratingActor ! "stop"
   }
 

@@ -5,7 +5,7 @@ import com.PredictionAlgorithm.Database._
 
 import com.mongodb.casbah.Imports._
 
-import com.mongodb.casbah.commons.{MongoDBObject, Imports}
+import com.mongodb.casbah.commons.MongoDBObject
 
 
 object TFLInsertUpdateRouteDefinition extends DatabaseInsertInterface{

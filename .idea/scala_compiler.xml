@@ -14,6 +14,8 @@
         <plugin path="$USER_HOME$/.ivy2/cache/org.scala-js/scalajs-compiler_2.11.7/jars/scalajs-compiler_2.11.7-0.6.4.jar" />
       </plugins>
     </profile>
-    <profile name="SBT 3" modules="app,project,bbkproject" />
+    <profile name="SBT 3" modules="app,project,bbkproject">
+      <option name="postfixOps" value="true" />
+    </profile>
   </component>
 </project>

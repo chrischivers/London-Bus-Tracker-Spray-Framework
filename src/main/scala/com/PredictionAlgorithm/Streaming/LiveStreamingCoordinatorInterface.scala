@@ -1,11 +1,9 @@
 package com.PredictionAlgorithm.Streaming
 
-import akka.actor.{Props, PoisonPill, ActorSystem, ActorRef}
+import akka.actor.{Props, ActorSystem}
 import com.PredictionAlgorithm.ControlInterface.LiveStreamControlInterface
 import com.PredictionAlgorithm.DataSource.TFL.TFLSourceLine
-import com.PredictionAlgorithm.Main
-import com.PredictionAlgorithm.Spray.SimpleServer
-import com.PredictionAlgorithm.Spray.SimpleServer.{PushToChildren, WebSocketServer}
+import com.PredictionAlgorithm.Spray.SimpleServer.PushToChildren
 
 
 case class livePositionData(routeID: String, directionID: Int, pointSequence: Int, nextStopID: String, arrivalTime: Long, firstLast:Option[String])

@@ -1,10 +1,8 @@
 package com.PredictionAlgorithm.DataSource.TFL
 
-import com.PredictionAlgorithm.DataSource.{SourceLine, SourceLineProcessor}
+import com.PredictionAlgorithm.DataSource.SourceLineProcessor
 
-/**
- * Created by chrischivers on 12/07/15.
- */
+
 object TFLSourceLineFormatter extends SourceLineProcessor{
   override def apply(sourceLineString: String): TFLSourceLine = {
     val x = splitLine(sourceLineString)

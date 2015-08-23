@@ -1,12 +1,6 @@
 package com.PredictionAlgorithm.DataDefinitions.TFL
 
-import java.io.File
-
-import com.PredictionAlgorithm.DataDefinitions.TFL
-import com.PredictionAlgorithm.DataDefinitions.TFL.LoadRouteIgnoreListFromFile._
 import com.PredictionAlgorithm.DataDefinitions.Tools.FetchPolyLines
-
-import scala.io.Source
 
 case class StopDefinitionFields(stopPointName:String, stopPointType:String, towards:String, bearing:Int, stopPointIndicator:String, stopPointState:Int, latitude:String, longitude:String)
 
@@ -18,15 +12,15 @@ object TFLDefinitions {
   lazy val RouteIgnoreList: Set[String] = LoadRouteIgnoreListFromFile.routeIgnoreSet
   lazy val StopIgnoreList: Set[String] = LoadStopIgnoreListFromFile.stopIgnoreSet
 
-  def updateRouteDefinitionsFromWeb = {
-    LoadRouteDefinitions.updateFromWeb
+  def updateRouteDefinitionsFromWeb() = {
+    LoadRouteDefinitions.updateFromWeb()
   }
 
-  def updateStopDefinitionsFromWeb = {
-    LoadStopDefinitions.updateFromWeb
+  def updateStopDefinitionsFromWeb() = {
+    LoadStopDefinitions.updateFromWeb()
   }
 
-  def addPolyLinesFromWeb = {
-    FetchPolyLines.updateAll
+  def addPolyLinesFromWeb() = {
+    FetchPolyLines.updateAll()
   }
 }

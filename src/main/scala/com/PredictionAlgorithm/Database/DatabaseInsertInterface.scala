@@ -1,9 +1,7 @@
 package com.PredictionAlgorithm.Database
 
 import akka.actor.{ActorRef, ActorSystem}
-import com.PredictionAlgorithm.Database.TFL.TFLInsertPointToPointDuration._
 import com.PredictionAlgorithm.Database.TFL.TFLMongoDBConnection
-import com.mongodb.casbah.MongoCollection
 
 import scala.util.{Failure, Success, Try}
 

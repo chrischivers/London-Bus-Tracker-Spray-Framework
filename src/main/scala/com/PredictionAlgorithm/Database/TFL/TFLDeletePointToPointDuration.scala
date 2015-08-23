@@ -3,12 +3,12 @@ package com.PredictionAlgorithm.Database.TFL
 import akka.actor.{Actor, ActorRef, Props}
 import com.PredictionAlgorithm.Database._
 import com.mongodb.casbah.Imports._
-import com.mongodb.casbah.MongoCursor
-import com.mongodb.casbah.commons.{Imports, MongoDBObject}
+import com.mongodb.casbah.commons.MongoDBObject
 
-
+/**
+ * Deletes a PointToPointDuration asyncronously
+ */
 object TFLDeletePointToPointDuration extends DatabaseDeleteInterface {
-
 
   override val dbDeleteActor: ActorRef = actorSystem.actorOf(Props[TFLDeletePointToPointDuration], name = "TFLDeletePointToPointDurationActor")
 

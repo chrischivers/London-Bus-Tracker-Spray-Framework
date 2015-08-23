@@ -1,14 +1,11 @@
 package com.PredictionAlgorithm.Database.TFL
 
 import akka.actor.{Actor, Props, ActorRef}
-import com.PredictionAlgorithm.Database.TFL.TFLInsertUpdateRouteDefinition._
 import com.PredictionAlgorithm.Database._
 import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.Imports._
 
-/**
- * Created by chrischivers on 01/08/15.
- */
+
 object TFLInsertPolyLineDefinition extends DatabaseInsertInterface{
 
   @volatile var numberPolyLinesInserted = 0

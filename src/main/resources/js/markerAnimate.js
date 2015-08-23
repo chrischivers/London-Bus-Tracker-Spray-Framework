@@ -12,7 +12,7 @@ google.maps.Marker.prototype.animateTo = function(newPosition, options) {
     duration: 1000,
     easing: 'linear',
     complete: null
-  }
+  };
   options = options || {};
 
   // complete missing options
@@ -77,7 +77,7 @@ google.maps.Marker.prototype.animateTo = function(newPosition, options) {
       }
 
     }            
-  }
+  };
 
   // stop possibly running animation
   if (window.cancelAnimationFrame) {
@@ -87,4 +87,4 @@ google.maps.Marker.prototype.animateTo = function(newPosition, options) {
   }
   
   animateStep(this, (new Date()).getTime());
-}
+};

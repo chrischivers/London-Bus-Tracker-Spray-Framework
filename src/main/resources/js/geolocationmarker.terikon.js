@@ -275,12 +275,12 @@ GeolocationMarker.prototype.setCircleOptions = function (circleOpts) {
 //Terikon: make updatePosition_ public
 GeolocationMarker.prototype.updatePosition = function (position) {
     this.updatePosition_(position);
-}
+};
 
 //Terikon: needed for MarkerWithLabel
 GeolocationMarker.prototype.setContent = function (content) {
     this.marker_.set("labelContent", content);
-}
+};
 
 /**
  * @private 

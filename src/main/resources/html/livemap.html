@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!--suppress HtmlUnknownTarget -->
 <html>
 <head>
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
@@ -19,8 +20,8 @@
     <script src="js/markerwithlabel.terikon.js"></script>
 
     <script>
-        // var wsUri = "ws://bbkproject.cloudapp.net/";
-        var wsUri = "ws://localhost:8080/";
+       // var wsUri = "ws://bbkproject.cloudapp.net/";
+       var wsUri = "ws://localhost:8080/";
         var map;
         var markerArray = {};
         var iconArray = {};
@@ -90,7 +91,7 @@
                     scale: 1,
                     fillColor: "#D40000",
                     fillOpacity: 1
-                }
+                };
 
                 markerArray[reg] = new MarkerWithLabel({
                     position: latLngArray[0],
@@ -127,7 +128,7 @@
             delete infoBoxArray[reg];
 
             infoBoxArray[reg] = new google.maps.InfoWindow({
-                content: "Route: " + routeID + "<br />" + "Direction: " + directionID + "<br />" + "Towards: " + towards + "<br />" + "Next Stop ID: " + nextStopID + "<br />" + "Next Stop Name: " + nextStopName,
+                content: "Route: " + routeID + "<br />" + "Direction: " + directionID + "<br />" + "Towards: " + towards + "<br />" + "Next Stop ID: " + nextStopID + "<br />" + "Next Stop Name: " + nextStopName
             });
 
 
@@ -190,10 +191,10 @@
 
         function setUpWebSocket(routeSelection) {
             websocket = new WebSocket(wsUri);
-            websocket.onopen = function (evt) {
+            websocket.onopen = function () {
                 onOpen(evt, routeSelection)
             };
-            websocket.onclose = function (evt) {
+            websocket.onclose = function () {
                 onClose(evt)
             };
             websocket.onmessage = function (evt) {
@@ -203,10 +204,10 @@
                 onError(evt)
             };
         }
-        function onOpen(evt, routeSelection) {
+        function onOpen(routeSelection) {
             doSend(routeSelection);
         }
-        function onClose(evt) {
+        function onClose() {
             alert("DISCONNECTED");
         }
         function onMessage(evt) {

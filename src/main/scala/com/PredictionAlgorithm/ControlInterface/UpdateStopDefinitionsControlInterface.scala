@@ -1,10 +1,10 @@
 package com.PredictionAlgorithm.ControlInterface
 
-import com.PredictionAlgorithm.DataDefinitions.TFL.{LoadStopDefinitions, LoadRouteDefinitions, TFLDefinitions}
-import com.PredictionAlgorithm.Database.TFL.{TFLInsertStopDefinition, TFLInsertUpdateRouteDefinition}
+import com.PredictionAlgorithm.DataDefinitions.TFL.{LoadStopDefinitions, TFLDefinitions}
+import com.PredictionAlgorithm.Database.TFL.TFLInsertStopDefinition
 
 /**
- * Created by chrischivers on 31/07/15.
+ * User Control Interface for Updating Stop Definitions
  */
 object UpdateStopDefinitionsControlInterface extends StartStopControlInterface {
   override def getVariableArray: Array[String] = {
@@ -14,9 +14,9 @@ object UpdateStopDefinitionsControlInterface extends StartStopControlInterface {
     Array(percentageComplete, numberInserted, numberUpdated)
   }
 
-  override def stop: Unit = throw new IllegalArgumentException("Unable to stop Update Stop Definitions From Web (will leave with incomplete data)")
+  override def stop(): Unit = throw new IllegalArgumentException("Unable to stop Update Stop Definitions From Web (will leave with incomplete data)")
 
-  override def start: Unit = {
-    TFLDefinitions.updateStopDefinitionsFromWeb
+  override def start(): Unit = {
+    TFLDefinitions.updateStopDefinitionsFromWeb()
   }
 }

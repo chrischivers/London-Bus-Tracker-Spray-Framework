@@ -2,13 +2,15 @@ package com.PredictionAlgorithm.ControlInterface
 
 import akka.actor.ActorSystem
 import akka.io.IO
-import com.PredictionAlgorithm.Prediction.{KNNPrediction, PredictionInterface}
-import com.PredictionAlgorithm.Processes.TFL.{TFLProcessSourceLines, TFLIterateOverArrivalStream}
+import com.PredictionAlgorithm.Processes.TFL.TFLProcessSourceLines
 import com.PredictionAlgorithm.Spray.SimpleServer.WebSocketServer
-import com.PredictionAlgorithm.Streaming.{PackagedStreamObject, LiveStreamResult, LiveStreamingCoordinator, LiveStream}
+import com.PredictionAlgorithm.Streaming.LiveStreamingCoordinator
 import spray.can.Http
 import spray.can.server.UHttp
 
+/**
+ * User Control Interface for  Live Stream Control
+ */
 object LiveStreamControlInterface extends StartStopControlInterface {
 
   implicit val system = ActorSystem("websocket")
@@ -21,12 +23,15 @@ object LiveStreamControlInterface extends StartStopControlInterface {
     Array(numberLiveActors, numberLiveChildren)
   }
 
-  override def stop: Unit = {
+  override def stop(): Unit = {
     IO(UHttp) ! Http.Unbind
     TFLProcessSourceLines.setLiveStreamCollection(false)
   }
 
-  override def start: Unit = {
+  /**
+   * Binds server
+   */
+  override def start(): Unit = {
     IO(UHttp) ! Http.Bind(server, interface = "0.0.0.0", port = 8080)
     TFLProcessSourceLines.setLiveStreamCollection(true)
   }

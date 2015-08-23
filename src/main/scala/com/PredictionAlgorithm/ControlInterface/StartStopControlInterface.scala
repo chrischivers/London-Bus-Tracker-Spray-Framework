@@ -3,14 +3,14 @@ package com.PredictionAlgorithm.ControlInterface
 import akka.actor.ActorSystem
 
 /**
- * Created by chrischivers on 16/07/15.
+ * Interface for User Interfaces that use a Start/Stop Button
  */
 trait StartStopControlInterface  {
   implicit val actorSystem = ActorSystem("ControlInterfaceActorSystem")
 
   def getVariableArray:Array[String]
-  def start
-  def stop
+  def start()
+  def stop()
 
 
 }

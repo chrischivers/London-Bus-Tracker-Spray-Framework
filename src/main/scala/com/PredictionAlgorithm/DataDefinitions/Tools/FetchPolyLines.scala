@@ -30,7 +30,7 @@ object FetchPolyLines extends LoadResource {
   println("Polyline cache size: " + existingPolyLineIndex.size)
 
 
-  def updateAll = {
+  def updateAll() = {
     val streamActor = actorSystem.actorOf(Props[UpdateAllPolyLinesActor], name = "AddPolyLinesActor")
     streamActor ! "updateAll"
   }
@@ -46,7 +46,7 @@ object FetchPolyLines extends LoadResource {
     if (existingPolyLineIndex.contains((fromStopCode, toStopCode))) {
       val polyLine = existingPolyLineIndex((fromStopCode, toStopCode))
       numberPolyLinesUpdatedFromCache += 1
-      return polyLine
+      polyLine
 
     }  else { //get it from online
     val url = "https://maps.googleapis.com/maps/api/directions/xml?origin=" + lastStopCodeLat + "," + lastStopCodeLng + "&destination=" + thisStopCodeLat + "," + thisStopCodeLng + "&key=" + getAPIKeys.get + "&mode=driving"
@@ -56,7 +56,7 @@ object FetchPolyLines extends LoadResource {
         if (line.contains("OVER_QUERY_LIMIT")) {
           APICurrentIndex += 1
           println("Over limit - new API being selected. APi Index: " + APICurrentIndex)
-          if (getAPIKeys().isDefined) return getPolyLineForTwoPoints(fromStopCode,toStopCode)
+          if (getAPIKeys.isDefined) return getPolyLineForTwoPoints(fromStopCode,toStopCode)
           else {
             throw new IllegalStateException("Out of API Keys. URL: " + url)
           }
@@ -76,7 +76,7 @@ object FetchPolyLines extends LoadResource {
   }
 
 
-  private def getAPIKeys():Option[String] = {
+  private def getAPIKeys:Option[String] = {
     val APIKeys = List(
       "AIzaSyD-9dP1VD-Ok9-oY1aXhSZZCYR5CRo-Jus",
       "AIzaSyDSEq-FMJhzFbQNIgK1JNQZuaLcPFV3oxw",
@@ -97,13 +97,13 @@ object FetchPolyLines extends LoadResource {
 
 
     override def receive: Receive = {
-      case "updateAll" => getAllRoutes
+      case "updateAll" => updatePolyLines()
     }
 
 
     val collection = ROUTE_DEFINITIONS_COLLECTION
 
-    def getAllRoutes = {
+    def updatePolyLines() = {
 
       var docLastRead: Option[Imports.DBObject] = None
       val cursor = TFLGetRouteDefinitionDocument.fetchAllOrdered()

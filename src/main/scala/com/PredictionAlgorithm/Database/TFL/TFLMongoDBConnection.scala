@@ -1,8 +1,8 @@
 package com.PredictionAlgorithm.Database.TFL
 
-import com.PredictionAlgorithm.Database.{POINT_TO_POINT_COLLECTION, DatabaseCollections, PREDICTION_DATABASE, Databases}
+import com.PredictionAlgorithm.Database.{DatabaseCollections, PREDICTION_DATABASE}
 import com.mongodb.casbah.commons.MongoDBObject
-import com.mongodb.casbah.{MongoCollection, MongoDB, MongoClient}
+import com.mongodb.casbah.{MongoCollection, MongoClient}
 
 object TFLMongoDBConnection {
 

@@ -1,16 +1,10 @@
 package com.PredictionAlgorithm.Streaming
 
-import java.util.concurrent.{LinkedBlockingQueue, BlockingQueue}
-
-import akka.actor.Status.{Failure, Success}
-import akka.actor.SupervisorStrategy.{Escalate, Restart}
+import akka.actor.SupervisorStrategy.Escalate
 import akka.actor._
 import com.PredictionAlgorithm.DataSource.TFL.TFLSourceLine
-import com.PredictionAlgorithm.Prediction.{PredictionRequest, KNNPrediction}
 import com.PredictionAlgorithm.Streaming.LiveStreamingCoordinator._
-
-import scala.collection.mutable.ListBuffer
-import scala.collection.{SortedMap, mutable}
+import scala.collection.mutable
 import scala.concurrent.duration._
 
 // Marker movement Data is Lat, Lng, Rotation To Here, Proportional Distance To Here, Label Position To Here Lat, Label Position To Here Lng
@@ -78,7 +72,7 @@ class LiveVehicleSupervisor extends Actor {
   def updateLiveActorTimestamp(reg: String, routeID: String, timeStamp: Long) = {
       val currentValue = liveActors.get(reg)
       if (currentValue.isDefined) liveActors += (reg -> (currentValue.get._1, routeID, timeStamp))
-      if (System.currentTimeMillis() - TIME_OF_LAST_CLEANUP > TIME_BETWEEN_CLEANUPS) cleanUpLiveActorsList
+      if (System.currentTimeMillis() - TIME_OF_LAST_CLEANUP > TIME_BETWEEN_CLEANUPS) cleanUpLiveActorsList()
 
   }
 

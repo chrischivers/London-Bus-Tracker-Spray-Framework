@@ -1,8 +1,8 @@
 package com.PredictionAlgorithm.Streaming
 
-import akka.actor.{PoisonPill, Actor}
+import akka.actor.Actor
 import com.PredictionAlgorithm.Commons.Commons
-import com.PredictionAlgorithm.DataDefinitions.TFL.{StopDefinitionFields, TFLDefinitions}
+import com.PredictionAlgorithm.DataDefinitions.TFL.TFLDefinitions
 import com.PredictionAlgorithm.DataSource.TFL.TFLSourceLine
 import com.PredictionAlgorithm.Prediction.{KNNPrediction, PredictionRequest}
 
@@ -58,7 +58,7 @@ class VehicleActor(vehicle_ID: String) extends Actor {
           }
           true
         } else if (indexOfStopCode == StopList.length - 1) {
-           endOfRouteKill//Handle last stop
+           endOfRouteKill()//Handle last stop
             false
         } else false
 
@@ -85,11 +85,11 @@ class VehicleActor(vehicle_ID: String) extends Actor {
       val arrivalTime =nextStopArrivalDueAt
       val stopCode = StopList(nextStopIndex)
       process(routeID,directionID,arrivalTime,stopCode)
-    } else if (nextStopIndex == StopList.length - 1) endOfRouteKill
+    } else if (nextStopIndex == StopList.length - 1) endOfRouteKill()
 
   }
 
-  def endOfRouteKill = {
+  def endOfRouteKill() = {
     LiveStreamingCoordinator.killActor(new KillMessage(vehicle_ID,currentRouteID))
   }
 
@@ -117,7 +117,7 @@ class VehicleActor(vehicle_ID: String) extends Actor {
       if (speedUpNumber > 0) speedUpNumber  = speedUpNumber - 1
 
       // println("Veh: " + vehicle_ID + ". Relative duration: " + relativeDuration)
-      val movementDataArray = Commons.getMovementDataArray(polyLineToNextStop,routeID)
+      val movementDataArray = Commons.getMovementDataArray(polyLineToNextStop)
       val pso = new PackagedStreamObject(vehicle_ID,nextStopArrivalDueAt.toString,movementDataArray,routeID,directionID,TFLDefinitions.StopDefinitions(StopList.last).stopPointName,nextStopCode, TFLDefinitions.StopDefinitions(nextStopCode).stopPointName)
       LiveStreamingCoordinator.enqueue(pso)
 

@@ -1,20 +1,15 @@
 package com.PredictionAlgorithm.Spray
 
 import akka.actor._
-import akka.io.IO
 import com.PredictionAlgorithm.Commons.Commons
-import com.PredictionAlgorithm.ControlInterface.QueryController
 import com.PredictionAlgorithm.DataDefinitions.TFL.TFLDefinitions
 import com.PredictionAlgorithm.Prediction.{KNNPrediction, PredictionRequest}
 import com.PredictionAlgorithm.Streaming.PackagedStreamObject
-import org.json4s.native.JsonMethods._
-import spray.can.server.UHttp
 import spray.can.websocket.FrameCommandFailed
 import spray.can.websocket.frame.TextFrame
 import spray.can.{websocket, Http}
 import spray.http.HttpRequest
 import spray.routing.HttpServiceActor
-import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.json4s.JsonDSL._
 
@@ -60,12 +55,10 @@ object SimpleServer extends MySslConfiguration {
         routeList = routeList ++ splitReceive
         println(routeList)
 
-      case Push(routeID: String, message: String) => {
+      case Push(routeID: String, message: String) =>
         if (routeList.contains(routeID)) {
           send(TextFrame(message))
         }
-
-      }
 
       case x: FrameCommandFailed =>
         log.error("frame command failed", x)

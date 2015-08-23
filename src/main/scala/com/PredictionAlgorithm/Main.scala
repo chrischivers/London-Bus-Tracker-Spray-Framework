@@ -1,35 +1,29 @@
 package com.PredictionAlgorithm
 
-import java.io.File
-import javax.swing.{SwingUtilities, JFrame}
-import akka.actor.{Props, ActorSystem}
-import akka.io.IO
-import akka.util.Timeout
+import javax.swing.SwingUtilities
 import com.PredictionAlgorithm.ControlInterface._
-import com.PredictionAlgorithm.DataDefinitions.TFL.{TFLDefinitions, LoadStopDefinitions}
-import com.PredictionAlgorithm.Spray.SimpleServer.WebSocketServer
-import com.PredictionAlgorithm.Spray.{SimpleServer}
-import com.PredictionAlgorithm.UI.{MonitoringUI}
-import akka.io.IO
-import spray.can.Http
-import akka.pattern.ask
-import akka.util.Timeout
-import spray.can.server.UHttp
-import scala.concurrent.duration._
+import com.PredictionAlgorithm.Prediction.KNNPrediction
+import com.PredictionAlgorithm.UI.MonitoringUI
 
 
 object Main extends App {
 
-  val UI_REFRESH_INTERVAL:Int = 1000;
+  /**
+   * How frequently the server UI refreshes
+   */
+  val UI_REFRESH_INTERVAL:Int = 1000
 
 
+  /**
+   * Starts the Server UI using Swing Framework
+   */
   SwingUtilities.invokeLater(new Runnable() {
     def run {
       val ui = new MonitoringUI(UI_REFRESH_INTERVAL)
       ui.setStreamProcessing(StreamProcessingControlInterface)
       ui.setHistoricalDataCollection(HistoricalDataCollectionControlInterface)
       ui.setLiveStreaming(LiveStreamControlInterface)
-      ui.setQueryProcessing(new QueryController)//TODO remove class and replace with obect
+      ui.setQueryProcessing(KNNPrediction)
       ui.setUpdateRouteDefinitions(UpdateRouteDefinitionsControlInterface)
       ui.setUpdateStopDefinitions(UpdateStopDefinitionsControlInterface)
       ui.setAddPolyLines(AddPolyLinesControlInterface)

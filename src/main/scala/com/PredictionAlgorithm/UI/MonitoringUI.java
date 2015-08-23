@@ -1,8 +1,9 @@
 package com.PredictionAlgorithm.UI;
 
 import com.PredictionAlgorithm.Commons.Commons;
-import com.PredictionAlgorithm.ControlInterface.QueryController;
 import com.PredictionAlgorithm.ControlInterface.StartStopControlInterface;
+import com.PredictionAlgorithm.Prediction.PredictionInterface;
+import com.PredictionAlgorithm.Prediction.PredictionRequest;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
@@ -12,18 +13,17 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 
 public class MonitoringUI {
     private JLabel dataSourceLinesReadValue;
     private JPanel mainPanel;
 
-    private int WINDOW_H_SIZE = 1200;
-    private int WINDOW_V_SIZE = 500;
-
-    private int UI_REFRESH_INTERVAL;
+    private final int UI_REFRESH_INTERVAL;
 
     private JButton startStopStreamProcessingButton;
     private JPanel DataSourcePanel;
@@ -78,9 +78,11 @@ public class MonitoringUI {
     public void createAndDisplayGUI() {
 
         JFrame frame = new JFrame("MonitoringUI");
+        int WINDOW_V_SIZE = 500;
+        int WINDOW_H_SIZE = 1200;
         frame.setPreferredSize(new Dimension(WINDOW_H_SIZE, WINDOW_V_SIZE));
         frame.setContentPane(mainPanel);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setLocation(500, 500);
         frame.pack();
         frame.setVisible(true);
@@ -90,7 +92,7 @@ public class MonitoringUI {
     public void setCleanUpPointToPoint(StartStopControlInterface sSCI) {
         cleanUpPointToPointButton.addActionListener(new ActionListener() {
             volatile boolean buttonStarted = false;
-            CounterUpdater cu = new CounterUpdater(sSCI, numberPointToPointRecordsCheckedForCleanUpValue, numberPointToPointRecordsDeletedValue);
+            final CounterUpdater cu = new CounterUpdater(sSCI, numberPointToPointRecordsCheckedForCleanUpValue, numberPointToPointRecordsDeletedValue);
 
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -113,7 +115,7 @@ public class MonitoringUI {
     public void setUpdateRouteDefinitions(StartStopControlInterface sSCI) {
         updateRouteDefinitionsFromButton.addActionListener(new ActionListener() {
             volatile boolean buttonStarted = false;
-            CounterUpdater cu = new CounterUpdater(sSCI, routeUpdatePercentageCompleteValue, numberRoutesInsertedDBValue, numberRoutesUpdatedDBValue);
+            final CounterUpdater cu = new CounterUpdater(sSCI, routeUpdatePercentageCompleteValue, numberRoutesInsertedDBValue, numberRoutesUpdatedDBValue);
 
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -128,7 +130,7 @@ public class MonitoringUI {
     public void setAddPolyLines(StartStopControlInterface sSCI) {
         addPolyLinesButton.addActionListener(new ActionListener() {
             volatile boolean buttonStarted = false;
-            CounterUpdater cu = new CounterUpdater(sSCI, numberAddPolyLinesLinesReadValue, numberPolyLinesAddedFromWebValue, numberPolyLinesAddedFromCacheValue);
+            final CounterUpdater cu = new CounterUpdater(sSCI, numberAddPolyLinesLinesReadValue, numberPolyLinesAddedFromWebValue, numberPolyLinesAddedFromCacheValue);
 
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -143,7 +145,7 @@ public class MonitoringUI {
     public void setUpdateStopDefinitions(StartStopControlInterface sSCI) {
         updateStopDefinitionsFromButton.addActionListener(new ActionListener() {
             volatile boolean buttonStarted = false;
-            CounterUpdater cu = new CounterUpdater(sSCI, stopUpdatePercentageCompleteValue, numberStopsInsertedDBValue, numberStopsUpdatedDBValue);
+            final CounterUpdater cu = new CounterUpdater(sSCI, stopUpdatePercentageCompleteValue, numberStopsInsertedDBValue, numberStopsUpdatedDBValue);
 
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -158,7 +160,7 @@ public class MonitoringUI {
     public void setStreamProcessing(StartStopControlInterface sSCI) {
         startStopStreamProcessingButton.addActionListener(new ActionListener() {
             volatile boolean buttonStarted = false;
-            CounterUpdater cu = new CounterUpdater(sSCI, dataSourceLinesReadValue, currentRainfallValue, usedMemoryValue, freeMemoryValue, totalMemoryValue, maxMemoryValue);
+            final CounterUpdater cu = new CounterUpdater(sSCI, dataSourceLinesReadValue, currentRainfallValue, usedMemoryValue, freeMemoryValue, totalMemoryValue, maxMemoryValue);
 
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -180,7 +182,7 @@ public class MonitoringUI {
     public void setHistoricalDataCollection(StartStopControlInterface sSCI) {
         startStopHistoricalDataCollectionButton.addActionListener(new ActionListener() {
             volatile boolean buttonStarted = false;
-            CounterUpdater cu = new CounterUpdater(sSCI, sizeHoldingBufferValue, nonMatchesCountValue, dBTransactionsRequestedValue, dBTransactionsExecutedValue, dBTransactionsOutstandingValue, dBPullTransactionsRequestedValue);
+            final CounterUpdater cu = new CounterUpdater(sSCI, sizeHoldingBufferValue, nonMatchesCountValue, dBTransactionsRequestedValue, dBTransactionsExecutedValue, dBTransactionsOutstandingValue, dBPullTransactionsRequestedValue);
 
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -199,13 +201,15 @@ public class MonitoringUI {
         });
     }
 
-    public void setQueryProcessing(QueryController queryController) {
-        runQueryButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String result = queryController.makePrediction(routeInput.getText(), Integer.parseInt(directionInput.getText()), fromStopIDInput.getText(), toStopIDInput.getText(), dayCodeInput.getText(), Commons.getTimeOffset(System.currentTimeMillis()));
-                queryResultValue.setText(result);
+    public void setQueryProcessing(PredictionInterface queryController) {
+        runQueryButton.addActionListener(e -> {
+            String result;
+            try {
+                result = queryController.makePrediction(new PredictionRequest(routeInput.getText(), Integer.parseInt(directionInput.getText()), fromStopIDInput.getText(), toStopIDInput.getText(), dayCodeInput.getText(), Commons.getTimeOffset(System.currentTimeMillis()))).get().toString();
+            } catch (NoSuchElementException nsee) {
+                result = "Unable to obtain prediction";
             }
+            queryResultValue.setText(result);
         });
     }
 
@@ -213,7 +217,7 @@ public class MonitoringUI {
     public void setLiveStreaming(StartStopControlInterface sSCI) {
         startStopLiveStreamingButton.addActionListener(new ActionListener() {
             volatile boolean buttonStarted = false;
-            CounterUpdater cu = new CounterUpdater(sSCI, numberLiveActorsValue, numberLiveChildrenValue);
+            final CounterUpdater cu = new CounterUpdater(sSCI, numberLiveActorsValue, numberLiveChildrenValue);
 
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -516,16 +520,14 @@ public class MonitoringUI {
 
 
     public class CounterUpdater implements Runnable {
-        private StartStopControlInterface cI;
-        private List<JLabel> valueLabelList = new LinkedList<JLabel>();
+        private final StartStopControlInterface cI;
+        private final List<JLabel> valueLabelList = new LinkedList<>();
         private volatile boolean running = true;
 
 
         public CounterUpdater(StartStopControlInterface cI, JLabel... valueLabels) {
             this.cI = cI;
-            for (int i = 0; i < valueLabels.length; i++) {
-                valueLabelList.add(valueLabels[i]);
-            }
+            Collections.addAll(valueLabelList, valueLabels);
         }
 
         public void terminate() {

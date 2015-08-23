@@ -1,7 +1,6 @@
 package com.PredictionAlgorithm.DataDefinitions.Tools
 
 import akka.actor.{PoisonPill, Props, Actor}
-import akka.actor.Actor.Receive
 import com.PredictionAlgorithm.ControlInterface.StreamProcessingControlInterface._
 import com.PredictionAlgorithm.DataDefinitions.TFL.TFLDefinitions
 import com.PredictionAlgorithm.Database.POINT_TO_POINT_COLLECTION
@@ -9,20 +8,17 @@ import com.PredictionAlgorithm.Database.TFL.{TFLDeletePointToPointDuration, TFLG
 import com.mongodb.casbah.Imports
 import org.bson.types.ObjectId
 
-/**
- * Created by chrischivers on 02/08/15.
- */
 object CleanPointToPointData {
 
   private val streamActor = actorSystem.actorOf(Props[CleanPointToPointData], name = "CleanPointToPointDataActor")
   @volatile var numberDocumentsRead = 0
   @volatile var numberDocumentsDeleted = 0
 
-  def start = {
+  def start() = {
     streamActor ! "start"
   }
 
-  def stop = {
+  def stop() = {
     streamActor ! PoisonPill
   }
 
@@ -65,7 +61,7 @@ class CleanPointToPointData extends Actor {
 
     val fromPointSeqFromDef = fromStopReference.head._1
     val toPointSeqFromDef = toStopReference.last._1
-    if(fromPointSeqFromDef + 1 != toPointSeqFromDef) true
+    if(fromPointSeqFromDef + 1 != toPointSeqFromDef) return true
 
     false
   }

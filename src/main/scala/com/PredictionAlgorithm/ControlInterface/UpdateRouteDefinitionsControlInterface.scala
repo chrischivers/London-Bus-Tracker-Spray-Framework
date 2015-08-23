@@ -1,13 +1,11 @@
 package com.PredictionAlgorithm.ControlInterface
 
-import akka.actor.Props
-import com.PredictionAlgorithm.ControlInterface.StreamProcessingControlInterface._
 import com.PredictionAlgorithm.DataDefinitions.TFL.{LoadRouteDefinitions, TFLDefinitions}
-import com.PredictionAlgorithm.Database.TFL.{TFLInsertUpdateRouteDefinition, TFLInsertUpdateRouteDefinition$, TFLInsertPointToPointDuration}
-import com.PredictionAlgorithm.Processes.TFL.{TFLIterateOverArrivalStream, TFLProcessSourceLines}
+import com.PredictionAlgorithm.Database.TFL.TFLInsertUpdateRouteDefinition
+
 
 /**
- * Created by chrischivers on 31/07/15.
+ * User Control Interface for Updating Route Definition
  */
 object UpdateRouteDefinitionsControlInterface extends StartStopControlInterface {
 
@@ -18,9 +16,9 @@ object UpdateRouteDefinitionsControlInterface extends StartStopControlInterface 
     Array(percentageComplete, numberInserted, numberUpdated)
   }
 
-  override def stop: Unit = throw new IllegalArgumentException("Unable to stop Update Route Definitions From Web (will leave with incomplete data)")
+  override def stop(): Unit = throw new IllegalArgumentException("Unable to stop Update Route Definitions From Web (will leave with incomplete data)")
 
-  override def start: Unit = {
-  TFLDefinitions.updateRouteDefinitionsFromWeb
+  override def start(): Unit = {
+  TFLDefinitions.updateRouteDefinitionsFromWeb()
   }
 }

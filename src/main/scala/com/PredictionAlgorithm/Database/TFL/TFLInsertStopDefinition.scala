@@ -2,7 +2,7 @@ package com.PredictionAlgorithm.Database.TFL
 
 import akka.actor.{Actor, Props, ActorRef}
 import com.PredictionAlgorithm.Database._
-import com.mongodb.casbah.commons.{Imports, MongoDBObject}
+import com.mongodb.casbah.commons.MongoDBObject
 
 
 object TFLInsertStopDefinition extends DatabaseInsertInterface{

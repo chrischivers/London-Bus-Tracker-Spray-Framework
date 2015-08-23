@@ -1,14 +1,18 @@
 package com.PredictionAlgorithm.ControlInterface
 
-import akka.actor.Props
-import com.PredictionAlgorithm.ControlInterface.UpdateRouteDefinitionsControlInterface._
-import com.PredictionAlgorithm.DataDefinitions.TFL.{LoadRouteDefinitions, TFLDefinitions}
+
+import com.PredictionAlgorithm.DataDefinitions.TFL.TFLDefinitions
 import com.PredictionAlgorithm.DataDefinitions.Tools.FetchPolyLines
-import com.PredictionAlgorithm.Database.TFL.TFLInsertUpdateRouteDefinition$
 
-
+/**
+ * User Control Interface for the Adding Polylines Function
+ */
 object AddPolyLinesControlInterface extends StartStopControlInterface {
 
+  /**
+   * Gets the variable array for displaying on the User Interface
+   * @return An array of the variables to display on the user interface
+   */
   override def getVariableArray: Array[String] = {
     val numberLinesRead = FetchPolyLines.numberLinesProcessed.toString
     val numberPolyLinesUpdatedFromWeb = FetchPolyLines.numberPolyLinesUpdatedFromWeb.toString
@@ -16,10 +20,10 @@ object AddPolyLinesControlInterface extends StartStopControlInterface {
     Array(numberLinesRead, numberPolyLinesUpdatedFromWeb,numberPolyLinesUpdatedFromCache)
   }
 
-  override def stop: Unit = throw new IllegalArgumentException("Unable to stop Add PolyLines (will leave with incomplete data)")
+  override def stop(): Unit = throw new IllegalArgumentException("Unable to stop Add PolyLines (will leave with incomplete data)")
 
-  override def start: Unit = {
-    TFLDefinitions.addPolyLinesFromWeb
+  override def start(): Unit = {
+    TFLDefinitions.addPolyLinesFromWeb()
   }
 }
 

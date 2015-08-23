@@ -6,7 +6,7 @@ import com.PredictionAlgorithm.Database.POINT_TO_POINT_COLLECTION
 import com.PredictionAlgorithm.Database.TFL.TFLGetPointToPointDocument
 import com.PredictionAlgorithm.Processes.Weather.Weather
 import com.mongodb.casbah.MongoCursor
-import com.mongodb.casbah.commons.{MongoDBList, Imports, MongoDBObject}
+import com.mongodb.casbah.commons.{Imports, MongoDBObject}
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics
 import scala.collection.JavaConversions._
 
@@ -27,20 +27,25 @@ object KNNPrediction extends PredictionInterface {
 
 
   override def makePrediction(pr:PredictionRequest): Option[Double] = {
-    val startingPoint = TFLDefinitions.RouteDefinitionMap(pr.route_ID, pr.direction_ID).filter(x=> x._2 == pr.from_Point_ID).head._1
-    val endingPoint = TFLDefinitions.RouteDefinitionMap(pr.route_ID, pr.direction_ID).filter(x=> x._2 == pr.to_Point_ID).last._1
-    var accumulatedPrediction = 0.0
-    var cumulativeDuration = pr.timeOffset.toDouble
-    for (i <- startingPoint until endingPoint) {
-      val fromStopID = TFLDefinitions.RouteDefinitionMap(pr.route_ID, pr.direction_ID).filter(x => x._1 == i).head._2
-      val toStopID = TFLDefinitions.RouteDefinitionMap(pr.route_ID, pr.direction_ID).filter(x => x._1 == i + 1).last._2
-      val duration = makePredictionBetweenConsecutivePoints(new PredictionRequest(pr.route_ID, pr.direction_ID, fromStopID, toStopID, pr.day_Of_Week, cumulativeDuration.toInt)).getOrElse(return None)
+    try {
+      val startingPoint = TFLDefinitions.RouteDefinitionMap(pr.route_ID, pr.direction_ID).filter(x => x._2 == pr.from_Point_ID).head._1
+      val endingPoint = TFLDefinitions.RouteDefinitionMap(pr.route_ID, pr.direction_ID).filter(x => x._2 == pr.to_Point_ID).last._1
+      var accumulatedPrediction = 0.0
+      var cumulativeDuration = pr.timeOffset.toDouble
+      for (i <- startingPoint until endingPoint) {
+        val fromStopID = TFLDefinitions.RouteDefinitionMap(pr.route_ID, pr.direction_ID).filter(x => x._1 == i).head._2
+        val toStopID = TFLDefinitions.RouteDefinitionMap(pr.route_ID, pr.direction_ID).filter(x => x._1 == i + 1).last._2
+        val duration = makePredictionBetweenConsecutivePoints(new PredictionRequest(pr.route_ID, pr.direction_ID, fromStopID, toStopID, pr.day_Of_Week, cumulativeDuration.toInt)).getOrElse(return None)
 
-      accumulatedPrediction += duration._1
-      cumulativeDuration += duration._1
+        accumulatedPrediction += duration._1
+        cumulativeDuration += duration._1
 
+      }
+      Some(round(accumulatedPrediction, 2))
     }
-    Some(round(accumulatedPrediction, 2))
+    catch {
+      case nsee: NoSuchElementException => None
+    }
   }
 
   def makePredictionBetweenConsecutivePoints(pr: PredictionRequest): Option[(Double, Double)] = {
@@ -64,7 +69,6 @@ object KNNPrediction extends PredictionInterface {
   private def getSortedKNNDistances(cursor: MongoCursor):Vector[(Int, Double)] = {
 
     val currentTimeOffset = Commons.getTimeOffset(System.currentTimeMillis())
-    val currentDay = Commons.getDayCode(System.currentTimeMillis())
     val currentRainFall = Weather.getCurrentRainfall
     val currentTime = System.currentTimeMillis()
 

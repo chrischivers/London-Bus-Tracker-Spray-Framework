@@ -1,19 +1,20 @@
 package com.PredictionAlgorithm.ControlInterface
 
-import akka.actor.Props
 import com.PredictionAlgorithm.Database.TFL.TFLInsertPointToPointDuration
-import com.PredictionAlgorithm.Processes.TFL.{TFLIterateOverArrivalStream, TFLProcessSourceLines}
+import com.PredictionAlgorithm.Processes.TFL.TFLProcessSourceLines
 
-
+/**
+ * User Control Interface for the Historical Data Collection
+ */
 object HistoricalDataCollectionControlInterface extends StartStopControlInterface {
 
 
-  override def start: Unit = {
+  override def start(): Unit = {
 TFLProcessSourceLines.setHistoricalDataStoring(true)
 
   }
 
-  override def stop: Unit = {
+  override def stop(): Unit = {
     TFLProcessSourceLines.setHistoricalDataStoring(false)
   }
 

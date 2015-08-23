@@ -2,7 +2,7 @@ package com.PredictionAlgorithm.Database
 
 
 /**
- * Created by chrischivers on 20/06/15.
+ * Database Collection Objects
  */
 sealed trait DatabaseCollections {
   val name: String
@@ -11,7 +11,10 @@ sealed trait DatabaseCollections {
   val uniqueIndex: Boolean
 }
 
-final case object POINT_TO_POINT_COLLECTION extends DatabaseCollections {
+/**
+ * The POINT_TO_POINT Collection as stored by MongoDB
+ */
+case object POINT_TO_POINT_COLLECTION extends DatabaseCollections {
 
 
   val ROUTE_ID = "ROUTE_ID"
@@ -31,8 +34,10 @@ final case object POINT_TO_POINT_COLLECTION extends DatabaseCollections {
   override val uniqueIndex = false
 }
 
-
-final case object ROUTE_DEFINITIONS_COLLECTION extends DatabaseCollections {
+/**
+ * The ROUTE_DEFINITIONS Collection as stored by MongoDB
+ */
+case object ROUTE_DEFINITIONS_COLLECTION extends DatabaseCollections {
 
   val ROUTE_ID = "ROUTE_ID"
   val DIRECTION_ID = "DIRECTION_ID"
@@ -48,7 +53,10 @@ final case object ROUTE_DEFINITIONS_COLLECTION extends DatabaseCollections {
 
 }
 
-final case object STOP_DEFINITIONS_COLLECTION extends DatabaseCollections {
+/**
+ * The STOP_DEFINITIONS Collection as stored by MongoDB
+ */
+case object STOP_DEFINITIONS_COLLECTION extends DatabaseCollections {
 
   val STOP_CODE = "STOP_CODE"
   val STOP_NAME = "STOP_NAME"
@@ -67,7 +75,10 @@ final case object STOP_DEFINITIONS_COLLECTION extends DatabaseCollections {
 
 }
 
-final case object POLYLINE_INDEX_COLLECTION extends DatabaseCollections {
+/**
+* The POLYLINE INDEX Collection as stored by MongoDB
+*/
+case object POLYLINE_INDEX_COLLECTION extends DatabaseCollections {
 
   val FROM_STOP_CODE = "FROM_STOP_CODE"
   val TO_STOP_CODE = "TO_STOP_CODE"

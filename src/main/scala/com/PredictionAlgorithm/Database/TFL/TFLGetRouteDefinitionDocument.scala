@@ -1,14 +1,13 @@
 package com.PredictionAlgorithm.Database.TFL
 
-import com.PredictionAlgorithm.Database.TFL.TFLGetPointToPointDocument._
-import com.PredictionAlgorithm.Database.{ROUTE_DEFINITIONS_COLLECTION, DatabaseCollections, POINT_TO_POINT_COLLECTION, DatabaseQueryInterface}
-import com.mongodb.casbah.{MongoCollection, MongoCursor}
-import com.mongodb.casbah.commons.{MongoDBObject, Imports}
+import com.PredictionAlgorithm.Database.{ROUTE_DEFINITIONS_COLLECTION, DatabaseCollections, DatabaseQueryInterface}
+import com.mongodb.casbah.MongoCursor
+import com.mongodb.casbah.commons.MongoDBObject
 
 import scala.util.{Failure, Success, Try}
 
 /**
- * Created by chrischivers on 31/07/15.
+ * Gets a TFL Route Definition Document asyncronously
  */
 object TFLGetRouteDefinitionDocument extends DatabaseQueryInterface{
 

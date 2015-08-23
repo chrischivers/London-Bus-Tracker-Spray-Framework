@@ -2,18 +2,20 @@ package com.PredictionAlgorithm.Commons
 
 import java.util.{GregorianCalendar, Calendar}
 
-import com.PredictionAlgorithm.DataDefinitions.TFL.TFLDefinitions
-
 import scala.math.BigDecimal.RoundingMode
 
 
 object Commons {
 
-
-  def getDayCode(arrivalTime: Long): String = {
+  /**
+   * Retrieves the day code from time in millis
+   * @param timeInMillis the time in milliseconds
+   * @return the day code (MON, TUE... etc)
+   */
+  def getDayCode(timeInMillis: Long): String = {
     val cal: Calendar  = new GregorianCalendar()
 
-    cal.setTimeInMillis(arrivalTime)
+    cal.setTimeInMillis(timeInMillis)
     cal.get(Calendar.DAY_OF_WEEK) match {
       case Calendar.MONDAY => "MON"
       case Calendar.TUESDAY=> "TUE"
@@ -26,16 +28,25 @@ object Commons {
 
   }
 
-  def getTimeOffset(existingTimeStamp:Long):Int = {
+  /**
+   * Retrieves the time offset from 00:00 in seconds from time in millis
+   * @param timeInMillis the time in milliseconds
+   * @return seconds since 00:00 (e.g. 1:00am = 3600 seconds)
+   */
+  def getTimeOffset(timeInMillis:Long):Int = {
     val existingTime: Calendar = new GregorianCalendar()
-    existingTime.setTimeInMillis(existingTimeStamp)
+    existingTime.setTimeInMillis(timeInMillis)
 
     val beginningOfDayTime: Calendar = new GregorianCalendar(existingTime.get(Calendar.YEAR), existingTime.get(Calendar.MONTH), existingTime.get(Calendar.DAY_OF_MONTH))
     ((existingTime.getTimeInMillis - beginningOfDayTime.getTimeInMillis)/1000).toInt
   }
 
-  // Returns array of Lat, Lng, Rotation To Here, Proportional Distance To Here, Label Position To Here Lat, Label Position To Here Lng
-  def getMovementDataArray(encodedPolyLine: String, routeID:String):Array[(String,String,String,String)] = {
+  /**
+   * Gets the movement data array sent to the clients from an encoded polyLine
+   * @param encodedPolyLine The encoded polyLine
+   * @return An String Array of Latitude, Longitude, Rotation and Proportional Distance
+   */
+  def getMovementDataArray(encodedPolyLine: String):Array[(String,String,String,String)] = {
     val decodedPolyLine = decodePolyLine(encodedPolyLine)
 
     var arrayBuild: Array[(Double,Double, Int, Double)] = Array()
@@ -62,15 +73,19 @@ object Commons {
         try {
           BigDecimal(dist / sumOfDistances).setScale(2, RoundingMode.HALF_UP).toString()
         } catch {
-          case e: NumberFormatException => "0"
+          case e: NumberFormatException => "0" // returns 0 as default
         })
     }
   }
 
-
+  /**
+   * Decodes polyLine
+   * The code in this method was adapted from the Java Decode Method of Google's PolyUtil Class from Android Map Utils
+   * https://github.com/googlemaps/android-maps-utils/blob/master/library/src/com/google/maps/android/PolyUtil.java
+   * @param encodedPolyLine The Encoded PolyLine
+   * @return The decoded polyLine as an Array series of Latitudes and Longitudes
+   */
   def decodePolyLine(encodedPolyLine: String): Array[(Double, Double)] = {
-    //Code adapted from Decode Method of Google's PolyUtil Class from Android Map Utils
-    // https://github.com/googlemaps/android-maps-utils/blob/master/library/src/com/google/maps/android/PolyUtil.java
 
     val len: Int = encodedPolyLine.length
     var latLngList: Array[(Double,Double)] = Array()
@@ -92,7 +107,7 @@ object Commons {
       } while (b >= 0x1f)
 
 
-      lat += (if ((result & 1) != 0) ~(result >> 1) else (result >> 1))
+      lat += (if ((result & 1) != 0) ~(result >> 1) else result >> 1)
 
       result = 1
       shift = 0
@@ -104,19 +119,25 @@ object Commons {
         shift += 5
       } while (b >= 0x1f)
 
-      lng += (if ((result & 1) != 0) ~(result >> 1) else (result >> 1))
+      lng += (if ((result & 1) != 0) ~(result >> 1) else result >> 1)
 
-      //BigDecimal("3.53456").round(new MathContext(4, RoundingMode.HALF_UP));
-      //val x = (BigDecimal(lat * 1e-5).setScale(6, RoundingMode.HALF_UP), BigDecimal(lng * 1e-5).setScale(6, RoundingMode.HALF_UP))
       val x = (lat * 1e-5, lng * 1e-5)
       latLngList = latLngList :+ x
     }
-    return latLngList
+    latLngList
   }
 
   def rad(x:Double) = x * Math.PI / 180
 
-  // Not own code. Taken from: http://stackoverflow.com/questions/1502590/calculate-distance-between-two-points-in-google-maps-v3
+  /**
+   * Gets distance between two pairs of latitudes and longitudes
+   * This method was adapted from code at : http://stackoverflow.com/questions/1502590/calculate-distance-between-two-points-in-google-maps-v3
+   * @param lat1 laitude 1
+   * @param lng1 longitude 1
+   * @param lat2 latitude 2
+   * @param lng2 longitude 2
+   * @return The distance in metres
+   */
   def getDistance(lat1:Double, lng1:Double, lat2:Double, lng2:Double): Double = {
     val R = 6378137 // Earth’s mean radius in meter
     val dLat = rad(lat2 - lat1)
@@ -129,14 +150,21 @@ object Commons {
     d
   }
 
-  // Not my code
-  // Formula from http://stackoverflow.com/questions/2908892/get-degrees-0-360-from-one-latlng-to-another-in-javascript
+  /**
+   * Gets rotation between two pairs of latitudes and longitudes
+   * This method was adapted from code at: http://stackoverflow.com/questions/2908892/get-degrees-0-360-from-one-latlng-to-another-in-javascript
+   * @param lat1 latitude 1
+   * @param lng1 longitude 1
+   * @param lat2 latitude 2
+   * @param lng2 longitude 2
+   * @return The rotation in degrees
+   */
   def getRotation(lat1:Double, lng1:Double, lat2:Double, lng2:Double): Int = {
     val lat1x = lat1 * Math.PI / 180
     val lat2x = lat2 * Math.PI / 180
     val dLon = (lng2 - lng1) * Math.PI / 180
 
-    val y = Math.sin(dLon) * Math.cos(lat2x);
+    val y = Math.sin(dLon) * Math.cos(lat2x)
     val x = Math.cos(lat1x) * Math.sin(lat2x) -
       Math.sin(lat1x) * Math.cos(lat2x) * Math.cos(dLon)
 

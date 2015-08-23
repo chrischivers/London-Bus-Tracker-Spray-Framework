@@ -1,10 +1,9 @@
 package com.PredictionAlgorithm.Database
 
 import akka.actor.ActorSystem
-import com.PredictionAlgorithm.Database.TFL.TFLGetRouteDefinitionDocument._
 import com.PredictionAlgorithm.Database.TFL.TFLMongoDBConnection
-import com.mongodb.casbah.{MongoCursor, MongoCollection}
-import com.mongodb.casbah.commons.{Imports, MongoDBObject}
+import com.mongodb.casbah.MongoCursor
+import com.mongodb.casbah.commons.Imports
 
 import scala.util.{Failure, Success, Try}
 

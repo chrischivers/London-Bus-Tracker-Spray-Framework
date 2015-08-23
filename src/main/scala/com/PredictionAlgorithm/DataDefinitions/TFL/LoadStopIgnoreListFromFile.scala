@@ -1,14 +1,8 @@
 package com.PredictionAlgorithm.DataDefinitions.TFL
 
-import java.io.File
-
 import com.PredictionAlgorithm.DataDefinitions.LoadResource
 
-import scala.io.Source
 
-/**
- * Created by chrischivers on 17/07/15.
- */
 object LoadStopIgnoreListFromFile extends LoadResource{
 
 
@@ -17,7 +11,7 @@ object LoadStopIgnoreListFromFile extends LoadResource{
 
   lazy val stopIgnoreSet:Set[String] = {
    var stopIgnoreSet:Set[String] = Set()
-    stopIgnoreListFile.getLines.drop(1).foreach((line) => {
+    stopIgnoreListFile.getLines().drop(1).foreach((line) => {
       //drop first row and iterate through others
       try {
         val splitLine = line.split(",")
