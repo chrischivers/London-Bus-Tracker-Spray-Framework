@@ -49,6 +49,7 @@ html, body, #map_canvas {
 
 
 #settings_canvas .row {
+
     overflow: hidden;
     display:table-cell;
     vertical-align:middle;

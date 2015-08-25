@@ -11,14 +11,15 @@ object Weather {
   private val DEFAULT_IF_UNAVAILABLE = 0.0
   private val DEFAULT_VALID_TO_IF_UNAVAILABLE = 900000
   private var lastRainfall = 0.0
-  private var lastValidTo:Long = 0
+  private var lastValidTo: Long = 0
 
   def getCurrentRainfall = {
-    if (lastValidTo -System.currentTimeMillis() < 0) {
+    if (lastValidTo - System.currentTimeMillis() < 0) {
       try {
         loadCurrentRainFallFromWeb()
       } catch {
-        case e:Exception =>
+        case e: Exception =>
+          println("weather exception, using default")
           lastRainfall = DEFAULT_IF_UNAVAILABLE
           lastValidTo = System.currentTimeMillis() + DEFAULT_VALID_TO_IF_UNAVAILABLE
       }
@@ -28,7 +29,6 @@ object Weather {
   }
 
 
-
   private def loadCurrentRainFallFromWeb() = {
     try {
       val s = Source.fromURL(WEATHER_API_URL)
@@ -36,14 +36,14 @@ object Weather {
 
       def helper(startIndex: Int): Unit = {
 
-
-
         val timeFromStartPoint = line.indexOf("time from=", startIndex)
         val timeToStartPoint = line.indexOf("to=", timeFromStartPoint) + 4
         val year = line.substring(timeToStartPoint, timeToStartPoint + 4).toInt
         val month = line.substring(timeToStartPoint + 5, timeToStartPoint + 7).toInt
         val day = line.substring(timeToStartPoint + 8, timeToStartPoint + 10).toInt
         val hour = line.substring(timeToStartPoint + 11, timeToStartPoint + 13).toInt
+
+        println(timeFromStartPoint + ", " + timeToStartPoint + ", " + year + ", " + month + ", " + day + ", " + hour)
 
         val cal = Calendar.getInstance()
 
@@ -57,12 +57,12 @@ object Weather {
 
         if (cal.getTimeInMillis - System.currentTimeMillis() < 0) helper(timeToStartPoint)
         else {
-          if (line.indexOf("<precipitation/>", timeToStartPoint) != -1 || line.indexOf("<precipitation/>", timeToStartPoint) < line.indexOf("<precipitation", timeToStartPoint)) {
+          if (line.indexOf("<precipitation></precipitation>", timeToStartPoint) != -1 && line.indexOf("<precipitation></precipitation>", timeToStartPoint) < line.indexOf("<precipitation unit", timeToStartPoint)) {
+            println("rainfall unavailable")
             lastRainfall = DEFAULT_IF_UNAVAILABLE
             lastValidTo = cal.getTimeInMillis
-          }
-          else {
-            val lineStartPoint = line.indexOf("<precipitation", timeToStartPoint)
+          } else {
+            val lineStartPoint = line.indexOf("<precipitation unit", timeToStartPoint)
             val valueStartPoint = line.indexOf("value", lineStartPoint) + 7
             val valueEndPoint = line.indexOf("\"", valueStartPoint)
             val rainFallValue = line.substring(valueStartPoint, valueEndPoint).toDouble

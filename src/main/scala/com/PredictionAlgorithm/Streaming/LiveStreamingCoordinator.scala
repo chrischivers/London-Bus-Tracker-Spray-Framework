@@ -7,7 +7,7 @@ import com.PredictionAlgorithm.Streaming.LiveStreamingCoordinator._
 import scala.collection.mutable
 import scala.concurrent.duration._
 
-// Marker movement Data is Lat, Lng, Rotation To Here, Proportional Distance To Here, Label Position To Here Lat, Label Position To Here Lng
+// Marker movement Data is Lat, Lng, Rotation To Here, Proportional Distance To Here
 case class PackagedStreamObject(reg: String, nextArrivalTime: String, markerMovementData: Array[(String, String, String, String)], route_ID: String, direction_ID: Int, towards: String, nextStopID: String, nextStopName: String)
 case class KillMessage(vehicleID:String, routeID:String)
 
