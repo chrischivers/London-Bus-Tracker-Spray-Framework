@@ -17,6 +17,8 @@
     <profile name="SBT 3" modules="app,project">
       <option name="postfixOps" value="true" />
     </profile>
-    <profile name="SBT 4" modules="bbkproject" />
+    <profile name="SBT 4" modules="bbkproject">
+      <option name="postfixOps" value="true" />
+    </profile>
   </component>
 </project>
