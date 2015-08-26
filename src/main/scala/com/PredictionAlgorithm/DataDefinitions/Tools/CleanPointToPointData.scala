@@ -46,7 +46,7 @@ class CleanPointToPointData extends Actor {
 
     if (canDelete(routeID,direction,fromStop,toStop))  {
       CleanPointToPointData.numberDocumentsDeleted += 1
-      println("Can delete the following: Route: " + routeID + ". Direction: " + direction + ". From Stop: " + fromStop + ". To Stop: " + toStop)
+      println("Deleting the following: Route: " + routeID + ". Direction: " + direction + ". From Stop: " + fromStop + ". To Stop: " + toStop)
       TFLDeletePointToPointDuration.deleteDocument(id)
     }
 

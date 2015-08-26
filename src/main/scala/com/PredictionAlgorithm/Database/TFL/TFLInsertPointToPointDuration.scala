@@ -24,7 +24,7 @@ class TFLInsertPointToPointDuration extends Actor {
 
   val PRUNE_THRESHOLD_K_LIMIT = 10
   val PRUNE_THRESHOLD_TIME_LIMIT = 1800
-  val PRUNE_THRESHOLD_RAINFALL_LIMIT = 1
+  val PRUNE_THRESHOLD_RAINFALL_LIMIT = 0.5
 
   override def receive: Receive = {
     case doc1: POINT_TO_POINT_DOCUMENT => insertToDB(doc1)
@@ -59,13 +59,15 @@ class TFLInsertPointToPointDuration extends Actor {
       if (cursor.size > 0) {
         //If no entry in DB with route, direction, fromPoint and toPoint... do nothing
         assert(cursor.length == 1)
-        val sortedDurTimeDifVec = getDurListVectorFromCursor(cursor.next(), timeOffSet) //First and only document in cursor
+        val durListVector = getDurListVectorFromCursor(cursor.next()) //First and only document in cursor
 
         // This filters those within the PRUNE THRESHOLD LIMIT followed by those within the rainfall threshold
-        val vecWithKNNTimeFiltering = sortedDurTimeDifVec.filter(_._4 <= PRUNE_THRESHOLD_TIME_LIMIT).filter(_._5 >= rainfall - (0.5 * PRUNE_THRESHOLD_RAINFALL_LIMIT)).filter(_._5 < rainfall - (0.5 * PRUNE_THRESHOLD_RAINFALL_LIMIT))
-        if (vecWithKNNTimeFiltering.size > PRUNE_THRESHOLD_K_LIMIT) {
-          val entryToDelete = vecWithKNNTimeFiltering.minBy(_._3) //Gets the oldest record in the vector
-          val updatePull = $pull(collection.DURATION_LIST -> MongoDBObject(collection.DURATION -> entryToDelete._1, collection.TIME_OFFSET -> entryToDelete._2, collection.TIME_STAMP -> entryToDelete._3, collection.RAINFALL -> entryToDelete._5))
+        val prunedVector = durListVector.filter(x=>
+            math.abs(x._2 - timeOffSet) <= PRUNE_THRESHOLD_TIME_LIMIT &&
+            math.abs(x._4 - rainfall) <= PRUNE_THRESHOLD_RAINFALL_LIMIT)
+        if (prunedVector.size > PRUNE_THRESHOLD_K_LIMIT) {
+          val entryToDelete = prunedVector.minBy(_._3) //Gets the oldest record in the vector
+          val updatePull = $pull(collection.DURATION_LIST -> MongoDBObject(collection.DURATION -> entryToDelete._1, collection.TIME_OFFSET -> entryToDelete._2, collection.TIME_STAMP -> entryToDelete._3, collection.RAINFALL -> entryToDelete._4))
           TFLInsertPointToPointDuration.dBCollection.update(newObj, updatePull)
           TFLInsertPointToPointDuration.numberDBPullTransactionsExecuted += 1
         }
@@ -74,16 +76,14 @@ class TFLInsertPointToPointDuration extends Actor {
 
 
     // Vector is Duration, Time Offset, Time_Stamp, Time Offset Difference
-    def getDurListVectorFromCursor(dbObject: Imports.MongoDBObject, timeOffSet:Int): Vector[(Int, Int, Long, Int, Double)] = {
+    def getDurListVectorFromCursor(dbObject: Imports.MongoDBObject): Vector[(Int, Int, Long, Double)] = {
       dbObject.get(collection.DURATION_LIST).get.asInstanceOf[Imports.BasicDBList].map(y => {
         (y.asInstanceOf[Imports.BasicDBObject].getInt(collection.DURATION),
           y.asInstanceOf[Imports.BasicDBObject].getInt(collection.TIME_OFFSET),
           y.asInstanceOf[Imports.BasicDBObject].getLong(collection.TIME_STAMP),
-          math.abs(y.asInstanceOf[Imports.BasicDBObject].getInt(collection.TIME_OFFSET) - timeOffSet),
           y.asInstanceOf[Imports.BasicDBObject].getDouble(collection.RAINFALL))
       })
         .toVector
-        .sortBy(_._4)
     }
 }
 

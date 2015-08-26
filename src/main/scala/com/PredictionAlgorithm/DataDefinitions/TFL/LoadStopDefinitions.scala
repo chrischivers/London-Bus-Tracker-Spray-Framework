@@ -1,5 +1,7 @@
 package com.PredictionAlgorithm.DataDefinitions.TFL
 
+import java.io.IOException
+
 import akka.actor.{Props, Actor}
 import com.PredictionAlgorithm.ControlInterface.StreamProcessingControlInterface._
 import com.PredictionAlgorithm.DataDefinitions.LoadResource
@@ -71,16 +73,20 @@ object LoadStopDefinitions extends LoadResource {
     println("Loading Stop Definitions From Web...")
 
     stopList.foreach { x =>
-      val s = Source.fromURL(tflURL(x))
-      s.getLines().drop(1).foreach(line => {
-        val split = splitLine(line)
-        val lat = BigDecimal(split(6)).toString()
-        val lng = BigDecimal(split(7)).toString()
-        tempMap += (x -> new StopDefinitionFields(split(0), split(1), split(2), split(3).toInt, split(4), split(5).toInt, lat, lng))
-        numberLinesProcessed += 1
-        percentageComplete = ((numberLinesProcessed.toDouble / totalNumberOfStops.toDouble) * 100).toInt
+      try {
+        val s = Source.fromURL(tflURL(x))
+        s.getLines().drop(1).foreach(line => {
+          val split = splitLine(line)
+          val lat = BigDecimal(split(6)).toString()
+          val lng = BigDecimal(split(7)).toString()
+          tempMap += (x -> new StopDefinitionFields(split(0), split(1), split(2), split(3).toInt, split(4), split(5).toInt, lat, lng))
+          numberLinesProcessed += 1
+          percentageComplete = ((numberLinesProcessed.toDouble / totalNumberOfStops.toDouble) * 100).toInt
+        }
+        )
+      } catch {
+        case ioe:IOException => println("No stop information for stop " + x + ". Moving on...")//Skip and move on
       }
-      )
     }
     percentageComplete = 100
     println("Stop definitons from web loaded")

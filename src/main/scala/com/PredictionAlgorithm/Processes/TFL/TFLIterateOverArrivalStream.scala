@@ -31,12 +31,11 @@ class TFLIterateOverArrivalStream extends ProcessingInterface {
   }
 
   override val supervisorStrategy =
-    OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
-      case _: Exception => {
-                    println("actor exception. Restarting...")
-                    Thread.sleep(5000)
-                    Restart
-      }
+    OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute, loggingEnabled = false) {
+      case _: Exception =>
+        println("actor exception. Restarting...")
+        Thread.sleep(5000)
+        Restart
       case t =>
         super.supervisorStrategy.decider.applyOrElse(t, (_: Any) => Escalate)
     }

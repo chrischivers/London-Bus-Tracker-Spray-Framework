@@ -58,7 +58,7 @@ object Weather {
         if (cal.getTimeInMillis - System.currentTimeMillis() < 0) helper(timeToStartPoint)
         else {
           if (line.indexOf("<precipitation></precipitation>", timeToStartPoint) != -1 && line.indexOf("<precipitation></precipitation>", timeToStartPoint) < line.indexOf("<precipitation unit", timeToStartPoint)) {
-            println("rainfall unavailable")
+            println("No rainfall")
             lastRainfall = DEFAULT_IF_UNAVAILABLE
             lastValidTo = cal.getTimeInMillis
           } else {
@@ -77,6 +77,7 @@ object Weather {
     }
     catch {
       case e: Exception =>
+        println("Rainfall exception, using default value")
         lastRainfall = DEFAULT_IF_UNAVAILABLE
         lastValidTo = System.currentTimeMillis() + DEFAULT_VALID_TO_IF_UNAVAILABLE
     }

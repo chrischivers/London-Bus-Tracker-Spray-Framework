@@ -88,7 +88,9 @@ object FetchPolyLines extends LoadResource {
     "AIzaSyCupO_iJ-uaNnvE8V9fKG4Aeo0Z4OobhDc",
       "AIzaSyAxBbetDC6UR596Okg4luf3vJVwB2-BDTc",
       "AIzaSyA-dJzMNsZwjlWulZOGmII-gSh8NaUd3kQ",
-      "AIzaSyCj3EZ9527OuKIHlzJ3P9ycgUNQZe7xx4Y")
+      "AIzaSyCj3EZ9527OuKIHlzJ3P9ycgUNQZe7xx4Y",
+    "AIzaSyAGbM0iQ7EAvSKTbxtaZPXsGXX_qhyJRow",
+    "AIzaSyD1WHQgCneuQluvW9AeO0-ZnEm1ZUD9BA0")
     if (APICurrentIndex < APIKeys.length) Some(APIKeys(APICurrentIndex)) else None
   }
 

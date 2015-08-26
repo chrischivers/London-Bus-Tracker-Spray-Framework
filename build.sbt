@@ -3,7 +3,7 @@ import sbtassembly.AssemblyKeys
 
 name := "BbkProject"
 
-version := "1.18"
+version := "1.21"
 
 scalaVersion := "2.11.7"
 
