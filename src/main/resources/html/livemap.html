@@ -219,9 +219,9 @@
             var parsedJson = JSON.parse(evt.data);
             if (parsedJson.nextArr != "kill") {
                 // Process immediately and do not wait for a return (pseudo concurrency)
-                setNewLocation(parsedJson.reg, parsedJson.nextArr, parsedJson.movementData, parsedJson.routeID, parsedJson.directionID, parsedJson.towards, parsedJson.nextStopID, parsedJson.nextStopName);
-
-
+                setTimeout(function () {
+                    setNewLocation(parsedJson.reg, parsedJson.nextArr, parsedJson.movementData, parsedJson.routeID, parsedJson.directionID, parsedJson.towards, parsedJson.nextStopID, parsedJson.nextStopName);
+                }, 0);
             } else {
                 deleteVehicle(parsedJson.reg);
             }
@@ -233,8 +233,6 @@
             websocket.send(message);
         }
 
-
-
     </script>
 </head>
 <body>
@@ -242,12 +240,16 @@
 <div id="settings_canvas" class="settings">
     <div class="content">
         <div class="row">
-            <label for="routeIDOption">Choose Route(s):</label>
+            <label for="routeIDOption">Choose Bus Route(s):
+                    </label>
             <select id="routeIDOption" multiple>
             </select>
             <button id="runButton">Run</button>
         </div>
+
     </div>
+    Please allow 1-2 minutes after clicking Run for stream to update fully<br>
+    Selecting a large numer of routes may cause slowdown.
 </div>
 
 </body>

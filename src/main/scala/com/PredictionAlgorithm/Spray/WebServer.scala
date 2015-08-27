@@ -33,7 +33,6 @@ object WebServer extends MySslConfiguration {
         val conn = context.actorOf(WebSocketWorker.props(serverConnection))
         serverConnection ! Http.Register(conn)
       case PushToChildren(pso: PackagedStreamObject) =>
-        if (pso.route_ID == "3") println("pushing to children reg: " + pso.reg)
         val children = context.children
         val encoded = encodePackageObject(pso)
         children.foreach(ref => ref ! Push(pso.route_ID, encoded))
@@ -93,6 +92,9 @@ object WebServer extends MySslConfiguration {
             getFromResourceDirectory("images")
           }
         } ~
+      path("favicon.ico") {
+        getFromResource("images/favicon.ico")
+      }~
         path("map") {
           getFromResource("html/livemap.html")
         } ~
