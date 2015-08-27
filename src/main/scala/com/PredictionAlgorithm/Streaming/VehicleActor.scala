@@ -24,7 +24,8 @@ class VehicleActor(vehicle_ID: String) extends Actor {
   var currentDirectionID:Int = _
 
   override def receive: Actor.Receive = {
-    case sourceLine: TFLSourceLine => if(receivedLineValid(sourceLine)) {
+    case sourceLine: TFLSourceLine =>
+      if(receivedLineValid(sourceLine)) {
       process(sourceLine.route_ID,sourceLine.direction_ID,sourceLine.arrival_TimeStamp,sourceLine.stop_Code)
       pauseAutoProcessing = false
     }
@@ -99,6 +100,7 @@ class VehicleActor(vehicle_ID: String) extends Actor {
     lastIndexSentForProcessing = indexOfStopCode
    // println("veh: " + vehicle_ID + ". lastindexSentforProcessing: " + lastIndexSentForProcessing + ". StopCode: " + stopCode + ". stopList length - 1: " + (StopList.length - 1) + "RouteID: " + routeID + ". Direction ID:" + directionID)
     val polyLineToNextStop = TFLDefinitions.RouteDefinitionMap(routeID,directionID)(indexOfStopCode)._4
+    val movementDataArray = Commons.getMovementDataArray(polyLineToNextStop)
 
     val nextStopCode = StopList(indexOfStopCode + 1)
     val indexOfNextStopCode = indexOfStopCode + 1
@@ -110,14 +112,15 @@ class VehicleActor(vehicle_ID: String) extends Actor {
     val transmitTime = if (arrivalTime < nextStopArrivalDueAt) nextStopArrivalDueAt else arrivalTime
     //println("Veh: " + vehicle_ID + ". transmitTime - System.currentTimeMillis(): " + (transmitTime - System.currentTimeMillis()))
 
-    in(Duration(transmitTime - System.currentTimeMillis() + 2000, MILLISECONDS)) {
+     in(Duration(transmitTime - System.currentTimeMillis() + 2000, MILLISECONDS)) {
+
 
       val addedTime = if (speedUpNumber > 0) (predictedDurtoNextStop_MS.toLong * SPEED_UP_MODE_TIME_MULTIPLIER).toLong else predictedDurtoNextStop_MS.toLong
       nextStopArrivalDueAt = arrivalTime + addedTime
       if (speedUpNumber > 0) speedUpNumber  = speedUpNumber - 1
 
       // println("Veh: " + vehicle_ID + ". Relative duration: " + relativeDuration)
-      val movementDataArray = Commons.getMovementDataArray(polyLineToNextStop)
+
       val pso = new PackagedStreamObject(vehicle_ID,nextStopArrivalDueAt.toString,movementDataArray,routeID,directionID,TFLDefinitions.StopDefinitions(StopList.last).stopPointName,nextStopCode, TFLDefinitions.StopDefinitions(nextStopCode).stopPointName)
       LiveStreamingCoordinator.enqueue(pso)
 

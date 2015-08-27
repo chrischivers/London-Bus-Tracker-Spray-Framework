@@ -72,9 +72,6 @@ object TFLProcessSourceLines {
 
   def validateLine(line: TFLSourceLine): Boolean = {
 
-    if (line.route_ID == "288" && line.direction_ID == 1 && line.stop_Code == "76069") {
-      println("Result: " + inDefinitionFile(line))
-    }
 
     def inDefinitionFile(line: TFLSourceLine): Boolean = {
       if (TFLDefinitions.RouteDefinitionMap.get(line.route_ID, line.direction_ID).isEmpty) {
@@ -83,6 +80,8 @@ object TFLProcessSourceLines {
          false
       } else if (!TFLDefinitions.RouteDefinitionMap(line.route_ID, line.direction_ID).exists(x => x._2 == line.stop_Code)) {
         numberNonMatches += 1
+       // println(line.route_ID + "," + line.direction_ID + ":    " + TFLDefinitions.RouteDefinitionMap(line.route_ID, line.direction_ID))
+       // println("Non Match: " + line.route_ID + ", " + line.direction_ID + ", " + line.stop_Code)
          false
       }
       else  true

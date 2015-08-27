@@ -14,7 +14,7 @@ import org.json4s.native.JsonMethods._
 import org.json4s.JsonDSL._
 
 
-object SimpleServer extends MySslConfiguration {
+object WebServer extends MySslConfiguration {
   //This code is based on example from https://github.com/wandoulabs/spray-websocket
 
   final case class Push(routeID: String, msg: String)
@@ -33,6 +33,7 @@ object SimpleServer extends MySslConfiguration {
         val conn = context.actorOf(WebSocketWorker.props(serverConnection))
         serverConnection ! Http.Register(conn)
       case PushToChildren(pso: PackagedStreamObject) =>
+        if (pso.route_ID == "3") println("pushing to children reg: " + pso.reg)
         val children = context.children
         val encoded = encodePackageObject(pso)
         children.foreach(ref => ref ! Push(pso.route_ID, encoded))

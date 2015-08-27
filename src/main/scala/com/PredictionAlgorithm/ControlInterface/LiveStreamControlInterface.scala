@@ -3,7 +3,7 @@ package com.PredictionAlgorithm.ControlInterface
 import akka.actor.ActorSystem
 import akka.io.IO
 import com.PredictionAlgorithm.Processes.TFL.TFLProcessSourceLines
-import com.PredictionAlgorithm.Spray.SimpleServer.WebSocketServer
+import com.PredictionAlgorithm.Spray.WebServer.WebSocketServer
 import com.PredictionAlgorithm.Streaming.LiveStreamingCoordinator
 import spray.can.Http
 import spray.can.server.UHttp
