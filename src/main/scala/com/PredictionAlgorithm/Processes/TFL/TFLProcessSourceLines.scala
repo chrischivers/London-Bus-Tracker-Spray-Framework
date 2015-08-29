@@ -36,7 +36,7 @@ object TFLProcessSourceLines {
       // Send to Live Streaming Coordinator if Enabled
       if (liveStreamCollectionEnabled) LiveStreamingCoordinator.processSourceLine(newLine)
       if (historicalDataStoringEnabled) {
-        if (!isFinalStop(newLine)) {
+
           if (!holdingBuffer.contains(newLine.route_ID, newLine.vehicle_Reg, newLine.direction_ID)) {
             holdingBufferAddAndPrune(newLine)
           } else {
@@ -58,16 +58,18 @@ object TFLProcessSourceLines {
             } else {
               // DO Nothing
             }
-          }
+
         }
       }
     }
   }
 
   def holdingBufferAddAndPrune(line:TFLSourceLine) = {
-    holdingBuffer += ((line.route_ID, line.vehicle_Reg, line.direction_ID) ->(line.stop_Code, line.arrival_TimeStamp))
-    val CUT_OFF:Long = System.currentTimeMillis() - MAXIMUM_AGE_OF_RECORDS_IN_HOLDING_BUFFER
-    holdingBuffer = holdingBuffer.filter{case ((_),(_,time)) => time > CUT_OFF}
+    if (!isFinalStop(line)) {
+      holdingBuffer += ((line.route_ID, line.vehicle_Reg, line.direction_ID) ->(line.stop_Code, line.arrival_TimeStamp))
+      val CUT_OFF: Long = System.currentTimeMillis() - MAXIMUM_AGE_OF_RECORDS_IN_HOLDING_BUFFER
+      holdingBuffer = holdingBuffer.filter { case ((_), (_, time)) => time > CUT_OFF }
+    }
   }
 
   def validateLine(line: TFLSourceLine): Boolean = {
