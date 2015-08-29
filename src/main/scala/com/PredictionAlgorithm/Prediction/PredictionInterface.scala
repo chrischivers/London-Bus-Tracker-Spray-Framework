@@ -6,6 +6,6 @@ trait PredictionInterface {
 
   val coll:DatabaseCollections
 
-  def makePrediction (pR:PredictionRequest):Option[Double]
+  def makePrediction (pR:PredictionRequest):Option[(Double, Double)]
 
 }

@@ -17,31 +17,40 @@ object KNNPrediction extends PredictionInterface {
 
 
   val K = 10
-  val MINIMUM_K_TO_MAKE_PREDICTION = 5 //In Seconds
+  val STANDARD_DEVIATION_MULTIPLIER_TO_EXCLUDE = 2
+  val SECONDS_THRESHOLD_TO_REPORT = 30
   val WEIGHTING_TIME_OFFSET = 0.3
   val WEIGHTING_DAY_OF_WEEK = 0.3
   val WEIGHTING_RAINFALL = 0.2
   val WEIGHTING_RECENT = 0.2
 
 
-
-
-  override def makePrediction(pr:PredictionRequest): Option[Double] = {
+  /**
+   * Makes a prediction between two points
+   * @param pr a prediction request object encapsulating the required fields
+   * @return an Option of predicted durastion and accuracy (based on standard devitation)
+   */
+  override def makePrediction(pr:PredictionRequest): Option[(Double, Double)] = {
     try {
       val startingPoint = TFLDefinitions.RouteDefinitionMap(pr.route_ID, pr.direction_ID).filter(x => x._2 == pr.from_Point_ID).head._1
       val endingPoint = TFLDefinitions.RouteDefinitionMap(pr.route_ID, pr.direction_ID).filter(x => x._2 == pr.to_Point_ID).last._1
-      var accumulatedPrediction = 0.0
+
+      var accumulatedPredictedDuration = 0.0
+      var accumulatedVariance = 0.0
       var cumulativeDuration = pr.timeOffset.toDouble
+
       for (i <- startingPoint until endingPoint) {
         val fromStopID = TFLDefinitions.RouteDefinitionMap(pr.route_ID, pr.direction_ID).filter(x => x._1 == i).head._2
         val toStopID = TFLDefinitions.RouteDefinitionMap(pr.route_ID, pr.direction_ID).filter(x => x._1 == i + 1).last._2
         val duration = makePredictionBetweenConsecutivePoints(new PredictionRequest(pr.route_ID, pr.direction_ID, fromStopID, toStopID, pr.day_Of_Week, cumulativeDuration.toInt)).getOrElse(return None)
 
-        accumulatedPrediction += duration._1
+        accumulatedPredictedDuration += duration._1
+        accumulatedVariance += duration._2
         cumulativeDuration += duration._1
 
       }
-      Some(round(accumulatedPrediction, 2))
+      val standardDeviation = math.sqrt(accumulatedVariance)
+      Some(round(accumulatedPredictedDuration, 2), round(standardDeviation, 2))
     }
     catch {
       case nsee: NoSuchElementException => None
@@ -60,8 +69,8 @@ object KNNPrediction extends PredictionInterface {
 
     if (cursor.size == 0) None //If no entry in DB with route, direction, fromPoint and toPoint... return Nothing
     else {
-      getAverageAndSD(getSortedKNNDistances(cursor).take(K))
-
+      val outliersRemoved = removeOutliers(getSortedKNNDistances(cursor).take(K))
+      getAverageAndVariance(outliersRemoved)
     }
   }
 
@@ -147,17 +156,36 @@ object KNNPrediction extends PredictionInterface {
   private def normaliseLong(x:Long, min: Double, max: Double): Double = (x - min) / (max - min)
 
 
-
-
-
-  private def getAverageAndSD(durationDistanceVector:Vector[(Int,Double)]):Option[(Double, Double)] = {
-    //Vector of Duration, Time Difference
+  /**
+   * Gets the average of a number of durations between points, plus the variance for each
+   * @param durationDistanceVector A vector of Duration and Distance between a number of points
+   * @return An Option of the average and the Variance
+   */
+  private def getAverageAndVariance(durationDistanceVector:Vector[(Int,Double)]):Option[(Double, Double)] = {
     if (durationDistanceVector.isEmpty) None
     else {
       val acc = new SummaryStatistics()
       durationDistanceVector.foreach(x => acc.addValue(x._1))
-      Some(acc.getMean, acc.getStandardDeviation)
+      Some(acc.getMean, acc.getVariance)
     }
+  }
+
+  /**
+   * Removes outlienrs from the durationDistanceVector based on the Standard Devitation Multiplier
+   * @param durationDistanceVector The vecotr of Durations and KNN Distances
+   * @return A vector of Durations and KNN distances with the outliers removed
+   */
+  private def removeOutliers(durationDistanceVector:Vector[(Int,Double)]):Vector[(Int,Double)] =  {
+    if (durationDistanceVector.isEmpty) None
+    val acc = new SummaryStatistics()
+    durationDistanceVector.foreach(x => acc.addValue(x._1))
+    val SD = acc.getStandardDeviation
+    val mean = acc.getMean
+    val SDmultiplier = SD * STANDARD_DEVIATION_MULTIPLIER_TO_EXCLUDE
+    val durationUpperTolerance = mean + SDmultiplier
+    val durationLowerTolerance = mean - SDmultiplier
+    durationDistanceVector.filter(x => x._1 <= durationUpperTolerance && x._1 >= durationLowerTolerance)
+
   }
 
   def round(number: Double, decimalPlaces: Int): Double = {

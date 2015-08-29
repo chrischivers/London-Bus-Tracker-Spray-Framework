@@ -152,10 +152,14 @@
 
             xmlhttp.onreadystatechange = function () {
                 if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-                    var prediction = parseInt(xmlhttp.responseText);
-                    var minutes = Math.floor(prediction / 60);
-                    var seconds = prediction - minutes * 60;
-                    document.getElementById("predictionResult").innerHTML = "Predicted duration: " + minutes +" minute(s), " + seconds + " second(s).";
+                    var splitInput = xmlhttp.responseText.split(",");
+                    var duration = parseInt(splitInput[0]);
+                    var standardDev = parseInt(splitInput[1]);
+                    var minutes = Math.floor(duration / 60);
+                    var seconds = duration - minutes * 60;
+                    document.getElementById("predictionResult").innerHTML = "Predicted duration: " + minutes +" minute(s), " + seconds + " second(s)." + "<br/>" +
+                            "Standard Deviation: " + standardDev + " seconds.*" + "<br/>" + "<br/>" +
+                            "<i>*(68% chance that actual duration will be +/- " + standardDev + "seconds of predicted duration).</i>";
 
                 }
             };

@@ -148,33 +148,33 @@ object WebServer extends MySslConfiguration {
   }
 
 
-  def getRouteList: String = {
+  private def getRouteList: String = {
     val routeList: List[String] = TFLDefinitions.RouteDefinitionMap.map(x => x._1._1).toSet.toList.sorted
     val jsonMap = Map("routeList" -> routeList)
     compact(render(jsonMap))
   }
 
-  def getDirectionList(routeID:String): String = {
+  private def getDirectionList(routeID:String): String = {
     val outwardDirection = TFLDefinitions.StopDefinitions(TFLDefinitions.RouteDefinitionMap.get(routeID,1).get.last._2).stopPointName
     val returnDirection = TFLDefinitions.StopDefinitions(TFLDefinitions.RouteDefinitionMap.get(routeID,2).get.last._2).stopPointName
     val jsonMap = Map("directionList" -> List("1," + outwardDirection, "2," + returnDirection))
     compact(render(jsonMap))
   }
 
-  def getStopList(routeID:String,directionID:Int):String = {
+  private def getStopList(routeID:String,directionID:Int):String = {
     val stopList = TFLDefinitions.RouteDefinitionMap(routeID,directionID).map(x=> x._2 + "," + TFLDefinitions.StopDefinitions(x._2).stopPointName)
     val jsonMap = Map("stopList" -> stopList)
     compact(render(jsonMap))
   }
 
-  def makePrediction(routeID:String, directionID:Int, fromStop: String, toStop: String): String = {
+  private def makePrediction(routeID:String, directionID:Int, fromStop: String, toStop: String): String = {
     val pr = new PredictionRequest(routeID,directionID,fromStop,toStop,Commons.getDayCode(System.currentTimeMillis()),Commons.getTimeOffset(System.currentTimeMillis()))
     val prediction = KNNPrediction.makePrediction(pr)
-    if (prediction.isDefined) prediction.get.toString else "Unable to make a prediction at this time"
+    if (prediction.isDefined) prediction.get._1.toString + "," + prediction.get._2.toString else "Unable to make a prediction at this time"
   }
 
 
-  def encodePackageObject(next: PackagedStreamObject): String = {
+  private def encodePackageObject(next: PackagedStreamObject): String = {
     val streamFields = Array("reg", "nextArr", "movementData", "routeID", "directionID", "towards", "nextStopID", "nextStopName")
 
     val nextList = Map(
