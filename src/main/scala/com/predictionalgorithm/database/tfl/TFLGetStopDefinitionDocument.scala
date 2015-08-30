@@ -1,11 +1,11 @@
 package com.predictionalgorithm.database.tfl
 
-import com.predictionalgorithm.database.{STOP_DEFINITIONS_COLLECTION, DatabaseCollections, DatabaseQueryInterface, ROUTE_DEFINITIONS_COLLECTION}
+import com.predictionalgorithm.database.{STOP_DEFINITIONS_COLLECTION, DatabaseCollections, DatabaseQuery, ROUTE_DEFINITIONS_COLLECTION}
 
 /**
- * Gets a StopDefinition Document asyncronously
+ * Gets a StopDefinition Document
  */
-object TFLGetStopDefinitionDocument extends DatabaseQueryInterface{
+object TFLGetStopDefinitionDocument extends DatabaseQuery{
 
   override protected val collection: DatabaseCollections = STOP_DEFINITIONS_COLLECTION
 

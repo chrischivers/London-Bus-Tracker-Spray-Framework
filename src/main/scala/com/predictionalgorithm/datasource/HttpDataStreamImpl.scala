@@ -7,9 +7,10 @@ import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.{BasicCredentialsProvider, HttpClientBuilder}
 
 /**
- * Created by chrischivers on 18/06/15.
+ * Code adapted from Stack Overflow: http://stackoverflow.com/questions/6024376/apache-httpcomponents-httpclient-timeout
+ * @param ds The DataSource
  */
-class HttpDataStream(ds: DataSource) extends DataStream{
+class HttpDataStreamImpl(ds: DataSource) extends DataStream{
 
   def getStream: Stream[String] = {
 
@@ -40,9 +41,7 @@ class HttpDataStream(ds: DataSource) extends DataStream{
     }
   }
 
-  private def checkHttpStatusValid(httpStatusCode: Int): Boolean = {
-    (httpStatusCode == 200)
-  }
+  private def checkHttpStatusValid(httpStatusCode: Int): Boolean = httpStatusCode == 200
 
   override def getNumberLinesToDisregard: Int = ds.NUMBER_LINES_TO_DISREGARD
 }

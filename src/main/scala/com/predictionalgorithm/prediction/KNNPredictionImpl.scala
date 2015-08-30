@@ -1,6 +1,6 @@
 package com.predictionalgorithm.prediction
 
-import com.predictionalgorithm.commons.Commons
+import com.predictionalgorithm.commons.Commons._
 import com.predictionalgorithm.datadefinitions.tfl.TFLDefinitions
 import com.predictionalgorithm.database.POINT_TO_POINT_COLLECTION
 import com.predictionalgorithm.database.tfl.TFLGetPointToPointDocument
@@ -11,7 +11,7 @@ import org.apache.commons.math3.stat.descriptive.SummaryStatistics
 import scala.collection.JavaConversions._
 
 
-object KNNPrediction extends PredictionInterface {
+object KNNPredictionImpl extends PredictionInterface {
 
   override val coll = POINT_TO_POINT_COLLECTION
 
@@ -81,7 +81,7 @@ object KNNPrediction extends PredictionInterface {
    */
   private def getSortedKNNDistances(cursor: MongoCursor):Vector[(Int, Double)] = {
 
-    val currentTimeOffset = Commons.getTimeOffset(System.currentTimeMillis())
+    val currentTimeOffset = System.currentTimeMillis().getTimeOffset
     val currentRainFall = Weather.getCurrentRainfall
     val currentTime = System.currentTimeMillis()
 
@@ -157,7 +157,7 @@ object KNNPrediction extends PredictionInterface {
     val UNEQUIV_DAY_WEEK_VALUE = 1
 
     val weekDays = Vector("MON","TUE","WED","THU","FRI")
-    val today = Commons.getDayCode(System.currentTimeMillis())
+    val today = System.currentTimeMillis().getDayCode
 
     if (today == dayOfWeek) SAME_DAY_VALUE
     else if(weekDays.contains(today) && weekDays.contains(dayOfWeek)) EQUIV_DAY_WEEK_VALUE

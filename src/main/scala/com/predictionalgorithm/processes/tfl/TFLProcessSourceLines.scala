@@ -2,27 +2,26 @@ package com.predictionalgorithm.processes.tfl
 
 import java.util.Date
 
-import com.predictionalgorithm.commons.Commons
+import com.predictionalgorithm.commons.Commons._
 import com.predictionalgorithm.datadefinitions.tfl.TFLDefinitions
-import com.predictionalgorithm.datasource.tfl.TFLSourceLine
+import com.predictionalgorithm.datasource.tfl.TFLSourceLineImpl
 import com.predictionalgorithm.database.POINT_TO_POINT_DOCUMENT
 import com.predictionalgorithm.database.tfl.TFLInsertPointToPointDuration
 import com.predictionalgorithm.processes.weather.Weather
-import com.predictionalgorithm.streaming.LiveStreamingCoordinator
+import com.predictionalgorithm.streaming.LiveStreamingCoordinatorImpl
 //import grizzled.slf4j.Logger
 import org.apache.commons.lang3.time.DateUtils
 
 
-class TFLProcessSourceLines
-
 object TFLProcessSourceLines {
 
-  //val logger = Logger(classOf[TFLProcessSourceLines])
-  val MAXIMUM_AGE_OF_RECORDS_IN_HOLDING_BUFFER = 600000
-  //In Ms
+  val MAXIMUM_AGE_OF_RECORDS_IN_HOLDING_BUFFER = 600000//In Ms
   var numberNonMatches = 0
 
-  // Map of (Route ID, Vehicle Reg, Direction ID) -> (Stop ID, Arrival Timestamp)
+  /**
+   * The holding buffer holds the temporary list of routes awaiting the next stop.
+   * It is a Map of (Route ID, Vehicle Reg, Direciton ID) -> (Stop ID, ArrivalTimeStamp)
+   */
   private var holdingBuffer: Map[(String, String, Int), (String, Long)] = Map()
   private var liveStreamCollectionEnabled: Boolean = false
   private var historicalDataStoringEnabled = false
@@ -33,11 +32,13 @@ object TFLProcessSourceLines {
 
   def getBufferSize: Int = holdingBuffer.size
 
-  def apply(newLine: TFLSourceLine) {
+  def apply(newLine: TFLSourceLineImpl) {
 
     if (validateLine(newLine)) {
       // Send to Live Streaming Coordinator if Enabled
-      if (liveStreamCollectionEnabled) LiveStreamingCoordinator.processSourceLine(newLine)
+      if (liveStreamCollectionEnabled) LiveStreamingCoordinatorImpl.processSourceLine(newLine)
+
+      // Process for historical data if enabled
       if (historicalDataStoringEnabled && !isPublicHoliday(newLine)) {
 
         if (!holdingBuffer.contains(newLine.route_ID, newLine.vehicle_Reg, newLine.direction_ID)) {
@@ -51,7 +52,7 @@ object TFLProcessSourceLines {
           if (newPointSequence == existingPointSequence + 1) {
             val durationInSeconds = ((newLine.arrival_TimeStamp - existingArrivalTimeStamp) / 1000).toInt
             if (durationInSeconds > 0) {
-              TFLInsertPointToPointDuration.insertDocument(createPointToPointDocument(newLine.route_ID, newLine.direction_ID, existingStopCode, newLine.stop_Code, Commons.getDayCode(existingArrivalTimeStamp), Commons.getTimeOffset(existingArrivalTimeStamp), durationInSeconds))
+              TFLInsertPointToPointDuration.insertDocument(createPointToPointDocument(newLine.route_ID, newLine.direction_ID, existingStopCode, newLine.stop_Code, existingArrivalTimeStamp.getDayCode, existingArrivalTimeStamp.getTimeOffset, durationInSeconds))
               updateHoldingBufferAndPrune(newLine)
             } else {
               updateHoldingBufferAndPrune(newLine) // Replace existing values with new values
@@ -67,7 +68,13 @@ object TFLProcessSourceLines {
     }
   }
 
-  private def updateHoldingBufferAndPrune(line: TFLSourceLine) = {
+  /**
+   * Updates the holding buffer. If it is not the final stop, the line is added to the holding buffer replacing the existing entry
+   * THe holding buffer is pruned to eliminate old records
+   * If it is the final stop, the entry is deleted from the holding buffer
+   * @param line The source line
+   */
+  private def updateHoldingBufferAndPrune(line: TFLSourceLineImpl) = {
     if (!isFinalStop(line)) {
       holdingBuffer += ((line.route_ID, line.vehicle_Reg, line.direction_ID) ->(line.stop_Code, line.arrival_TimeStamp))
       val CUT_OFF: Long = System.currentTimeMillis() - MAXIMUM_AGE_OF_RECORDS_IN_HOLDING_BUFFER
@@ -77,10 +84,14 @@ object TFLProcessSourceLines {
     }
   }
 
-  private def validateLine(line: TFLSourceLine): Boolean = {
+  /**
+   * Checks the line is acceptable for inserting
+   * @param line The source line
+   * @return True if valid, false if not
+   */
+  private def validateLine(line: TFLSourceLineImpl): Boolean = {
 
-
-    def inDefinitionFile(line: TFLSourceLine): Boolean = {
+    def inDefinitionFile(line: TFLSourceLineImpl): Boolean = {
       if (TFLDefinitions.RouteDefinitionMap.get(line.route_ID, line.direction_ID).isEmpty) {
         numberNonMatches += 1
         //logger.info("Cannot get definition. Line: " + line) //TODO Fix this
@@ -94,11 +105,12 @@ object TFLProcessSourceLines {
       else true
     }
 
-    def isWithinTimeThreshold(line: TFLSourceLine): Boolean = {
+
+    def isWithinTimeThreshold(line: TFLSourceLineImpl): Boolean = {
       ((line.arrival_TimeStamp - System.currentTimeMillis) / 1000) <= TFLProcessVariables.LINE_TOLERANCE_IN_RELATION_TO_CURRENT_TIME
     }
 
-    def isNotOnIgnoreLists(line: TFLSourceLine): Boolean = {
+    def isNotOnIgnoreLists(line: TFLSourceLineImpl): Boolean = {
       if (routeIgnoreList.contains(line.route_ID) || stopIgnoreList.contains(line.stop_Code)) false else true
     }
 
@@ -108,9 +120,9 @@ object TFLProcessSourceLines {
     true
   }
 
-  private def isFinalStop(line: TFLSourceLine): Boolean = TFLDefinitions.RouteDefinitionMap(line.route_ID, line.direction_ID).filter(x => x._2 == line.stop_Code).head._3.contains("LAST")
+  private def isFinalStop(line: TFLSourceLineImpl): Boolean = TFLDefinitions.RouteDefinitionMap(line.route_ID, line.direction_ID).filter(x => x._2 == line.stop_Code).head._3.contains("LAST")
 
-  private def isPublicHoliday(line: TFLSourceLine): Boolean = {
+  private def isPublicHoliday(line: TFLSourceLineImpl): Boolean = {
 
     val date = new Date(line.arrival_TimeStamp)
     for (pubHolDate <- publicHolidayList) if (DateUtils.isSameDay(date, pubHolDate)) return true

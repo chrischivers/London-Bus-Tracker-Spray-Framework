@@ -1,9 +1,11 @@
 package com.predictionalgorithm.datadefinitions
 
-import scala.io.Source
+import scala.io.{BufferedSource, Source}
 
 
-trait LoadResource {
+trait LoadResourceFromFile {
+
+  val bufferedSource:BufferedSource
 
   val DEFAULT_ROUTE_LIST_FILE = Source.fromURL(getClass.getResource("/routeList.csv"))
   val DEFAULT_ROUTE_DEF_FILE = Source.fromURL(getClass.getResource("/busSequences.csv"))

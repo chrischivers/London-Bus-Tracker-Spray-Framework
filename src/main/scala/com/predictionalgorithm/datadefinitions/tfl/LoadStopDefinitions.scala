@@ -4,14 +4,14 @@ import java.io.IOException
 
 import akka.actor.{Props, Actor}
 import com.predictionalgorithm.controlinterface.StreamProcessingControlInterface._
-import com.predictionalgorithm.datadefinitions.LoadResource
+import com.predictionalgorithm.datadefinitions.LoadResourceFromFile
 import com.predictionalgorithm.database.{STOP_DEFINITIONS_COLLECTION, STOP_DEFINITION_DOCUMENT}
 import com.predictionalgorithm.database.tfl.{TFLGetStopDefinitionDocument, TFLInsertStopDefinition}
 
-import scala.io.Source
+import scala.io.{BufferedSource, Source}
 
 
-object LoadStopDefinitions extends LoadResource {
+object LoadStopDefinitions {
 
   var percentageComplete = 0
 
@@ -114,6 +114,7 @@ object LoadStopDefinitions extends LoadResource {
   }
 
 }
+
 }
 
 

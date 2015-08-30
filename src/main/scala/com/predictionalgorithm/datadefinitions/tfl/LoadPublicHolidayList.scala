@@ -3,16 +3,17 @@ package com.predictionalgorithm.datadefinitions.tfl
 import java.text.SimpleDateFormat
 import java.util.{Locale, Date}
 
-import com.predictionalgorithm.datadefinitions.LoadResource
+import com.predictionalgorithm.datadefinitions.LoadResourceFromFile
 
-object LoadPublicHolidayListFromFile extends LoadResource{
+import scala.io.BufferedSource
 
+object LoadPublicHolidayList extends LoadResourceFromFile{
 
-  private val publicHolidayListFile = DEFAULT_PUBLIC_HOLIDAY_LIST_FILE
+  override val bufferedSource: BufferedSource = DEFAULT_PUBLIC_HOLIDAY_LIST_FILE
 
   lazy val publicHolidayList:List[Date] = {
     var publicHolidayList:List[Date] = List()
-    publicHolidayListFile.getLines().drop(1).foreach((line) => {
+    bufferedSource.getLines().drop(1).foreach((line) => {
 
       try {
         val sdf = new SimpleDateFormat("dd/M/yyyy", Locale.UK)
@@ -26,4 +27,5 @@ object LoadPublicHolidayListFromFile extends LoadResource{
     println("Public holiday List Loaded")
     publicHolidayList
   }
+
 }

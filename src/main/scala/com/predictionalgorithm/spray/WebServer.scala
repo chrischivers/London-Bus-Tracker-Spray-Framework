@@ -1,9 +1,9 @@
 package com.predictionalgorithm.spray
 
 import akka.actor._
-import com.predictionalgorithm.commons.Commons
+import com.predictionalgorithm.commons.Commons._
 import com.predictionalgorithm.datadefinitions.tfl.TFLDefinitions
-import com.predictionalgorithm.prediction.{KNNPrediction, PredictionRequest}
+import com.predictionalgorithm.prediction.{KNNPredictionImpl, PredictionRequest}
 import com.predictionalgorithm.streaming.PackagedStreamObject
 import spray.can.websocket.FrameCommandFailed
 import spray.can.websocket.frame.TextFrame
@@ -13,9 +13,11 @@ import spray.routing.HttpServiceActor
 import org.json4s.native.JsonMethods._
 import org.json4s.JsonDSL._
 
+/**
+ *  This code is adapted from an example from https://github.com/wandoulabs/spray-websocket
+ */
+object WebServer {
 
-object WebServer extends MySslConfiguration {
-  //This code is based on example from https://github.com/wandoulabs/spray-websocket
 
   final case class Push(routeID: String, msg: String)
 
@@ -27,11 +29,17 @@ object WebServer extends MySslConfiguration {
 
   class WebSocketServer extends Actor with ActorLogging {
     def receive = {
-      // when a new connection comes in we register a WebSocketConnection actor as the per connection handler
+      /**
+       * Sets up a new actor for each new connection
+       */
       case Http.Connected(remoteAddress, localAddress) =>
         val serverConnection = sender()
         val conn = context.actorOf(WebSocketWorker.props(serverConnection))
         serverConnection ! Http.Register(conn)
+
+      /**
+       * Pushes each new position update to the children connected (as an JSON encoded object)
+       */
       case PushToChildren(pso: PackagedStreamObject) =>
         val children = context.children
         val encoded = encodePackageObject(pso)
@@ -44,6 +52,8 @@ object WebServer extends MySslConfiguration {
   }
 
   class WebSocketWorker(val serverConnection: ActorRef) extends HttpServiceActor with websocket.WebSocketServerWorker {
+
+    // Escalates to web socket
     override def receive = handshaking orElse businessLogicNoUpgrade orElse closeLogic
 
     var routeList: List[String] = List()
@@ -56,6 +66,8 @@ object WebServer extends MySslConfiguration {
         println(routeList)
 
       case Push(routeID: String, message: String) =>
+
+        // Sends a text frame to the clients that are listening to that particular route
         if (routeList.contains(routeID)) {
           send(TextFrame(message))
         }
@@ -63,7 +75,7 @@ object WebServer extends MySslConfiguration {
       case x: FrameCommandFailed =>
         log.error("frame command failed", x)
 
-      case x: HttpRequest => // do something
+      case x: HttpRequest => //Log this
     }
 
     def businessLogicNoUpgrade: Receive = {
@@ -168,12 +180,17 @@ object WebServer extends MySslConfiguration {
   }
 
   private def makePrediction(routeID:String, directionID:Int, fromStop: String, toStop: String): String = {
-    val pr = new PredictionRequest(routeID,directionID,fromStop,toStop,Commons.getDayCode(System.currentTimeMillis()),Commons.getTimeOffset(System.currentTimeMillis()))
-    val prediction = KNNPrediction.makePrediction(pr)
+    val pr = new PredictionRequest(routeID,directionID,fromStop,toStop,System.currentTimeMillis().getDayCode,System.currentTimeMillis().getTimeOffset)
+    val prediction = KNNPredictionImpl.makePrediction(pr)
     if (prediction.isDefined) prediction.get._1.toString + "," + prediction.get._2.toString else "Unable to make a prediction at this time"
   }
 
 
+  /**
+   * Encodes a package of live bus movements to JSON
+   * @param next The next object to be encoded
+   * @return A string in JSON format
+   */
   private def encodePackageObject(next: PackagedStreamObject): String = {
     val streamFields = Array("reg", "nextArr", "movementData", "routeID", "directionID", "towards", "nextStopID", "nextStopName")
 

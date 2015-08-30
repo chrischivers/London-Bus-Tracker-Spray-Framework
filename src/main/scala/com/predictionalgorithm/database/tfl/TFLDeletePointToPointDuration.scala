@@ -1,25 +1,20 @@
 package com.predictionalgorithm.database.tfl
 
 import akka.actor.{Actor, ActorRef, Props}
-import com.predictionalgorithm.database._
 import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.MongoDBObject
+import com.predictionalgorithm.database._
 
 /**
  * Deletes a PointToPointDuration asyncronously
  */
-object TFLDeletePointToPointDuration extends DatabaseDeleteInterface {
-
-  override val dbDeleteActor: ActorRef = actorSystem.actorOf(Props[TFLDeletePointToPointDuration], name = "TFLDeletePointToPointDurationActor")
+object TFLDeletePointToPointDuration extends DatabaseDelete {
 
   override protected val collection: DatabaseCollections = POINT_TO_POINT_COLLECTION
+  override protected val dbTransactionActor: ActorRef = actorSystem.actorOf(Props[TFLDeletePointToPointDuration], name = "TFLDeletePointToPointDurationActor")
 }
 
-
-
 class TFLDeletePointToPointDuration extends Actor {
-
-  val collection = POINT_TO_POINT_COLLECTION
 
   override def receive: Receive = {
     case docID: ObjectId => deleteFromDB(docID)
@@ -35,6 +30,5 @@ class TFLDeletePointToPointDuration extends Actor {
     val writeConcern = TFLDeletePointToPointDuration.dBCollection.remove(query)
     assert(writeConcern.getN == 1)
   }
-
 }
 

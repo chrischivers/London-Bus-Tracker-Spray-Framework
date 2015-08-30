@@ -5,10 +5,8 @@ import com.predictionalgorithm.database.tfl.TFLMongoDBConnection
 
 import scala.util.{Failure, Success, Try}
 
-trait DatabaseInsertInterface {
 
-  protected implicit val actorSystem = ActorSystem("DB_Actor_System")
-  protected val dbInsertActor:ActorRef
+trait DatabaseTransaction {
 
   protected val collection:DatabaseCollections
 
@@ -17,10 +15,6 @@ trait DatabaseInsertInterface {
       case Success(coll) => coll
       case Failure(fail) => throw new IllegalStateException("Cannot get DB Collection "+ fail)
     }
-
-  def insertDocument(doc: DatabaseDocuments): Unit = {
-    dbInsertActor ! doc
-  }
 
 
 }

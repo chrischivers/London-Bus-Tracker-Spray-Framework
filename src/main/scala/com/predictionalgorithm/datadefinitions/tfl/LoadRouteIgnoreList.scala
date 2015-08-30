@@ -1,16 +1,15 @@
 package com.predictionalgorithm.datadefinitions.tfl
 
 
-import com.predictionalgorithm.datadefinitions.LoadResource
+import com.predictionalgorithm.datadefinitions.LoadResourceFromFile
 
-object LoadRouteIgnoreListFromFile extends LoadResource{
+object LoadRouteIgnoreList extends LoadResourceFromFile{
 
-
-  private val routeIgnoreListFile = DEFAULT_ROUTE_IGNORE_LIST_FILE
+  override val bufferedSource = DEFAULT_ROUTE_IGNORE_LIST_FILE
 
   lazy val routeIgnoreSet:Set[String] = {
     var routeIgnoreSet:Set[String] = Set()
-    routeIgnoreListFile.getLines().drop(1).foreach((line) => {
+    bufferedSource.getLines().drop(1).foreach((line) => {
       //drop first row and iterate through others
       try {
         val splitLine = line.split(",")

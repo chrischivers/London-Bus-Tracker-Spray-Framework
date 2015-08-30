@@ -1,20 +1,15 @@
 package com.predictionalgorithm.processes.tfl
 
 
-import java.net.UnknownHostException
-
 import akka.actor.SupervisorStrategy._
-import akka.actor.{ActorInitializationException, OneForOneStrategy, Props, Actor}
-import com.predictionalgorithm.controlinterface.StreamProcessingControlInterface._
-import com.predictionalgorithm.datasource.tfl.{TFLSourceLineFormatter, TFLDataSource, TFLSourceLine}
+import akka.actor.{ OneForOneStrategy, Props, Actor}
+
+import com.predictionalgorithm.datasource.tfl.{TFLSourceLineFormatterImpl, TFLDataSourceImpl}
 import com.predictionalgorithm.datasource._
-import com.predictionalgorithm.database.POINT_TO_POINT_COLLECTION
 import com.predictionalgorithm.processes.ProcessingInterface
 import scala.concurrent.{ExecutionContext, Await, Future}
 import scala.concurrent.duration._
 import ExecutionContext.Implicits.global
-
-import scala.util.{Failure, Success, Try}
 
 
 class TFLIterateOverArrivalStream extends ProcessingInterface {
@@ -30,6 +25,9 @@ class TFLIterateOverArrivalStream extends ProcessingInterface {
     iteratingActor ! "stop"
   }
 
+  /**
+   * Supervisers the Actor, ensuring that it restarts if it ctrashes
+   */
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute, loggingEnabled = false) {
       case _: Exception =>
@@ -48,14 +46,14 @@ object TFLIterateOverArrivalStream {
 
 }
 
-//TODO consider abstracting this to an interface
+/**
+ * Actor that iterates over live stream sending lines to be processed. On crash, the supervisor strategy restarts it
+ */
 class IteratingActor extends Actor {
   lazy val it = getSourceIterator
 
   // Iterating pattern for this actor based on code snippet posted on StackOverflow
   //http://stackoverflow.com/questions/5626285/pattern-for-interruptible-loops-using-actors
-
-
   override def receive: Receive = inactive // Start out as inactive
 
   def inactive: Receive = { // This is the behavior when inactive
@@ -67,7 +65,7 @@ class IteratingActor extends Actor {
     case "stop" =>
       context.become(inactive)
     case "next" =>
-        val lineFuture = Future(TFLSourceLineFormatter(it.next()))
+        val lineFuture = Future(TFLSourceLineFormatterImpl(it.next()))
         val line = Await.result(lineFuture, 3 seconds)
         TFLProcessSourceLines(line)
         TFLIterateOverArrivalStream.numberProcessed += 1
@@ -79,6 +77,5 @@ class IteratingActor extends Actor {
     self ! "next"
   }
 
-  def getSourceIterator =
-   new SourceIterator(new HttpDataStream(TFLDataSource)).iterator
+  def getSourceIterator = new SourceIterator(new HttpDataStreamImpl(TFLDataSourceImpl)).iterator
 }

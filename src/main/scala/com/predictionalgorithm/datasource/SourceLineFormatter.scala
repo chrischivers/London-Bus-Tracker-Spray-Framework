@@ -1,7 +1,7 @@
 package com.predictionalgorithm.datasource
 
 
-trait SourceLineProcessor {
+trait SourceLineFormatter {
 
   def apply(sourceLineString: String):SourceLine
 

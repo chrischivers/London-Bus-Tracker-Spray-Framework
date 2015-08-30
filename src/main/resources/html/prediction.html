@@ -132,6 +132,7 @@
                 }
             }
             toCombo.onchange = function() {
+                document.getElementById("predictionResult").innerHTML = "";
                 if (toCombo.selectedIndex != 0) {
                     document.getElementById("runButton").style.display="block";
                 } else {
@@ -186,7 +187,7 @@
 <BODY>
 <fieldset>
     <div id="fieldselection">
-    <legend>TFL Bus Prediction</legend>
+    <header>TFL Bus Prediction</header>
     <p>
         <label for="route">Route:</label>
         <select id="route" name="routeIDCombo" id="routeIDCombo"></select>

@@ -2,7 +2,7 @@ package com.predictionalgorithm
 
 import javax.swing.SwingUtilities
 import com.predictionalgorithm.controlinterface._
-import com.predictionalgorithm.prediction.KNNPrediction
+import com.predictionalgorithm.prediction.KNNPredictionImpl
 import com.predictionalgorithm.serverui.MonitoringUI
 
 
@@ -18,12 +18,11 @@ object Main extends App {
    * Starts the Server UI using Swing Framework
    */
   SwingUtilities.invokeLater(new Runnable() {
-    def run {
+    def run() {
       val ui = new MonitoringUI(UI_REFRESH_INTERVAL)
       ui.setStreamProcessing(StreamProcessingControlInterface)
       ui.setHistoricalDataCollection(HistoricalDataCollectionControlInterface)
       ui.setLiveStreaming(LiveStreamControlInterface)
-      ui.setQueryProcessing(KNNPrediction)
       ui.setUpdateRouteDefinitions(UpdateRouteDefinitionsControlInterface)
       ui.setUpdateStopDefinitions(UpdateStopDefinitionsControlInterface)
       ui.setAddPolyLines(AddPolyLinesControlInterface)

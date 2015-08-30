@@ -2,15 +2,14 @@ package com.predictionalgorithm.datadefinitions.tools
 
 import akka.actor.{Actor, Props}
 import com.predictionalgorithm.controlinterface.StreamProcessingControlInterface._
-import com.predictionalgorithm.datadefinitions.LoadResource
 import com.predictionalgorithm.datadefinitions.tfl.TFLDefinitions
 import com.predictionalgorithm.database.tfl._
 import com.predictionalgorithm.database.{POLYLINE_INDEX_COLLECTION, POLYLINE_INDEX_DOCUMENT, ROUTE_DEFINITIONS_COLLECTION, ROUTE_DEFINITION_DOCUMENT}
 import com.mongodb.casbah.Imports
 
-import scala.io.Source
+import scala.io.{BufferedSource, Source}
 
-object FetchPolyLines extends LoadResource {
+object FetchPolyLines {
 
   val TIME_BETWEEN_POLYLINE_QUERIES = 250
   var numberLinesProcessed = 0
@@ -49,7 +48,7 @@ object FetchPolyLines extends LoadResource {
       polyLine
 
     }  else { //get it from online
-    val url = "https://maps.googleapis.com/maps/api/directions/xml?origin=" + lastStopCodeLat + "," + lastStopCodeLng + "&destination=" + thisStopCodeLat + "," + thisStopCodeLng + "&key=" + getAPIKeys.get + "&mode=driving"
+      val url = "https://maps.googleapis.com/maps/api/directions/xml?origin=" + lastStopCodeLat + "," + lastStopCodeLng + "&destination=" + thisStopCodeLat + "," + thisStopCodeLng + "&key=" + getAPIKeys.get + "&mode=driving"
      // println("from : " + fromStopCode + ". To: " + toStopCode + "." + "Url: " + url)
       val s = Source.fromURL(url).getLines()
       for (line <- s) {
@@ -159,6 +158,8 @@ object FetchPolyLines extends LoadResource {
 
     }
   }
+
+
 }
 
 //

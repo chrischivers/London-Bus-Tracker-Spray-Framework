@@ -1,15 +1,14 @@
 package com.predictionalgorithm.database.tfl
 
-import com.predictionalgorithm.database.{ROUTE_DEFINITIONS_COLLECTION, DatabaseCollections, DatabaseQueryInterface}
+import com.predictionalgorithm.database.{ROUTE_DEFINITIONS_COLLECTION, DatabaseCollections, DatabaseQuery}
 import com.mongodb.casbah.MongoCursor
 import com.mongodb.casbah.commons.MongoDBObject
 
-import scala.util.{Failure, Success, Try}
 
 /**
- * Gets a TFL Route Definition Document asyncronously
+ * Gets a TFL Route Definition Document
  */
-object TFLGetRouteDefinitionDocument extends DatabaseQueryInterface{
+object TFLGetRouteDefinitionDocument extends DatabaseQuery{
 
   override protected val collection: DatabaseCollections = ROUTE_DEFINITIONS_COLLECTION
 

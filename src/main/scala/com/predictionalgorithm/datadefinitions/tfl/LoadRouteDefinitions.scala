@@ -1,18 +1,18 @@
 package com.predictionalgorithm.datadefinitions.tfl
 
 
-import java.lang.NumberFormatException
-
 import akka.actor.{Props, Actor}
 import com.predictionalgorithm.controlinterface.StreamProcessingControlInterface._
-import com.predictionalgorithm.datadefinitions.LoadResource
+import com.predictionalgorithm.datadefinitions.LoadResourceFromFile
 import com.predictionalgorithm.database.{ROUTE_DEFINITION_DOCUMENT, ROUTE_DEFINITIONS_COLLECTION}
 import com.predictionalgorithm.database.tfl.{TFLInsertUpdateRouteDefinition, TFLGetRouteDefinitionDocument}
 
 
-import scala.io.Source
+import scala.io.{BufferedSource, Source}
 
-object LoadRouteDefinitions extends LoadResource {
+object LoadRouteDefinitions extends LoadResourceFromFile {
+
+  override val bufferedSource: BufferedSource = DEFAULT_ROUTE_DEF_FILE
 
   var percentageComplete = 0
   private val collection = ROUTE_DEFINITIONS_COLLECTION
@@ -72,12 +72,11 @@ object LoadRouteDefinitions extends LoadResource {
       println("Loading Route Definitions From CSV file...")
       var tempMap: Map[(String, Int), Map[Int, (String, Option[String], String)]] = Map()
 
-      val routeDefFile = DEFAULT_ROUTE_DEF_FILE
       var numberLinesProcessed = 0
 
       var prevRecord: (String, Int) = ("0", 0)
 
-      routeDefFile.getLines().drop(1).foreach((line) => {
+      bufferedSource.getLines().drop(1).foreach((line) => {
         try {
           val splitLine = line.split(",")
           val route_ID = splitLine(0)
@@ -155,7 +154,7 @@ object LoadRouteDefinitions extends LoadResource {
           if (tflURL != "") {
             val s = Source.fromURL(tflURL)
             var pointSequence = 1
-            var skipThisRoute = false //TODO If webpage is in irregular format, we skip this. Needs to be logged. And dealt with if time.
+            var skipThisRoute = false
 
             s.getLines().foreach((line) => {
               // For some routes there are mutliple pattern segments (e.g. route 134). This discards the first one if a second one follows (only second is kept)
@@ -295,7 +294,7 @@ object LoadRouteDefinitions extends LoadResource {
 
     val s = Source.fromURL(tflURL)
     var pointSequence = 1
-    var skipThisRoute = false //TODO If webpage is in irregular format, we skip this. Needs to be logged. And dealt with if time.
+    var skipThisRoute = false
 
     s.getLines().foreach((line) => {
       // For some routes there are mutliple pattern segments (e.g. route 134). This discards the first one if a second one follows (only second is kept)

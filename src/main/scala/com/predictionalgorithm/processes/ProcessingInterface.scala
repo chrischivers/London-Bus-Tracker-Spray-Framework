@@ -2,9 +2,6 @@ package com.predictionalgorithm.processes
 
 
 import akka.actor.Actor
-import com.mongodb.casbah.MongoCollection
-
-
 
 trait ProcessingInterface extends Actor{
   def start()
@@ -15,12 +12,3 @@ trait ProcessingInterface extends Actor{
     case "stop" => stop()
   }
 }
-
-trait ProcessLinesInterface extends ProcessingInterface{
-
-  lazy val dbCollection: MongoCollection = getDBCollection
-
-  def getDBCollection:MongoCollection
-
-}
-

@@ -7,38 +7,37 @@ import scala.math.BigDecimal.RoundingMode
 
 object Commons {
 
-  /**
-   * Retrieves the day code from time in millis
-   * @param timeInMillis the time in milliseconds
-   * @return the day code (MON, TUE... etc)
-   */
-  def getDayCode(timeInMillis: Long): String = {
-    val cal: Calendar  = new GregorianCalendar()
+  implicit class DayTimeOperations(timeInMillis: Long) {
+    /**
+     * Retrieves the day code from time in millis
+     * @return the day code (MON, TUE... etc)
+     */
+    def getDayCode: String = {
+      val cal: Calendar = new GregorianCalendar()
 
-    cal.setTimeInMillis(timeInMillis)
-    cal.get(Calendar.DAY_OF_WEEK) match {
-      case Calendar.MONDAY => "MON"
-      case Calendar.TUESDAY=> "TUE"
-      case Calendar.WEDNESDAY => "WED"
-      case Calendar.THURSDAY=> "THU"
-      case Calendar.FRIDAY => "FRI"
-      case Calendar.SATURDAY => "SAT"
-      case Calendar.SUNDAY => "SUN"
+      cal.setTimeInMillis(timeInMillis)
+      cal.get(Calendar.DAY_OF_WEEK) match {
+        case Calendar.MONDAY => "MON"
+        case Calendar.TUESDAY => "TUE"
+        case Calendar.WEDNESDAY => "WED"
+        case Calendar.THURSDAY => "THU"
+        case Calendar.FRIDAY => "FRI"
+        case Calendar.SATURDAY => "SAT"
+        case Calendar.SUNDAY => "SUN"
+      }
     }
 
-  }
+    /**
+     * Retrieves the time offset from 00:00 in seconds from time in millis
+     * @return seconds since 00:00 (e.g. 1:00am = 3600 seconds)
+     */
+    def getTimeOffset: Int = {
+      val existingTime: Calendar = new GregorianCalendar()
+      existingTime.setTimeInMillis(timeInMillis)
 
-  /**
-   * Retrieves the time offset from 00:00 in seconds from time in millis
-   * @param timeInMillis the time in milliseconds
-   * @return seconds since 00:00 (e.g. 1:00am = 3600 seconds)
-   */
-  def getTimeOffset(timeInMillis:Long):Int = {
-    val existingTime: Calendar = new GregorianCalendar()
-    existingTime.setTimeInMillis(timeInMillis)
-
-    val beginningOfDayTime: Calendar = new GregorianCalendar(existingTime.get(Calendar.YEAR), existingTime.get(Calendar.MONTH), existingTime.get(Calendar.DAY_OF_MONTH))
-    ((existingTime.getTimeInMillis - beginningOfDayTime.getTimeInMillis)/1000).toInt
+      val beginningOfDayTime: Calendar = new GregorianCalendar(existingTime.get(Calendar.YEAR), existingTime.get(Calendar.MONTH), existingTime.get(Calendar.DAY_OF_MONTH))
+      ((existingTime.getTimeInMillis - beginningOfDayTime.getTimeInMillis) / 1000).toInt
+    }
   }
 
   /**

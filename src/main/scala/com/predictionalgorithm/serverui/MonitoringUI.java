@@ -1,6 +1,7 @@
 package com.predictionalgorithm.serverui;
 
 import com.predictionalgorithm.commons.Commons;
+import com.predictionalgorithm.commons.Commons.*;
 import com.predictionalgorithm.controlinterface.StartStopControlInterface;
 import com.predictionalgorithm.prediction.PredictionInterface;
 import com.predictionalgorithm.prediction.PredictionRequest;
@@ -32,7 +33,6 @@ public class MonitoringUI {
     private JLabel dBTransactionsRequestedValue;
     private JLabel dBTransactionsExecutedValue;
     private JLabel dBTransactionsOutstandingValue;
-    private JPanel queryingPanel;
     private JTextField routeInput;
     private JTextField directionInput;
     private JTextField fromStopIDInput;
@@ -198,18 +198,6 @@ public class MonitoringUI {
                     buttonStarted = false;
                 }
             }
-        });
-    }
-
-    public void setQueryProcessing(PredictionInterface queryController) {
-        runQueryButton.addActionListener(e -> {
-            String result;
-            try {
-                result = queryController.makePrediction(new PredictionRequest(routeInput.getText(), Integer.parseInt(directionInput.getText()), fromStopIDInput.getText(), toStopIDInput.getText(), dayCodeInput.getText(), Commons.getTimeOffset(System.currentTimeMillis()))).get().toString();
-            } catch (NoSuchElementException nsee) {
-                result = "Unable to obtain prediction";
-            }
-            queryResultValue.setText(result);
         });
     }
 
@@ -441,46 +429,6 @@ public class MonitoringUI {
         updateStopDefinitionsFromButton = new JButton();
         updateStopDefinitionsFromButton.setText("Update Stop Definitions From Web");
         updateStopDefinitionsPanel.add(updateStopDefinitionsFromButton, new GridConstraints(0, 0, 1, 3, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        queryingPanel = new JPanel();
-        queryingPanel.setLayout(new GridLayoutManager(6, 2, new Insets(5, 5, 5, 5), -1, -1));
-        mainPanel.add(queryingPanel, new GridConstraints(3, 1, 1, 1, GridConstraints.ANCHOR_NORTHWEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-        queryingPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createRaisedBevelBorder(), "Querying"));
-        final JLabel label22 = new JLabel();
-        label22.setText("Route");
-        queryingPanel.add(label22, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        final JLabel label23 = new JLabel();
-        label23.setText("Direction");
-        queryingPanel.add(label23, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        final JLabel label24 = new JLabel();
-        label24.setText("From Stop ID");
-        queryingPanel.add(label24, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        final JLabel label25 = new JLabel();
-        label25.setText("To Stop ID");
-        queryingPanel.add(label25, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        routeInput = new JTextField();
-        routeInput.setText("455");
-        queryingPanel.add(routeInput, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
-        directionInput = new JTextField();
-        directionInput.setText("1");
-        queryingPanel.add(directionInput, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
-        fromStopIDInput = new JTextField();
-        fromStopIDInput.setText("72620");
-        queryingPanel.add(fromStopIDInput, new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
-        toStopIDInput = new JTextField();
-        toStopIDInput.setText("49515");
-        queryingPanel.add(toStopIDInput, new GridConstraints(3, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
-        final JLabel label26 = new JLabel();
-        label26.setText("Day Code");
-        queryingPanel.add(label26, new GridConstraints(4, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        dayCodeInput = new JTextField();
-        dayCodeInput.setText("SUN");
-        queryingPanel.add(dayCodeInput, new GridConstraints(4, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
-        runQueryButton = new JButton();
-        runQueryButton.setText("Run Query");
-        queryingPanel.add(runQueryButton, new GridConstraints(5, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        queryResultValue = new JLabel();
-        queryResultValue.setText("");
-        queryingPanel.add(queryResultValue, new GridConstraints(5, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JPanel panel1 = new JPanel();
         panel1.setLayout(new GridLayoutManager(4, 2, new Insets(5, 5, 5, 5), -1, -1));
         mainPanel.add(panel1, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_NORTHWEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
@@ -488,27 +436,33 @@ public class MonitoringUI {
         usedMemoryValue = new JLabel();
         usedMemoryValue.setText("0");
         panel1.add(usedMemoryValue, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        final JLabel label27 = new JLabel();
-        label27.setText("Used Memory");
-        panel1.add(label27, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JLabel label22 = new JLabel();
+        label22.setText("Used Memory");
+        panel1.add(label22, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         freeMemoryValue = new JLabel();
         freeMemoryValue.setText("0");
         panel1.add(freeMemoryValue, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        final JLabel label28 = new JLabel();
-        label28.setText("Free Memory");
-        panel1.add(label28, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JLabel label23 = new JLabel();
+        label23.setText("Free Memory");
+        panel1.add(label23, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         totalMemoryValue = new JLabel();
         totalMemoryValue.setText("0");
         panel1.add(totalMemoryValue, new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        final JLabel label29 = new JLabel();
-        label29.setText("Total Memory");
-        panel1.add(label29, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JLabel label24 = new JLabel();
+        label24.setText("Total Memory");
+        panel1.add(label24, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         maxMemoryValue = new JLabel();
         maxMemoryValue.setText("0");
         panel1.add(maxMemoryValue, new GridConstraints(3, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        final JLabel label30 = new JLabel();
-        label30.setText("Max Memory");
-        panel1.add(label30, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JLabel label25 = new JLabel();
+        label25.setText("Max Memory");
+        panel1.add(label25, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JLabel label26 = new JLabel();
+        label26.setFont(new Font(label26.getFont().getName(), Font.BOLD, 18));
+        label26.setHorizontalAlignment(0);
+        label26.setHorizontalTextPosition(0);
+        label26.setText("TfL Bus Prediction Framework - Server UI");
+        mainPanel.add(label26, new GridConstraints(0, 0, 1, 4, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     }
 
     /**

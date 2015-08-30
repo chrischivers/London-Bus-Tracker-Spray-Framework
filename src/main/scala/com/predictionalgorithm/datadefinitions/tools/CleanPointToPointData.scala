@@ -8,7 +8,10 @@ import com.predictionalgorithm.database.tfl.{TFLDeletePointToPointDuration, TFLG
 import com.mongodb.casbah.Imports
 import org.bson.types.ObjectId
 
-object CleanPointToPointData {
+/**
+ * Tool to look through PoinToPoint collection and remove any entries that no longer correspond to entries in the definition file
+ */
+object CleanPointToPointData  {
 
   private val streamActor = actorSystem.actorOf(Props[CleanPointToPointData], name = "CleanPointToPointDataActor")
   @volatile var numberDocumentsRead = 0
@@ -53,6 +56,14 @@ class CleanPointToPointData extends Actor {
     if (cursor.hasNext) self ! cursor.next()
   }
 
+  /**
+   * Tests whether it is safe to delet
+   * @param routeID The Route ID
+   * @param direction The Direction ID
+   * @param fromStop The From Stop ID
+   * @param toStop The To Stop ID
+   * @return A boolean indicating whether the record can be deleted
+   */
   def canDelete(routeID:String, direction:Int, fromStop:String, toStop:String): Boolean = {
 
     val fromStopReference = routeDefinitions.get(routeID,direction).getOrElse(return true).filter(x => x._2 == fromStop)

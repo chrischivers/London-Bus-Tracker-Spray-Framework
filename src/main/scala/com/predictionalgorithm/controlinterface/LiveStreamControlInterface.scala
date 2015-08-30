@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import akka.io.IO
 import com.predictionalgorithm.processes.tfl.TFLProcessSourceLines
 import com.predictionalgorithm.spray.WebServer.WebSocketServer
-import com.predictionalgorithm.streaming.LiveStreamingCoordinator
+import com.predictionalgorithm.streaming.LiveStreamingCoordinatorImpl
 import spray.can.Http
 import spray.can.server.UHttp
 
@@ -18,8 +18,8 @@ object LiveStreamControlInterface extends StartStopControlInterface {
 
 
   override def getVariableArray: Array[String] = {
-    val numberLiveActors  = LiveStreamingCoordinator.getNumberLiveActors.toString
-    val numberLiveChildren = LiveStreamingCoordinator.getNumberLiveChildren.toString
+    val numberLiveActors  = LiveStreamingCoordinatorImpl.getNumberLiveActors.toString
+    val numberLiveChildren = LiveStreamingCoordinatorImpl.getNumberLiveChildren.toString
     Array(numberLiveActors, numberLiveChildren)
   }
 

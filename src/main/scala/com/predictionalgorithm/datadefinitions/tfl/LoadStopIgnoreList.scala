@@ -1,17 +1,17 @@
 package com.predictionalgorithm.datadefinitions.tfl
 
-import com.predictionalgorithm.datadefinitions.LoadResource
+import com.predictionalgorithm.datadefinitions.LoadResourceFromFile
+
+import scala.io.BufferedSource
 
 
-object LoadStopIgnoreListFromFile extends LoadResource{
+object LoadStopIgnoreList extends LoadResourceFromFile{
 
-
-  private val stopIgnoreListFile = DEFAULT_STOP_IGNORE_LIST_FILE
-
+  override val bufferedSource: BufferedSource = DEFAULT_STOP_IGNORE_LIST_FILE
 
   lazy val stopIgnoreSet:Set[String] = {
    var stopIgnoreSet:Set[String] = Set()
-    stopIgnoreListFile.getLines().drop(1).foreach((line) => {
+    bufferedSource.getLines().drop(1).foreach((line) => {
       //drop first row and iterate through others
       try {
         val splitLine = line.split(",")
@@ -24,4 +24,5 @@ object LoadStopIgnoreListFromFile extends LoadResource{
     println("Stop Ignore List Loaded")
     stopIgnoreSet
   }
+
 }

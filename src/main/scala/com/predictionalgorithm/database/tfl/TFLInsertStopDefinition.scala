@@ -5,12 +5,12 @@ import com.predictionalgorithm.database._
 import com.mongodb.casbah.commons.MongoDBObject
 
 
-object TFLInsertStopDefinition extends DatabaseInsertInterface{
+object TFLInsertStopDefinition extends DatabaseInsert{
 
   @volatile var numberDBUpdatesRequested = 0
   @volatile var numberDBInsertsRequested = 0
 
-  override val dbInsertActor: ActorRef = actorSystem.actorOf(Props[TFLInsertStopDefinition], name = "TFLInsertStopDefinitionActor")
+  override val dbTransactionActor: ActorRef = actorSystem.actorOf(Props[TFLInsertStopDefinition], name = "TFLInsertStopDefinitionActor")
 
   override protected val collection: DatabaseCollections = STOP_DEFINITIONS_COLLECTION
 
