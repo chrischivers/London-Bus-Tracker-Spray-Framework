@@ -157,9 +157,13 @@
                     var standardDev = parseInt(splitInput[1]);
                     var minutes = Math.floor(duration / 60);
                     var seconds = duration - minutes * 60;
-                    document.getElementById("predictionResult").innerHTML = "Predicted duration: " + minutes +" minute(s), " + seconds + " second(s)." + "<br/>" +
-                            "Standard Deviation: " + standardDev + " seconds.*" + "<br/>" + "<br/>" +
-                            "<i>*(68% chance that actual duration will be +/- " + standardDev + "seconds of predicted duration).</i>";
+                    if (!isNaN(duration)) {
+                        document.getElementById("predictionResult").innerHTML = "Predicted duration: " + minutes + " minute(s), " + seconds + " second(s)." + "<br/>" +
+                                "Standard Deviation: " + standardDev + " seconds.*" + "<br/>" + "<br/>" +
+                                "<i>*(68% chance that actual duration will be +/- " + standardDev + " seconds of predicted duration).</i>";
+                    } else {
+                        document.getElementById("predictionResult").innerHTML = "Unable to make a prediction for this journey."
+                    }
 
                 }
             };
