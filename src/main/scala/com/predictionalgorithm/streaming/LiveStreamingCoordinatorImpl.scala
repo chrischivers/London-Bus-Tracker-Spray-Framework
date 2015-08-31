@@ -19,11 +19,12 @@ import scala.concurrent.duration._
  */
 case class PackagedStreamObject(reg: String, nextArrivalTime: String, markerMovementData: Array[(String, String, String, String)], route_ID: String, direction_ID: Int, towards: String, nextStopID: String, nextStopName: String)
 
-case class KillMessage(vehicleID:String, routeID:String)
+case class KillMessage(vehicleID: String, routeID: String)
 
 object LiveStreamingCoordinatorImpl extends LiveStreamingCoordinator {
 
   override def processSourceLine(liveSourceLine: TFLSourceLineImpl): Unit = vehicleSupervisor ! liveSourceLine
+
   def killActor(km: KillMessage) = vehicleSupervisor ! km
 }
 
@@ -34,7 +35,7 @@ class LiveVehicleSupervisor extends Actor {
 
   var TIME_OF_LAST_CLEANUP = System.currentTimeMillis()
   val TIME_BETWEEN_CLEANUPS = 60000
-  
+
   @volatile var liveActors = Map[String, (ActorRef, String, Long)]()
 
   override def receive = {
@@ -42,7 +43,7 @@ class LiveVehicleSupervisor extends Actor {
     case km: KillMessage => killActor(km)
     case actor: Terminated =>
       liveActors -= actor.getActor.path.name
-      //  context.unwatch(actor.getActor)
+    //  context.unwatch(actor.getActor)
   }
 
   override val supervisorStrategy =
@@ -59,21 +60,21 @@ class LiveVehicleSupervisor extends Actor {
    * If not already in progress, create a new actor and send the line
    * @param liveSourceLine The incoming source line
    */
-  def processLine(liveSourceLine:TFLSourceLineImpl) = {
-      val vehicle_Reg = liveSourceLine.vehicle_Reg
-      if (liveActors.contains(vehicle_Reg)) {
-        updateLiveActorTimestamp(vehicle_Reg, liveSourceLine.route_ID, System.currentTimeMillis())
-        liveActors(vehicle_Reg)._1 ! liveSourceLine
-      } else {
-        val newVehicleActor = context.actorOf(Props(new VehicleActor(vehicle_Reg)), vehicle_Reg)
-        context.watch(newVehicleActor)
-        liveActors += (vehicle_Reg ->(newVehicleActor, liveSourceLine.route_ID, System.currentTimeMillis()))
-        newVehicleActor ! liveSourceLine
+  def processLine(liveSourceLine: TFLSourceLineImpl) = {
+    val vehicle_Reg = liveSourceLine.vehicle_Reg
+    if (liveActors.contains(vehicle_Reg)) {
+      updateLiveActorTimestamp(vehicle_Reg, liveSourceLine.route_ID, System.currentTimeMillis())
+      liveActors(vehicle_Reg)._1 ! liveSourceLine
+    } else {
+      val newVehicleActor = context.actorOf(Props(new VehicleActor(vehicle_Reg)), vehicle_Reg)
+      context.watch(newVehicleActor)
+      liveActors += (vehicle_Reg ->(newVehicleActor, liveSourceLine.route_ID, System.currentTimeMillis()))
+      newVehicleActor ! liveSourceLine
 
-      }
+    }
     //Update variables
-      numberLiveActors = liveActors.size
-      numberLiveChildren = context.children.size
+    numberLiveActors = liveActors.size
+    numberLiveChildren = context.children.size
   }
 
   /**
@@ -84,9 +85,9 @@ class LiveVehicleSupervisor extends Actor {
    * @param timeStamp The time stanp
    */
   def updateLiveActorTimestamp(reg: String, routeID: String, timeStamp: Long) = {
-      val currentValue = liveActors.get(reg)
-      if (currentValue.isDefined) liveActors += (reg -> (currentValue.get._1, routeID, timeStamp))
-      if (System.currentTimeMillis() - TIME_OF_LAST_CLEANUP > TIME_BETWEEN_CLEANUPS) cleanUpLiveActorsList()
+    val currentValue = liveActors.get(reg)
+    if (currentValue.isDefined) liveActors += (reg ->(currentValue.get._1, routeID, timeStamp))
+    if (System.currentTimeMillis() - TIME_OF_LAST_CLEANUP > TIME_BETWEEN_CLEANUPS) cleanUpLiveActorsList()
 
   }
 
@@ -98,7 +99,7 @@ class LiveVehicleSupervisor extends Actor {
     val cutOffThreshold = System.currentTimeMillis() - IDLE_TIME_UNTIL_ACTOR_KILLED
     val actorsToKill = liveActors.filter(x => x._2._3 < cutOffThreshold)
     actorsToKill.foreach(x => {
-      killActor(new KillMessage(x._1, x._2._2))//Kill actor
+      killActor(new KillMessage(x._1, x._2._2)) //Kill actor
     })
   }
 
@@ -106,10 +107,10 @@ class LiveVehicleSupervisor extends Actor {
    * Kills an actor by sending it a poison pill and sending message to clients to remove
    * @param km The kill message containing vehicle ID and route
    */
-  def killActor(km:KillMessage) = {
+  def killActor(km: KillMessage) = {
     val value = liveActors.get(km.vehicleID)
     if (value.isDefined) value.get._1 ! PoisonPill
-    pushToClients(new PackagedStreamObject(km.vehicleID,"kill",Array(),km.routeID ,0,"0","0","0")) //Send kill to stream Queue so this is updated for clients
+    pushToClients(new PackagedStreamObject(km.vehicleID, "kill", Array(), km.routeID, 0, "0", "0", "0")) //Send kill to stream Queue so this is updated for clients
   }
 
 }

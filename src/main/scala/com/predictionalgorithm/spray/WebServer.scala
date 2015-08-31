@@ -14,7 +14,7 @@ import org.json4s.native.JsonMethods._
 import org.json4s.JsonDSL._
 
 /**
- *  This code is adapted from an example from https://github.com/wandoulabs/spray-websocket
+ * This code is adapted from an example from https://github.com/wandoulabs/spray-websocket
  */
 object WebServer {
 
@@ -104,9 +104,9 @@ object WebServer {
             getFromResourceDirectory("images")
           }
         } ~
-      path("favicon.ico") {
-        getFromResource("images/favicon.ico")
-      }~
+        path("favicon.ico") {
+          getFromResource("images/favicon.ico")
+        } ~
         path("map") {
           getFromResource("html/livemap.html")
         } ~
@@ -139,16 +139,16 @@ object WebServer {
               }
             }
           }
-        }~
+        } ~
         path("prediction_request.asp") {
           get {
             parameters("route") { (route) =>
               parameters("direction") { (direction) =>
                 parameters("fromStop") { (fromStop) =>
                   parameters("toStop") { (toStop) =>
-                    println(route + "," + direction + "," +fromStop + "," + toStop)
+                    println(route + "," + direction + "," + fromStop + "," + toStop)
                     complete {
-                      makePrediction(route, direction.toInt, fromStop,toStop)
+                      makePrediction(route, direction.toInt, fromStop, toStop)
                     }
                   }
                 }
@@ -166,21 +166,21 @@ object WebServer {
     compact(render(jsonMap))
   }
 
-  private def getDirectionList(routeID:String): String = {
-    val outwardDirection = TFLDefinitions.StopDefinitions(TFLDefinitions.RouteDefinitionMap.get(routeID,1).get.last._2).stopPointName
-    val returnDirection = TFLDefinitions.StopDefinitions(TFLDefinitions.RouteDefinitionMap.get(routeID,2).get.last._2).stopPointName
+  private def getDirectionList(routeID: String): String = {
+    val outwardDirection = TFLDefinitions.StopDefinitions(TFLDefinitions.RouteDefinitionMap.get(routeID, 1).get.last._2).stopPointName
+    val returnDirection = TFLDefinitions.StopDefinitions(TFLDefinitions.RouteDefinitionMap.get(routeID, 2).get.last._2).stopPointName
     val jsonMap = Map("directionList" -> List("1," + outwardDirection, "2," + returnDirection))
     compact(render(jsonMap))
   }
 
-  private def getStopList(routeID:String,directionID:Int):String = {
-    val stopList = TFLDefinitions.RouteDefinitionMap(routeID,directionID).map(x=> x._2 + "," + TFLDefinitions.StopDefinitions(x._2).stopPointName)
+  private def getStopList(routeID: String, directionID: Int): String = {
+    val stopList = TFLDefinitions.RouteDefinitionMap(routeID, directionID).map(x => x._2 + "," + TFLDefinitions.StopDefinitions(x._2).stopPointName)
     val jsonMap = Map("stopList" -> stopList)
     compact(render(jsonMap))
   }
 
-  private def makePrediction(routeID:String, directionID:Int, fromStop: String, toStop: String): String = {
-    val pr = new PredictionRequest(routeID,directionID,fromStop,toStop,System.currentTimeMillis().getDayCode,System.currentTimeMillis().getTimeOffset)
+  private def makePrediction(routeID: String, directionID: Int, fromStop: String, toStop: String): String = {
+    val pr = new PredictionRequest(routeID, directionID, fromStop, toStop, System.currentTimeMillis().getDayCode, System.currentTimeMillis().getTimeOffset)
     val prediction = KNNPredictionImpl.makePrediction(pr)
     if (prediction.isDefined) prediction.get._1.toString + "," + prediction.get._2.toString else "Unable to make a prediction at this time"
   }
@@ -197,7 +197,7 @@ object WebServer {
     val nextList = Map(
       streamFields(0) -> next.reg,
       streamFields(1) -> next.nextArrivalTime,
-      streamFields(2) -> compact(render(next.markerMovementData.map({ case (lat, lng, rot, propDis) => lat + "," + lng + "," + rot + "," + propDis}).toList)),
+      streamFields(2) -> compact(render(next.markerMovementData.map({ case (lat, lng, rot, propDis) => lat + "," + lng + "," + rot + "," + propDis }).toList)),
       streamFields(3) -> next.route_ID,
       streamFields(4) -> next.direction_ID.toString,
       streamFields(5) -> next.towards,

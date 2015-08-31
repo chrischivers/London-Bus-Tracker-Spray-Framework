@@ -38,11 +38,11 @@ libraryDependencies += "org.json4s" %% "json4s-native" % "3.2.10"
 
 libraryDependencies += "org.codehaus.mojo" % "ideauidesigner-maven-plugin" % "1.0-beta-1"
 
+libraryDependencies += "me.lessis" %% "courier" % "0.1.3"
 
+mainClass in assembly := Some("com.predictionalgorithm.Main")
 
-mainClass in assembly := Some("com.PredictionAlgorithm.Main")
-
-mainClass in (Compile, run) := Some("com.PredictionAlgorithm.Main")
+mainClass in (Compile, run) := Some("com.predictionalgorithm.Main")
 
 
 assemblyMergeStrategy in assembly := {

@@ -2,6 +2,7 @@ package com.predictionalgorithm.serverui;
 
 import com.predictionalgorithm.commons.Commons;
 import com.predictionalgorithm.commons.Commons.*;
+import com.predictionalgorithm.controlinterface.EmailAlertInterface;
 import com.predictionalgorithm.controlinterface.StartStopControlInterface;
 import com.predictionalgorithm.prediction.PredictionInterface;
 import com.predictionalgorithm.prediction.PredictionRequest;
@@ -69,6 +70,7 @@ public class MonitoringUI {
     private JLabel totalMemoryValue;
     private JLabel maxMemoryValue;
     private JLabel numberLiveChildrenValue;
+    private JButton emailAlertsEnabledButton;
 
 
     public MonitoringUI(int refreshIntervalMS) {
@@ -87,6 +89,25 @@ public class MonitoringUI {
         frame.pack();
         frame.setVisible(true);
 
+    }
+
+    public void setUpEmailAlerts(StartStopControlInterface sSCI) {
+        emailAlertsEnabledButton.addActionListener(new ActionListener() {
+            volatile boolean buttonStarted = false;
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (!buttonStarted) {
+                    sSCI.start();
+                    emailAlertsEnabledButton.setText("Disable Email Alerts");
+                    buttonStarted = true;
+                } else {
+                    sSCI.stop();
+                    emailAlertsEnabledButton.setText("Enable Email Alerts");
+                    buttonStarted = false;
+                }
+            }
+        });
     }
 
     public void setCleanUpPointToPoint(StartStopControlInterface sSCI) {
@@ -463,6 +484,9 @@ public class MonitoringUI {
         label26.setHorizontalTextPosition(0);
         label26.setText("TfL Bus Prediction Framework - Server UI");
         mainPanel.add(label26, new GridConstraints(0, 0, 1, 4, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        emailAlertsEnabledButton = new JButton();
+        emailAlertsEnabledButton.setText("Enable Email Alerts");
+        mainPanel.add(emailAlertsEnabledButton, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     }
 
     /**

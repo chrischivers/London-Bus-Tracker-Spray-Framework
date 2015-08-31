@@ -9,13 +9,13 @@ import com.predictionalgorithm.database.POINT_TO_POINT_DOCUMENT
 import com.predictionalgorithm.database.tfl.TFLInsertPointToPointDuration
 import com.predictionalgorithm.processes.weather.Weather
 import com.predictionalgorithm.streaming.LiveStreamingCoordinatorImpl
-//import grizzled.slf4j.Logger
 import org.apache.commons.lang3.time.DateUtils
 
 
 object TFLProcessSourceLines {
 
-  val MAXIMUM_AGE_OF_RECORDS_IN_HOLDING_BUFFER = 600000//In Ms
+  val MAXIMUM_AGE_OF_RECORDS_IN_HOLDING_BUFFER = 600000
+  //In Ms
   var numberNonMatches = 0
 
   /**

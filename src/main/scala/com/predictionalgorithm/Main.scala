@@ -27,6 +27,7 @@ object Main extends App {
       ui.setUpdateStopDefinitions(UpdateStopDefinitionsControlInterface)
       ui.setAddPolyLines(AddPolyLinesControlInterface)
       ui.setCleanUpPointToPoint(CleanUpPointToPointControlInterface)
+      ui.setUpEmailAlerts(EmailAlertInterface)
       ui.createAndDisplayGUI()
 
     }

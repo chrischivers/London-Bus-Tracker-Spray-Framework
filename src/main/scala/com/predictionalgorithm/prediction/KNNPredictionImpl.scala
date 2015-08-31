@@ -25,11 +25,11 @@ object KNNPredictionImpl extends PredictionInterface {
 
 
   /**
-   * Makes a prediction between two points (consecutive or non consecutive)
+   * Makes a prediction between two points (consecutive or non consecutive) using the kNN algorithm
    * @param pr A prediction request object encapsulating the required fields
-   * @return an Option of predicted duration and standard deviation
+   * @return An Option of predicted duration and standard deviation
    */
-  override def makePrediction(pr:PredictionRequest): Option[(Double, Double)] = {
+  override def makePrediction(pr: PredictionRequest): Option[(Double, Double)] = {
     try {
       val startingPoint = TFLDefinitions.RouteDefinitionMap(pr.route_ID, pr.direction_ID).filter(x => x._2 == pr.from_Point_ID).head._1
       val endingPoint = TFLDefinitions.RouteDefinitionMap(pr.route_ID, pr.direction_ID).filter(x => x._2 == pr.to_Point_ID).last._1
@@ -56,7 +56,7 @@ object KNNPredictionImpl extends PredictionInterface {
   }
 
   /**
-   * Maes a prediction between two consecutive points
+   * Makes a prediction between two consecutive points
    * @param pr A prediction request object encapsulating the required fields
    * @return an Option of predicted duration and variance
    */
@@ -79,7 +79,7 @@ object KNNPredictionImpl extends PredictionInterface {
    * @param cursor A MongoCursor of the relevant records
    * @return A Vector of duratons and weighted distances
    */
-  private def getSortedKNNDistances(cursor: MongoCursor):Vector[(Int, Double)] = {
+  private def getSortedKNNDistances(cursor: MongoCursor): Vector[(Int, Double)] = {
 
     val currentTimeOffset = System.currentTimeMillis().getTimeOffset
     val currentRainFall = Weather.getCurrentRainfall
@@ -101,18 +101,18 @@ object KNNPredictionImpl extends PredictionInterface {
       rawValueArrayAllDays = rawValueArrayAllDays ++ rawValueArray
     })
 
-      val minTimeOffset = rawValueArrayAllDays.minBy(_._2)._2.toDouble
-      val maxTimeOffset = rawValueArrayAllDays.maxBy(_._2)._2.toDouble
+    val minTimeOffset = rawValueArrayAllDays.minBy(_._2)._2.toDouble
+    val maxTimeOffset = rawValueArrayAllDays.maxBy(_._2)._2.toDouble
 
-      val minDayOfWeek = rawValueArrayAllDays.minBy(_._3)._3
-      val maxDayOfWeek = rawValueArrayAllDays.maxBy(_._3)._3
+    val minDayOfWeek = rawValueArrayAllDays.minBy(_._3)._3
+    val maxDayOfWeek = rawValueArrayAllDays.maxBy(_._3)._3
 
-      val minRainfall = rawValueArrayAllDays.minBy(_._4)._4
-      val maxRainfall = rawValueArrayAllDays.maxBy(_._4)._4
+    val minRainfall = rawValueArrayAllDays.minBy(_._4)._4
+    val maxRainfall = rawValueArrayAllDays.maxBy(_._4)._4
 
 
-      val minTimeDifference = rawValueArrayAllDays.minBy(_._5)._5.toDouble
-      val maxTimeDifference = rawValueArrayAllDays.maxBy(_._5)._5.toDouble
+    val minTimeDifference = rawValueArrayAllDays.minBy(_._5)._5.toDouble
+    val maxTimeDifference = rawValueArrayAllDays.maxBy(_._5)._5.toDouble
 
     val currentTimeOffsetNormalised = normaliseInt(currentTimeOffset, minTimeOffset, maxTimeOffset)
     val currentDayNormalised = 0
@@ -123,12 +123,12 @@ object KNNPredictionImpl extends PredictionInterface {
 
     val normalisedArray = rawValueArrayAllDays.map { case (duration, timeOffset, day, rainfall, timeStamp) =>
       (duration,
-      normaliseInt(timeOffset, minTimeOffset, maxTimeOffset),
-      normaliseDouble(day, minDayOfWeek, maxDayOfWeek),
-      normaliseDouble(rainfall, minDayOfWeek, maxDayOfWeek),
-      normaliseLong(timeStamp,minTimeDifference,maxTimeDifference))
+        normaliseInt(timeOffset, minTimeOffset, maxTimeOffset),
+        normaliseDouble(day, minDayOfWeek, maxDayOfWeek),
+        normaliseDouble(rainfall, minDayOfWeek, maxDayOfWeek),
+        normaliseLong(timeStamp, minTimeDifference, maxTimeDifference))
     }
-   // println("normalised array: " + normalisedArray)
+    // println("normalised array: " + normalisedArray)
 
     val durationWeightedDistanceArray = normalisedArray.map { case (duration, timeOffset, day, rainfall, timeStamp) =>
       (duration, math.sqrt(
@@ -140,7 +140,7 @@ object KNNPredictionImpl extends PredictionInterface {
 
     val sortedDurationWeightedDistanceArray = durationWeightedDistanceArray.sortBy(_._2)
 
-  //  println("sortedDurationWeightedDistanceArray array: " + sortedDurationWeightedDistanceArray)
+    //  println("sortedDurationWeightedDistanceArray array: " + sortedDurationWeightedDistanceArray)
 
     sortedDurationWeightedDistanceArray
   }
@@ -150,24 +150,26 @@ object KNNPredictionImpl extends PredictionInterface {
    * @param dayOfWeek The day of the week to compare today to
    * @return The distance value
    */
-  private def getDayOfWeekValue(dayOfWeek:String):Double = {
+  private def getDayOfWeekValue(dayOfWeek: String): Double = {
 
     val SAME_DAY_VALUE = 0
     val EQUIV_DAY_WEEK_VALUE = 0.5
     val UNEQUIV_DAY_WEEK_VALUE = 1
 
-    val weekDays = Vector("MON","TUE","WED","THU","FRI")
+    val weekDays = Vector("MON", "TUE", "WED", "THU", "FRI")
     val today = System.currentTimeMillis().getDayCode
 
     if (today == dayOfWeek) SAME_DAY_VALUE
-    else if(weekDays.contains(today) && weekDays.contains(dayOfWeek)) EQUIV_DAY_WEEK_VALUE
+    else if (weekDays.contains(today) && weekDays.contains(dayOfWeek)) EQUIV_DAY_WEEK_VALUE
     else UNEQUIV_DAY_WEEK_VALUE
 
   }
 
-  private def normaliseInt(x:Int, min: Double, max: Double): Double = (x - min) / (max - min)
-  private def normaliseDouble(x:Double, min: Double, max: Double): Double = (x - min) / (max - min)
-  private def normaliseLong(x:Long, min: Double, max: Double): Double = (x - min) / (max - min)
+  private def normaliseInt(x: Int, min: Double, max: Double): Double = (x - min) / (max - min)
+
+  private def normaliseDouble(x: Double, min: Double, max: Double): Double = (x - min) / (max - min)
+
+  private def normaliseLong(x: Long, min: Double, max: Double): Double = (x - min) / (max - min)
 
 
   /**
@@ -175,7 +177,7 @@ object KNNPredictionImpl extends PredictionInterface {
    * @param durationDistanceVector A vector of Duration and Distance between a number of points
    * @return An Option of the average and the Variance
    */
-  private def getAverageAndVariance(durationDistanceVector:Vector[(Int,Double)]):Option[(Double, Double)] = {
+  private def getAverageAndVariance(durationDistanceVector: Vector[(Int, Double)]): Option[(Double, Double)] = {
     if (durationDistanceVector.isEmpty) None
     else {
       val acc = new SummaryStatistics()
@@ -189,7 +191,7 @@ object KNNPredictionImpl extends PredictionInterface {
    * @param durationDistanceVector The vecotr of Durations and KNN Distances
    * @return A vector of Durations and KNN distances with the outliers removed
    */
-  private def removeOutliers(durationDistanceVector:Vector[(Int,Double)]):Vector[(Int,Double)] =  {
+  private def removeOutliers(durationDistanceVector: Vector[(Int, Double)]): Vector[(Int, Double)] = {
     if (durationDistanceVector.isEmpty) None
     val acc = new SummaryStatistics()
     durationDistanceVector.foreach(x => acc.addValue(x._1))
@@ -212,4 +214,4 @@ object KNNPredictionImpl extends PredictionInterface {
     BigDecimal(number).setScale(decimalPlaces, BigDecimal.RoundingMode.HALF_UP).toDouble
   }
 
-  }
+}

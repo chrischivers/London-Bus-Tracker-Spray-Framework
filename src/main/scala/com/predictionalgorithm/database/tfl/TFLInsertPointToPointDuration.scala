@@ -9,9 +9,9 @@ import com.mongodb.casbah.Imports._
 
 object TFLInsertPointToPointDuration extends DatabaseInsert {
 
-  @volatile var numberDBTransactionsRequested:Long= 0
-  @volatile var numberDBTransactionsExecuted:Long = 0
-  @volatile var numberDBPullTransactionsExecuted:Long = 0
+  @volatile var numberDBTransactionsRequested: Long = 0
+  @volatile var numberDBTransactionsExecuted: Long = 0
+  @volatile var numberDBPullTransactionsExecuted: Long = 0
 
   override protected val collection: DatabaseCollections = POINT_TO_POINT_COLLECTION
   override protected val dbTransactionActor: ActorRef = actorSystem.actorOf(Props[TFLInsertPointToPointDuration], name = "TFLInsertPointToPointDurationActor")
@@ -53,36 +53,46 @@ class TFLInsertPointToPointDuration extends Actor {
   }
 
 
-    def pruneExistingCollectionBeforeInsert(newObj: MongoDBObject,timeOffSet:Int, rainfall:Double): Unit = {
-      val cursor: MongoCursor = TFLGetPointToPointDocument.executeQuery(newObj)
-      if (cursor.size > 0) {
-        //If no entry in DB with route, direction, fromPoint and toPoint... do nothing
-        assert(cursor.length == 1)
-        val durListVector = getDurListVectorFromCursor(cursor.next()) //First and only document in cursor
+  /**
+   * Prune existing records in collection before inserting a new record (ensures database does not grow infinitely)
+   * @param newObj The new object to be inserted
+   * @param timeOffSet The time offset of the new record to be inserted
+   * @param rainfall The rainfall of the new record to be inserted
+   */
+  def pruneExistingCollectionBeforeInsert(newObj: MongoDBObject, timeOffSet: Int, rainfall: Double): Unit = {
+    val cursor: MongoCursor = TFLGetPointToPointDocument.executeQuery(newObj)
+    if (cursor.size > 0) {
+      //If no entry in DB with route, direction, fromPoint and toPoint... do nothing
+      assert(cursor.length == 1)
+      val durListVector = getDurListVectorFromCursor(cursor.next()) //First and only document in cursor
 
-        // This filters those within the PRUNE THRESHOLD LIMIT followed by those within the rainfall threshold
-        val prunedVector = durListVector.filter(x=>
-            math.abs(x._2 - timeOffSet) <= PRUNE_THRESHOLD_TIME_LIMIT &&
-            math.abs(x._4 - rainfall) <= PRUNE_THRESHOLD_RAINFALL_LIMIT)
-        if (prunedVector.size > PRUNE_THRESHOLD_K_LIMIT) {
-          val entryToDelete = prunedVector.minBy(_._3) //Gets the oldest record in the vector
-          val updatePull = $pull(collection.DURATION_LIST -> MongoDBObject(collection.DURATION -> entryToDelete._1, collection.TIME_OFFSET -> entryToDelete._2, collection.TIME_STAMP -> entryToDelete._3, collection.RAINFALL -> entryToDelete._4))
-          TFLInsertPointToPointDuration.dBCollection.update(newObj, updatePull)
-          TFLInsertPointToPointDuration.numberDBPullTransactionsExecuted += 1
-        }
+      // This filters those within the PRUNE THRESHOLD LIMIT followed by those within the rainfall threshold
+      val prunedVector = durListVector.filter(x =>
+        math.abs(x._2 - timeOffSet) <= PRUNE_THRESHOLD_TIME_LIMIT &&
+          math.abs(x._4 - rainfall) <= PRUNE_THRESHOLD_RAINFALL_LIMIT)
+      if (prunedVector.size > PRUNE_THRESHOLD_K_LIMIT) {
+        val entryToDelete = prunedVector.minBy(_._3) //Gets the oldest record in the vector
+        val updatePull = $pull(collection.DURATION_LIST -> MongoDBObject(collection.DURATION -> entryToDelete._1, collection.TIME_OFFSET -> entryToDelete._2, collection.TIME_STAMP -> entryToDelete._3, collection.RAINFALL -> entryToDelete._4))
+        TFLInsertPointToPointDuration.dBCollection.update(newObj, updatePull)
+        TFLInsertPointToPointDuration.numberDBPullTransactionsExecuted += 1
       }
     }
+  }
 
 
-    // Vector is Duration, Time Offset, Time_Stamp, Time Offset Difference
-    def getDurListVectorFromCursor(dbObject: Imports.MongoDBObject): Vector[(Int, Int, Long, Double)] = {
-      dbObject.get(collection.DURATION_LIST).get.asInstanceOf[Imports.BasicDBList].map(y => {
-        (y.asInstanceOf[Imports.BasicDBObject].getInt(collection.DURATION),
-          y.asInstanceOf[Imports.BasicDBObject].getInt(collection.TIME_OFFSET),
-          y.asInstanceOf[Imports.BasicDBObject].getLong(collection.TIME_STAMP),
-          y.asInstanceOf[Imports.BasicDBObject].getDouble(collection.RAINFALL))
-      })
-        .toVector
-    }
+  /*
+   *
+   * @param dbObject The database document
+   * @return A vector of Duration, Time Offset, Time Stamp and Time Offset Difference
+   */
+  def getDurListVectorFromCursor(dbObject: Imports.MongoDBObject): Vector[(Int, Int, Long, Double)] = {
+    dbObject.get(collection.DURATION_LIST).get.asInstanceOf[Imports.BasicDBList].map(y => {
+      (y.asInstanceOf[Imports.BasicDBObject].getInt(collection.DURATION),
+        y.asInstanceOf[Imports.BasicDBObject].getInt(collection.TIME_OFFSET),
+        y.asInstanceOf[Imports.BasicDBObject].getLong(collection.TIME_STAMP),
+        y.asInstanceOf[Imports.BasicDBObject].getDouble(collection.RAINFALL))
+    })
+      .toVector
+  }
 }
 

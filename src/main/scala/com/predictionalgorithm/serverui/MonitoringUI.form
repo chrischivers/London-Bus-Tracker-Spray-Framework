@@ -568,6 +568,14 @@
           <text value="TfL Bus Prediction Framework - Server UI"/>
         </properties>
       </component>
+      <component id="1cb6f" class="javax.swing.JButton" binding="emailAlertsEnabledButton" default-binding="true">
+        <constraints>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Enable Email Alerts"/>
+        </properties>
+      </component>
     </children>
   </grid>
 </form>

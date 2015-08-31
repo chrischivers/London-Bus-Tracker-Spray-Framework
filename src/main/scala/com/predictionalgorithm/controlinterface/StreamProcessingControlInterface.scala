@@ -13,6 +13,12 @@ object StreamProcessingControlInterface extends StartStopControlInterface {
   val mb = 1024*1024
   val runtime = Runtime.getRuntime
 
+  val alertText = "LINES NOT BEING READ AS EXPECTED. POSSIBLE SERVER CRASH."
+  val periodToCheck = 600000
+  val MIN_LINES_TOREAD_IN_PERIOD = 10
+  var timeStampLastChecked:Long = 0
+  var linesReadOnLastCheck:Long = 0
+
 
   override def start(): Unit = {
     streamActor ! "start"
@@ -35,8 +41,19 @@ object StreamProcessingControlInterface extends StartStopControlInterface {
     val freeMemory =  (runtime.freeMemory / mb).toString
     val totalMemory = (runtime.totalMemory / mb).toString
     val maxMemory =  (runtime.maxMemory / mb).toString
-    Array(numberLinesRead, currentRainfall, usedMemory,freeMemory,totalMemory,maxMemory)
+    val array = Array(numberLinesRead, currentRainfall, usedMemory,freeMemory,totalMemory,maxMemory)
+    checkAndSendForEmailAlerting(array)
+    array
   }
 
-
+  def checkAndSendForEmailAlerting(variableArray: Array[String]): Unit = {
+    val linesRead = variableArray(0).toLong
+    if (System.currentTimeMillis() - periodToCheck > timeStampLastChecked) {
+      if (linesRead - linesReadOnLastCheck < MIN_LINES_TOREAD_IN_PERIOD && linesRead != 0) {
+        EmailAlertInterface.sendAlert(alertText)
+      }
+      timeStampLastChecked = System.currentTimeMillis()
+      linesReadOnLastCheck = linesRead
+    }
+  }
 }

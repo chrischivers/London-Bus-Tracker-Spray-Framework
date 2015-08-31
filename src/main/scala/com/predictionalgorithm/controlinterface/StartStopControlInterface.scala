@@ -9,6 +9,7 @@ trait StartStopControlInterface  {
   implicit val actorSystem = ActorSystem("ControlInterfaceActorSystem")
 
   def getVariableArray:Array[String]
+ // def checkAndSendForEmailAlerting(variableArray: Array[String])
   def start()
   def stop()
 

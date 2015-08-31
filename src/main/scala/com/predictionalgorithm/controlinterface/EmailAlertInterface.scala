@@ -1,0 +1,27 @@
+package com.predictionalgorithm.controlinterface
+
+import com.predictionalgorithm.controlinterface.emailer.Emailer
+
+
+object EmailAlertInterface extends StartStopControlInterface{
+
+  var alertsEnabled = false
+  var numberEmailsSent = 0
+
+  def setEnabled(enabled:Boolean) = {
+    
+  }
+
+  def sendAlert(alertText:String) = {
+    if (alertsEnabled) {
+      Emailer.sendMesage(alertText)
+      numberEmailsSent += 1
+    }
+  }
+
+  override def getVariableArray: Array[String] = Array(numberEmailsSent.toString)
+
+  override def stop(): Unit = alertsEnabled = false
+  
+  override def start(): Unit = alertsEnabled = true
+}
