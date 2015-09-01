@@ -19,7 +19,7 @@ import org.json4s.JsonDSL._
 object WebServer {
 
 
-  final case class Push(routeID: String, msg: String)
+  final case class Push(routeID: String, latitude:Double, longitude:Double, msg: String)
 
   final case class PushToChildren(pso: PackagedStreamObject)
 
@@ -43,7 +43,9 @@ object WebServer {
       case PushToChildren(pso: PackagedStreamObject) =>
         val children = context.children
         val encoded = encodePackageObject(pso)
-        children.foreach(ref => ref ! Push(pso.route_ID, encoded))
+        val firstLat = if (!pso.markerMovementData.isEmpty) pso.markerMovementData(0)._1.toDouble else 0
+        val firstLng = if (!pso.markerMovementData.isEmpty) pso.markerMovementData(0)._2.toDouble else 0
+        children.foreach(ref => ref ! Push(pso.route_ID, firstLat, firstLng, encoded))
     }
   }
 
@@ -56,20 +58,38 @@ object WebServer {
     // Escalates to web socket
     override def receive = handshaking orElse businessLogicNoUpgrade orElse closeLogic
 
+    var mode = "NONE"
     var routeList: List[String] = List()
+    var boundsArray:Array[String] = Array()
 
     def businessLogic: Receive = {
       case x@(_: TextFrame) =>
-        //sender() ! x
-        val splitReceive = x.payload.utf8String.split(",").toList
-        routeList = routeList ++ splitReceive
-        println(routeList)
+        val receivedStr = x.payload.utf8String
+        if (receivedStr.startsWith("ROUTELIST")) {
+          mode = "ROUTELIST"
+          val splitReceive = receivedStr.split(",").drop(1).toList
+          routeList = routeList ++ splitReceive
+          println(routeList)
+        } else if (receivedStr.startsWith("BOUNDS")) {
+          mode = "BOUNDS"
+          boundsArray = receivedStr.replaceAll("\\)","").replaceAll("\\(","").split(",").drop(1) //Take out brackets
+        }
 
-      case Push(routeID: String, message: String) =>
+      case Push(routeID: String, latitude: Double, longitude: Double, message: String) =>
 
-        // Sends a text frame to the clients that are listening to that particular route
-        if (routeList.contains(routeID)) {
-          send(TextFrame(message))
+        if (mode == "ROUTELIST") {
+          // Sends a text frame to the clients that are listening to that particular route
+          if (routeList.contains(routeID)) {
+            send(TextFrame(message))
+          }
+        } else if (mode == "BOUNDS") {
+          val bottomBound = boundsArray(0).toDouble
+          val leftBound = boundsArray(1).toDouble
+          val topBound = boundsArray(2).toDouble
+          val rightBound = boundsArray(3).toDouble
+          if (latitude >= bottomBound && latitude <= topBound && longitude >= leftBound && longitude <= rightBound) {
+            send(TextFrame(message))
+          }
         }
 
       case x: FrameCommandFailed =>
