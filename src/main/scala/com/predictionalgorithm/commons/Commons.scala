@@ -140,7 +140,7 @@ object Commons {
   def getDistance(lat1:Double, lng1:Double, lat2:Double, lng2:Double): Double = {
     val R = 6378137 // Earth’s mean radius in meter
     val dLat = rad(lat2 - lat1)
-    val dLong = rad(lng2 - lng2)
+    val dLong = rad(lng2 - lng1)
     val a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos(rad(lat1)) * Math.cos(rad(lat2)) *
         Math.sin(dLong / 2) * Math.sin(dLong / 2)

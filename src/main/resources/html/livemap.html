@@ -8,7 +8,7 @@
 
     <link href="css/map.css" rel="stylesheet"/>
     <script type="text/javascript"
-            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBxCYp9RWcbhuPg0nLWFzJhuPbECQYOqBw"></script>
+            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBxCYp9RWcbhuPg0nLWFzJhuPbECQYOqBw&libraries=geometry"></script>
     <script src="js/jquery-2.1.4.min.js"></script>
     <script src="js/jquery.easing.1.3.js"></script>
     <script src="js/markerAnimate.js"></script>
@@ -20,8 +20,8 @@
     <script src="js/markerwithlabel.terikon.js"></script>
 
     <script>
-       var wsUri = "ws://bbkproject.cloudapp.net/";
-       //var wsUri = "ws://localhost:8080/";
+        // var wsUri = "ws://bbkproject.cloudapp.net/";
+        var wsUri = "ws://localhost:8080/";
         var map;
         var markerArray = {};
         var iconArray = {};
@@ -33,6 +33,7 @@
 
         var supportsTouch = 'ontouchstart' in window || navigator.msMaxTouchPoints;
         var mode;
+        var RADIUS;
 
         function initialize() {
             loadRouteIDs();
@@ -44,6 +45,20 @@
             };
             map = new google.maps.Map(document.getElementById('map_canvas'), mapOptions);
 
+            // Try HTML5 geolocation.
+            // Code from: https://developers.google.com/maps/documentation/javascript/examples/map-geolocation
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    var pos = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+
+                    map.setCenter(pos);
+                    map.setZoom(16);
+                });
+            }
+
             document.getElementById("runButton").addEventListener("click", function () {
                 mode = "ROUTELIST";
                 var selectedValues = $('#routeIDOption').val();
@@ -51,34 +66,38 @@
                 $('#settings_canvas').css('visibility', 'hidden');
             });
 
-            document.getElementById("boundsButton").addEventListener("click", function () {
-                mode = "BOUNDS";
-                setUpWebSocket("BOUNDS," + map.getBounds());
+            document.getElementById("radiusButton").addEventListener("click", function () {
+                mode = "RADIUS";
+                var radiusCombo = document.getElementById("radiusOption");
+                RADIUS = radiusCombo.options[radiusCombo.selectedIndex].value;
+                setUpWebSocket("RADIUS," + RADIUS + "," + map.getCenter());
                 $('#settings_canvas').css('visibility', 'hidden');
             });
 
 
-                google.maps.event.addListener(map, "bounds_changed", function () {
-                    if (mode == "BOUNDS") {
-                        doSend("BOUNDS," + map.getBounds());
-                        var deleteList = [];
+            google.maps.event.addListener(map, "bounds_changed", function () {
+                if (mode == "RADIUS") {
+                    var mapCentre = map.getCenter();
+                    doSend("RADIUS," + RADIUS + "," + mapCentre);
+                    var deleteList = [];
 
-                        for (var key in markerArray) {
-                            if (markerArray.hasOwnProperty(key)) {
-                                //alert(key + " -> " + markerArray[key]);
-                                if (!map.getBounds().contains(markerArray[key].getPosition())) {
-                                    deleteList.push(key);
-                                }
+                    for (var key in markerArray) {
+                        if (markerArray.hasOwnProperty(key)) {
+                            if (google.maps.geometry.spherical.computeDistanceBetween(mapCentre, markerArray[key].getPosition()) > RADIUS) {
+                                deleteList.push(key);
                             }
-                        } setTimeout(function () {
-                            for (var i = 0; i < deleteList.length; i++) {
-                                deleteVehicle(deleteList[i]);
-                            }
-                            deleteList = [];
-                        }, 0);
-
+                        }
                     }
-                });
+                    setTimeout(function () {
+                        for (var i = 0; i < deleteList.length; i++) {
+                            deleteVehicle(deleteList[i]);
+                        }
+                        deleteList = [];
+                    }, 0);
+
+                }
+            });
+
 
         }
         $(function () {
@@ -139,7 +158,6 @@
                 });
 
 
-
                 moveMarker(reg, latLngArray, rotationArray, proportionalDurationArray, nextArr, routeID, directionID, towards, nextStopID, nextStopName);
 
 
@@ -193,7 +211,7 @@
 
                     if (timeOut > 0) {
                         markerArray[reg].setVisible(true);
-                   }
+                    }
                     markerArray[reg].setDuration(actualDuration);
                     markerArray[reg].setIcon(iconArray[reg]);
                     markerArray[reg].labelAnchor = new google.maps.Point(routeIDOffset, 10);
@@ -272,7 +290,7 @@
     <div class="content">
         <div class="row">
             <label for="routeIDOption">Choose Bus Route(s):
-                    </label>
+            </label>
             <select id="routeIDOption" multiple>
             </select>
             <button id="runButton">Run</button>
@@ -280,10 +298,20 @@
         </div>
 
     </div>
-
-    Please allow 1-2 minutes after clicking Run for stream to update fully<br>
-    Selecting a large numer of routes may cause slowdown.<br><br>
-    <button id="boundsButton" style="height:50px;width:200px">Show buses nearest to me (beta)</button>
+    <div class="row">
+        <label for="radiusOption">OR show buses within a fixed radius:</label>
+        <select id="radiusOption" style="height:50px">
+            <option value="1000">1km</option>
+            <option value="2000">2km</option>
+            <option value="3000">3km</option>
+            <option value="4000">4km</option>
+            <option value="5000">5km</option>
+        </select>
+        <button id="radiusButton" style="height:50px;width:200px">Run</button>
+        <br><br><br><br>
+        Please allow 1-2 minutes after clicking Run for stream to update fully<br>
+        Selecting a large number of routes may cause slowdown.
+    </div>
 </div>
 
 </body>

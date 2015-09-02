@@ -1,12 +1,15 @@
 package com.predictionalgorithm.spray
 
+import java.io.ByteArrayInputStream
+
 import akka.actor._
+import com.predictionalgorithm.commons.Commons
 import com.predictionalgorithm.commons.Commons._
 import com.predictionalgorithm.datadefinitions.tfl.TFLDefinitions
 import com.predictionalgorithm.prediction.{KNNPredictionImpl, PredictionRequest}
 import com.predictionalgorithm.streaming.PackagedStreamObject
 import spray.can.websocket.FrameCommandFailed
-import spray.can.websocket.frame.TextFrame
+import spray.can.websocket.frame.{TextFrameStream, TextFrame}
 import spray.can.{websocket, Http}
 import spray.http.HttpRequest
 import spray.routing.HttpServiceActor
@@ -59,10 +62,12 @@ object WebServer {
     override def receive = handshaking orElse businessLogicNoUpgrade orElse closeLogic
 
     var mode = "NONE"
+    var selectedRadius = 0.0
     var routeList: List[String] = List()
-    var boundsArray:Array[String] = Array()
+    var centrePoint:Array[Double] = Array()
 
     def businessLogic: Receive = {
+
       case x@(_: TextFrame) =>
         val receivedStr = x.payload.utf8String
         if (receivedStr.startsWith("ROUTELIST")) {
@@ -70,9 +75,11 @@ object WebServer {
           val splitReceive = receivedStr.split(",").drop(1).toList
           routeList = routeList ++ splitReceive
           println(routeList)
-        } else if (receivedStr.startsWith("BOUNDS")) {
-          mode = "BOUNDS"
-          boundsArray = receivedStr.replaceAll("\\)","").replaceAll("\\(","").split(",").drop(1) //Take out brackets
+        } else if (receivedStr.startsWith("RADIUS")) {
+          mode = "RADIUS"
+          val temporaryStr = receivedStr.replaceAll("\\)","").replaceAll("\\(","").split(",").drop(1).map(_.toDouble) //Take out brackets
+          selectedRadius = temporaryStr.head //Sets the radius
+          centrePoint = temporaryStr.drop(1) // Sets the centre Point
         }
 
       case Push(routeID: String, latitude: Double, longitude: Double, message: String) =>
@@ -82,12 +89,11 @@ object WebServer {
           if (routeList.contains(routeID)) {
             send(TextFrame(message))
           }
-        } else if (mode == "BOUNDS") {
-          val bottomBound = boundsArray(0).toDouble
-          val leftBound = boundsArray(1).toDouble
-          val topBound = boundsArray(2).toDouble
-          val rightBound = boundsArray(3).toDouble
-          if (latitude >= bottomBound && latitude <= topBound && longitude >= leftBound && longitude <= rightBound) {
+        } else if (mode == "RADIUS") {
+          val centreLat = centrePoint(0)
+          val centreLng = centrePoint(1)
+
+          if (Commons.getDistance(centreLat,centreLng,latitude,longitude) < selectedRadius) {
             send(TextFrame(message))
           }
         }

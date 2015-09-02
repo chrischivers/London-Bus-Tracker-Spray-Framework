@@ -56,7 +56,7 @@ object StreamProcessingControlInterface extends StartStopControlInterface {
       timeStampLastChecked = System.currentTimeMillis()
       linesReadOnLastCheck = linesRead
     }
-    if (variableArray(2).toDouble - variableArray(5).toDouble < 200) {
+    if (variableArray(5).toDouble - variableArray(2).toDouble < 200) {
       EmailAlertInterface.sendAlert(freeMemoryLowAlertText)
     }
   }
