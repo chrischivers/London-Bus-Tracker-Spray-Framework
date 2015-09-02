@@ -26,7 +26,6 @@ object LiveStreamingCoordinatorImpl extends LiveStreamingCoordinator {
 
   override def processSourceLine(liveSourceLine: TFLSourceLineImpl): Unit = vehicleSupervisor ! liveSourceLine
 
-  def killActor(km: KillMessage) = vehicleSupervisor ! km
 }
 
 /**
@@ -40,12 +39,12 @@ class LiveVehicleSupervisor extends Actor {
   /**
    * The record of live actors. A Map of the VehicleID to the ActorRef, The Route, and the time last updated
    */
-  @volatile private var liveActors = Map[String, (ActorRef, String, Long)]()
+  private val liveActors = scala.collection.mutable.Map[String, (ActorRef, String, Long)]()
 
   override def receive = {
     case liveSourceLine: TFLSourceLineImpl => processLine(liveSourceLine)
     case km: KillMessage => killActor(km)
-    case actor: Terminated => liveActors -= actor.getActor.path.name
+    case actor: Terminated => liveActors.remove(actor.getActor.path.name)
     case CleanUp => cleanUpLiveActorsList()
     case obj:UpdateLiveActorsObj => updateLiveActorTimestamp(obj)
   }
@@ -72,7 +71,7 @@ class LiveVehicleSupervisor extends Actor {
     } else {
       val newVehicleActor = context.actorOf(Props(new VehicleActor(vehicle_Reg)), vehicle_Reg)
       context.watch(newVehicleActor)
-      liveActors += vehicle_Reg -> (newVehicleActor, liveSourceLine.route_ID,System.currentTimeMillis())
+      liveActors.put(vehicle_Reg, (newVehicleActor, liveSourceLine.route_ID,System.currentTimeMillis()))
       newVehicleActor ! liveSourceLine
     }
     //Update variables
@@ -89,7 +88,7 @@ class LiveVehicleSupervisor extends Actor {
    */
   private def updateLiveActorTimestamp(obj: UpdateLiveActorsObj) = {
     val currentValue = liveActors.get(obj.reg)
-    if (currentValue.isDefined) liveActors += obj.reg -> (currentValue.get._1, obj.routeID, obj.timeStamp)
+    if (currentValue.isDefined) liveActors.put(obj.reg, (currentValue.get._1, obj.routeID, obj.timeStamp))
     if (System.currentTimeMillis() - TIME_OF_LAST_CLEANUP > TIME_BETWEEN_CLEANUPS) self ! CleanUp
   }
 

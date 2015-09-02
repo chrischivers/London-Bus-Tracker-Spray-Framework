@@ -13,7 +13,8 @@ object StreamProcessingControlInterface extends StartStopControlInterface {
   val mb = 1024*1024
   val runtime = Runtime.getRuntime
 
-  val alertText = "LINES NOT BEING READ AS EXPECTED. POSSIBLE SERVER CRASH."
+  val linesNotBeingReadAlertText = "LINES NOT BEING READ AS EXPECTED. POSSIBLE SERVER CRASH."
+  val freeMemoryLowAlertText = "FREE MEMORY RUNNING LOW"
   val periodToCheck = 600000
   val MIN_LINES_TOREAD_IN_PERIOD = 10
   var timeStampLastChecked:Long = 0
@@ -50,10 +51,13 @@ object StreamProcessingControlInterface extends StartStopControlInterface {
     val linesRead = variableArray(0).toLong
     if (System.currentTimeMillis() - periodToCheck > timeStampLastChecked) {
       if (linesRead - linesReadOnLastCheck < MIN_LINES_TOREAD_IN_PERIOD && linesRead != 0) {
-        EmailAlertInterface.sendAlert(alertText)
+        EmailAlertInterface.sendAlert(linesNotBeingReadAlertText)
       }
       timeStampLastChecked = System.currentTimeMillis()
       linesReadOnLastCheck = linesRead
+    }
+    if (variableArray(2).toDouble - variableArray(5).toDouble < 200) {
+      EmailAlertInterface.sendAlert(freeMemoryLowAlertText)
     }
   }
 }

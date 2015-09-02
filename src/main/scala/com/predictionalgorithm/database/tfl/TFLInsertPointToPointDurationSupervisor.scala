@@ -1,23 +1,22 @@
 package com.predictionalgorithm.database.tfl
 
-import akka.actor.{ActorRef, Props, Actor}
+import akka.actor.{ActorSystem, ActorRef, Props, Actor}
 import com.predictionalgorithm.database._
 import com.mongodb.casbah.MongoCursor
 import com.mongodb.casbah.commons.{Imports, MongoDBObject}
 import com.mongodb.casbah.Imports._
+import com.predictionalgorithm.streaming.LiveVehicleSupervisor
 
 
-object TFLInsertPointToPointDuration extends DatabaseInsert {
+object TFLInsertPointToPointDurationSupervisor extends DatabaseInsert {
 
-  @volatile var numberDBTransactionsRequested: Long = 0
-  @volatile var numberDBTransactionsExecuted: Long = 0
   @volatile var numberDBPullTransactionsExecuted: Long = 0
 
   override protected val collection: DatabaseCollections = POINT_TO_POINT_COLLECTION
-  override protected val dbTransactionActor: ActorRef = actorSystem.actorOf(Props[TFLInsertPointToPointDuration], name = "TFLInsertPointToPointDurationActor")
+  override protected val dbTransactionActor: ActorRef = actorSystem.actorOf(Props[TFLInsertPointToPointDurationActor], "InsertPointToPointActor")
 }
 
-class TFLInsertPointToPointDuration extends Actor {
+class TFLInsertPointToPointDurationActor extends Actor {
 
   val collection = POINT_TO_POINT_COLLECTION
 
@@ -33,8 +32,6 @@ class TFLInsertPointToPointDuration extends Actor {
 
   private def insertToDB(doc: POINT_TO_POINT_DOCUMENT) = {
 
-    TFLInsertPointToPointDuration.numberDBTransactionsRequested += 1
-
     val newObj = MongoDBObject(
       collection.ROUTE_ID -> doc.route_ID,
       collection.DIRECTION_ID -> doc.direction_ID,
@@ -47,8 +44,8 @@ class TFLInsertPointToPointDuration extends Actor {
     val pushUpdate = $push(collection.DURATION_LIST -> MongoDBObject(collection.DURATION -> doc.durationSeconds, collection.TIME_OFFSET -> doc.timeOffsetSeconds, collection.RAINFALL -> doc.rainfall, collection.TIME_STAMP -> System.currentTimeMillis()))
 
     // Upsert - pushing Duration and ObservedTime to Array
-    TFLInsertPointToPointDuration.dBCollection.update(newObj, pushUpdate, upsert = true)
-    TFLInsertPointToPointDuration.numberDBTransactionsExecuted += 1
+    TFLInsertPointToPointDurationSupervisor.dBCollection.update(newObj, pushUpdate, upsert = true)
+    TFLInsertPointToPointDurationSupervisor.numberDBTransactionsExecuted += 1
 
   }
 
@@ -73,8 +70,8 @@ class TFLInsertPointToPointDuration extends Actor {
       if (prunedVector.size > PRUNE_THRESHOLD_K_LIMIT) {
         val entryToDelete = prunedVector.minBy(_._3) //Gets the oldest record in the vector
         val updatePull = $pull(collection.DURATION_LIST -> MongoDBObject(collection.DURATION -> entryToDelete._1, collection.TIME_OFFSET -> entryToDelete._2, collection.TIME_STAMP -> entryToDelete._3, collection.RAINFALL -> entryToDelete._4))
-        TFLInsertPointToPointDuration.dBCollection.update(newObj, updatePull)
-        TFLInsertPointToPointDuration.numberDBPullTransactionsExecuted += 1
+        TFLInsertPointToPointDurationSupervisor.dBCollection.update(newObj, updatePull)
+        TFLInsertPointToPointDurationSupervisor.numberDBPullTransactionsExecuted += 1
       }
     }
   }

@@ -11,7 +11,6 @@ import scala.util.{Failure, Success, Try}
  */
 trait DatabaseDelete extends DatabaseTransaction{
 
-  protected implicit val actorSystem = ActorSystem("DB_Actor_System")
   protected val dbTransactionActor:ActorRef
 
   def deleteDocument(docID: ObjectId): Unit = {

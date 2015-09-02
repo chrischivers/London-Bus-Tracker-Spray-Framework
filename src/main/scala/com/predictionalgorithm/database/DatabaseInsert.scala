@@ -1,7 +1,7 @@
 package com.predictionalgorithm.database
 
 import akka.actor.{ActorRef, ActorSystem}
-import com.predictionalgorithm.database.tfl.TFLMongoDBConnection
+import com.predictionalgorithm.database.tfl.{TFLInsertPointToPointDurationSupervisor$, TFLMongoDBConnection}
 
 import scala.util.{Failure, Success, Try}
 
@@ -10,12 +10,13 @@ import scala.util.{Failure, Success, Try}
  */
 trait DatabaseInsert extends DatabaseTransaction{
 
-  protected implicit val actorSystem = ActorSystem("DB_Actor_System")
+
   protected val dbTransactionActor:ActorRef
+  @volatile var numberDBTransactionsRequested: Long = 0
+  @volatile var numberDBTransactionsExecuted: Long = 0
 
-  def insertDocument(doc: DatabaseDocuments): Unit = {
-    dbTransactionActor ! doc
+  def insertDocument(doc: DatabaseDocuments) = {
+      dbTransactionActor ! doc
+      numberDBTransactionsRequested += 1
   }
-
-
 }

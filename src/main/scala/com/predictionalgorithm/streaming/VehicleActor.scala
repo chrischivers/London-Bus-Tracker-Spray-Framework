@@ -116,7 +116,7 @@ class VehicleActor(vehicle_ID: String) extends Actor {
    * Vehicle at the end of route. Send a kill message to the supervisor, which will result in a Poison Pill
    */
   def endOfRouteKill() = {
-    LiveStreamingCoordinatorImpl.killActor(new KillMessage(vehicle_ID, currentRouteID))
+    context.parent ! new KillMessage(vehicle_ID, currentRouteID)
   }
 
   /**

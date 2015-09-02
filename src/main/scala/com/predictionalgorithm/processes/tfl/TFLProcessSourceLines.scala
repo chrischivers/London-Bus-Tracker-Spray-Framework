@@ -6,7 +6,7 @@ import com.predictionalgorithm.commons.Commons._
 import com.predictionalgorithm.datadefinitions.tfl.TFLDefinitions
 import com.predictionalgorithm.datasource.tfl.TFLSourceLineImpl
 import com.predictionalgorithm.database.POINT_TO_POINT_DOCUMENT
-import com.predictionalgorithm.database.tfl.TFLInsertPointToPointDuration
+import com.predictionalgorithm.database.tfl.{TFLInsertPointToPointDurationSupervisor, TFLInsertPointToPointDurationSupervisor$}
 import com.predictionalgorithm.processes.weather.Weather
 import com.predictionalgorithm.streaming.LiveStreamingCoordinatorImpl
 import org.apache.commons.lang3.time.DateUtils
@@ -17,6 +17,7 @@ object TFLProcessSourceLines {
   val MAXIMUM_AGE_OF_RECORDS_IN_HOLDING_BUFFER = 600000
   //In Ms
   var numberNonMatches = 0
+
 
   /**
    * The holding buffer holds the temporary list of routes awaiting the next stop.
@@ -52,7 +53,7 @@ object TFLProcessSourceLines {
           if (newPointSequence == existingPointSequence + 1) {
             val durationInSeconds = ((newLine.arrival_TimeStamp - existingArrivalTimeStamp) / 1000).toInt
             if (durationInSeconds > 0) {
-              TFLInsertPointToPointDuration.insertDocument(createPointToPointDocument(newLine.route_ID, newLine.direction_ID, existingStopCode, newLine.stop_Code, existingArrivalTimeStamp.getDayCode, existingArrivalTimeStamp.getTimeOffset, durationInSeconds))
+              TFLInsertPointToPointDurationSupervisor.insertDocument(createPointToPointDocument(newLine.route_ID, newLine.direction_ID, existingStopCode, newLine.stop_Code, existingArrivalTimeStamp.getDayCode, existingArrivalTimeStamp.getTimeOffset, durationInSeconds))
               updateHoldingBufferAndPrune(newLine)
             } else {
               updateHoldingBufferAndPrune(newLine) // Replace existing values with new values

@@ -1,6 +1,6 @@
 package com.predictionalgorithm.controlinterface
 
-import com.predictionalgorithm.database.tfl.TFLInsertPointToPointDuration
+import com.predictionalgorithm.database.tfl.{TFLInsertPointToPointDurationSupervisor, TFLInsertPointToPointDurationSupervisor$}
 import com.predictionalgorithm.processes.tfl.TFLProcessSourceLines
 
 /**
@@ -21,10 +21,10 @@ TFLProcessSourceLines.setHistoricalDataStoring(true)
   override def getVariableArray: Array[String] = {
     val numberInHoldingBuffer = TFLProcessSourceLines.getBufferSize.toString
     val numberNonMatches = TFLProcessSourceLines.numberNonMatches.toString
-    val numberDBTransactionsRequested = TFLInsertPointToPointDuration.numberDBTransactionsRequested.toString
-    val numberDBTransactionsExecuted = TFLInsertPointToPointDuration.numberDBTransactionsExecuted.toString
-    val numberDBTransactionsOutstanding = (TFLInsertPointToPointDuration.numberDBTransactionsRequested - TFLInsertPointToPointDuration.numberDBTransactionsExecuted).toString
-    val numberDBPullTransactionsExecuted = TFLInsertPointToPointDuration.numberDBPullTransactionsExecuted.toString
+    val numberDBTransactionsRequested = TFLInsertPointToPointDurationSupervisor.numberDBTransactionsRequested.toString
+    val numberDBTransactionsExecuted = TFLInsertPointToPointDurationSupervisor.numberDBTransactionsExecuted.toString
+    val numberDBTransactionsOutstanding = (TFLInsertPointToPointDurationSupervisor.numberDBTransactionsRequested - TFLInsertPointToPointDurationSupervisor.numberDBTransactionsExecuted).toString
+    val numberDBPullTransactionsExecuted = TFLInsertPointToPointDurationSupervisor.numberDBPullTransactionsExecuted.toString
     Array(numberInHoldingBuffer, numberNonMatches, numberDBTransactionsRequested, numberDBTransactionsExecuted, numberDBTransactionsOutstanding, numberDBPullTransactionsExecuted)
   }
 
