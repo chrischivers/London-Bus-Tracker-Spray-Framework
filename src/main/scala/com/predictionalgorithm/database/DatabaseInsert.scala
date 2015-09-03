@@ -14,7 +14,7 @@ trait DatabaseInsert extends DatabaseTransaction{
   protected val dbTransactionActor:ActorRef
   @volatile var numberDBTransactionsRequested: Long = 0
   @volatile var numberDBTransactionsExecuted: Long = 0
-  val MAXIMUM_OUTSTANDING_TRANSACTIONS = 10000
+  val MAXIMUM_OUTSTANDING_TRANSACTIONS = 1000
 
   def insertDocument(doc: DatabaseDocuments) = {
     if (numberDBTransactionsRequested - numberDBTransactionsExecuted < MAXIMUM_OUTSTANDING_TRANSACTIONS) {

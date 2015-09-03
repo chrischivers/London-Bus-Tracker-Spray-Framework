@@ -158,8 +158,11 @@
                     var standardDev = parseInt(splitInput[1]);
                     var minutes = Math.floor(duration / 60);
                     var seconds = duration - minutes * 60;
+                    var arrivalTime = new Date();
+                    arrivalTime.setSeconds(arrivalTime.getSeconds() + duration);
                     if (!isNaN(duration)) {
                         document.getElementById("predictionResult").innerHTML = "Predicted duration: " + minutes + " minute(s), " + seconds + " second(s)." + "<br/>" +
+                                       "Predicted Arrival Time: " + formatDate(arrivalTime) + "<br/>" + "<br/>" +
                                 "Standard Deviation: " + standardDev + " seconds.*" + "<br/>" + "<br/>" +
                                 "<i>*(68% chance that actual duration will be +/- " + standardDev + " seconds of predicted duration).</i>";
                     } else {
@@ -170,6 +173,16 @@
             };
             xmlhttp.open("GET", "prediction_request.asp?route=" + routeID + "&direction=" + directionID + "&fromStop=" + fromValue + "&toStop=" + toValue, true);
             xmlhttp.send();
+        }
+
+        function formatDate(date) {
+            var hours = date.getHours();
+            var minutes = date.getMinutes();
+            var seconds = date.getSeconds();
+            minutes = minutes < 10 ? "0" +minutes : minutes;
+            seconds = seconds < 10 ? "0" +seconds : seconds;
+            var strTime = hours + ":" + minutes + ":" + seconds
+            return strTime;
         }
 
     </SCRIPT>
