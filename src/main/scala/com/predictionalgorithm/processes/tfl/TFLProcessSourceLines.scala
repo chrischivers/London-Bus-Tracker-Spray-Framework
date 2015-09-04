@@ -14,8 +14,7 @@ import org.apache.commons.lang3.time.DateUtils
 
 object TFLProcessSourceLines {
 
-  val MAXIMUM_AGE_OF_RECORDS_IN_HOLDING_BUFFER = 600000
-  //In Ms
+  val MAXIMUM_AGE_OF_RECORDS_IN_HOLDING_BUFFER = 600000 //In Ms
   var numberNonMatches = 0
 
 
@@ -39,35 +38,41 @@ object TFLProcessSourceLines {
       // Send to Live Streaming Coordinator if Enabled
       if (liveStreamCollectionEnabled) LiveStreamingCoordinatorImpl.processSourceLine(newLine)
 
-      // Process for historical data if enabled
-      if (historicalDataStoringEnabled && !isPublicHoliday(newLine)) {
-
-        if (!holdingBuffer.contains(newLine.route_ID, newLine.vehicle_Reg, newLine.direction_ID)) {
-          updateHoldingBufferAndPrune(newLine)
-        } else {
-          val existingValues = holdingBuffer(newLine.route_ID, newLine.vehicle_Reg, newLine.direction_ID)
-          val existingStopCode = existingValues._1
-          val existingArrivalTimeStamp = existingValues._2
-          val existingPointSequence = TFLDefinitions.RouteDefinitionMap(newLine.route_ID, newLine.direction_ID).filter(x => x._2 == existingStopCode).head._1
-          val newPointSequence = TFLDefinitions.RouteDefinitionMap(newLine.route_ID, newLine.direction_ID).filter(x => x._2 == newLine.stop_Code).last._1
-          if (newPointSequence == existingPointSequence + 1) {
-            val durationInSeconds = ((newLine.arrival_TimeStamp - existingArrivalTimeStamp) / 1000).toInt
-            if (durationInSeconds > 0) {
-              TFLInsertPointToPointDurationSupervisor.insertDocument(createPointToPointDocument(newLine.route_ID, newLine.direction_ID, existingStopCode, newLine.stop_Code, existingArrivalTimeStamp.getDayCode, existingArrivalTimeStamp.getTimeOffset, durationInSeconds))
-              updateHoldingBufferAndPrune(newLine)
-            } else {
-              updateHoldingBufferAndPrune(newLine) // Replace existing values with new values
-            }
-          } else if (newPointSequence >= existingPointSequence) {
-            updateHoldingBufferAndPrune(newLine) // Replace existing values with new values
-          } else {
-            // DO Nothing
-          }
-
-        }
-      }
+      // Process for historical data if Enabled
+      if (historicalDataStoringEnabled && !isPublicHoliday(newLine)) processLineForHistoricalData(newLine)
     }
   }
+
+  /**
+   * Processes the validated line for historical data by comparing with holdingBuffer and, if necessary, inserting into the DB
+   * @param newLine The validated Source Line
+   */
+  def processLineForHistoricalData(newLine: TFLSourceLineImpl) = {
+    if (!holdingBuffer.contains(newLine.route_ID, newLine.vehicle_Reg, newLine.direction_ID)) {
+      updateHoldingBufferAndPrune(newLine)
+    } else {
+      val existingValues = holdingBuffer(newLine.route_ID, newLine.vehicle_Reg, newLine.direction_ID)
+      val existingStopCode = existingValues._1
+      val existingArrivalTimeStamp = existingValues._2
+      val existingPointSequence = TFLDefinitions.RouteDefinitionMap(newLine.route_ID, newLine.direction_ID).filter(x => x._2 == existingStopCode).head._1
+      val newPointSequence = TFLDefinitions.RouteDefinitionMap(newLine.route_ID, newLine.direction_ID).filter(x => x._2 == newLine.stop_Code).last._1
+      if (newPointSequence == existingPointSequence + 1) {
+        val durationInSeconds = ((newLine.arrival_TimeStamp - existingArrivalTimeStamp) / 1000).toInt
+        if (durationInSeconds > 0) {
+          TFLInsertPointToPointDurationSupervisor.insertDocument(createPointToPointDocument(newLine.route_ID, newLine.direction_ID, existingStopCode, newLine.stop_Code, existingArrivalTimeStamp.getDayCode, existingArrivalTimeStamp.getTimeOffset, durationInSeconds))
+          updateHoldingBufferAndPrune(newLine)
+        } else {
+          updateHoldingBufferAndPrune(newLine) // Replace existing values with new values
+        }
+      } else if (newPointSequence >= existingPointSequence) {
+        updateHoldingBufferAndPrune(newLine) // Replace existing values with new values
+      } else {
+        // DO Nothing
+      }
+
+    }
+  }
+  
 
   /**
    * Updates the holding buffer. If it is not the final stop, the line is added to the holding buffer replacing the existing entry

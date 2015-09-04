@@ -1,6 +1,6 @@
 package com.predictionalgorithm.controlinterface
 
-import com.predictionalgorithm.database.tfl.{TFLInsertPointToPointDurationSupervisor, TFLInsertPointToPointDurationSupervisor$}
+import com.predictionalgorithm.database.tfl.TFLInsertPointToPointDurationSupervisor
 import com.predictionalgorithm.processes.tfl.TFLProcessSourceLines
 
 /**
@@ -24,9 +24,8 @@ TFLProcessSourceLines.setHistoricalDataStoring(true)
     val numberDBTransactionsRequested = TFLInsertPointToPointDurationSupervisor.numberDBTransactionsRequested.toString
     val numberDBTransactionsExecuted = TFLInsertPointToPointDurationSupervisor.numberDBTransactionsExecuted.toString
     val numberDBTransactionsOutstanding = (TFLInsertPointToPointDurationSupervisor.numberDBTransactionsRequested - TFLInsertPointToPointDurationSupervisor.numberDBTransactionsExecuted).toString
-    val numberDBPullTransactionsToFile = TFLInsertPointToPointDurationSupervisor.numberDBPullTransactionsWrittenToFile.toString
-    val numberDBPullTransactionsToDB = TFLInsertPointToPointDurationSupervisor.numberDBPullTransactionsWrittenToDB.toString
-    Array(numberInHoldingBuffer, numberNonMatches, numberDBTransactionsRequested, numberDBTransactionsExecuted, numberDBTransactionsOutstanding, numberDBPullTransactionsToFile, numberDBPullTransactionsToDB)
+    val numberDBPullTransactionsRequested = TFLInsertPointToPointDurationSupervisor.numberDBPullTransactionsRequested.toString
+    Array(numberInHoldingBuffer, numberNonMatches, numberDBTransactionsRequested, numberDBTransactionsExecuted, numberDBTransactionsOutstanding, numberDBPullTransactionsRequested)
   }
 
 

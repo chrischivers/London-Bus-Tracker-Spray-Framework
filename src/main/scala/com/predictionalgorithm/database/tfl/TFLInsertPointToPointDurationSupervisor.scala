@@ -3,6 +3,7 @@ package com.predictionalgorithm.database.tfl
 import java.io.{File, FileWriter}
 
 import akka.actor.{ActorSystem, ActorRef, Props, Actor}
+import akka.routing.{RoundRobinPool, RoundRobinRouter}
 import com.mongodb.util.JSON
 import com.predictionalgorithm.database._
 import com.mongodb.casbah.MongoCursor
@@ -11,24 +12,19 @@ import com.mongodb.casbah.Imports._
 
 import scala.io.Source
 
-case class ProcessPullTransactions()
 object TFLInsertPointToPointDurationSupervisor extends DatabaseInsert {
 
-  @volatile var numberDBPullTransactionsWrittenToFile: Long = 0
-  @volatile var numberDBPullTransactionsWrittenToDB: Long = 0
+  @volatile var numberDBPullTransactionsRequested: Long = 0
 
   override protected val collection: DatabaseCollections = POINT_TO_POINT_COLLECTION
-  override protected val dbTransactionActor: ActorRef = actorSystem.actorOf(Props[TFLInsertPointToPointDurationActor], "InsertPointToPointActor")
-
-  def processPullTransactions = {
-    dbTransactionActor ! ProcessPullTransactions
-  }
-
+ // override protected val dbTransactionActor: ActorRef = actorSystem.actorOf(Props[TFLInsertPointToPointDurationActor], "InsertPointToPointActor")
+ //val a1 = actorSystem.actorOf(Props[TFLInsertPointToPointDurationActor], "actor1")
+ // val a2 = actorSystem.actorOf(Props[TFLInsertPointToPointDurationActor], "actor2")
+  val routerProps = actorSystem.actorOf(RoundRobinPool(10).props(Props[TFLInsertPointToPointDurationActor]), "InsertPointToPointRouter")
+  override protected val dbTransactionActor: ActorRef = routerProps
 }
 
 class TFLInsertPointToPointDurationActor extends Actor {
-
-  val pullFileName = "TO_PULL.txt"
 
   val collection = POINT_TO_POINT_COLLECTION
 
@@ -40,7 +36,6 @@ class TFLInsertPointToPointDurationActor extends Actor {
 
   override def receive: Receive = {
     case doc1: POINT_TO_POINT_DOCUMENT =>  insertToDB(doc1)
-    case ProcessPullTransactions => writePullEntriesToDB()
     case _ => throw new IllegalStateException("TFL Insert Point Actor received unknown message")
   }
 
@@ -58,18 +53,17 @@ class TFLInsertPointToPointDurationActor extends Actor {
     val pushUpdate = $push(collection.DURATION_LIST -> MongoDBObject(collection.DURATION -> doc.durationSeconds, collection.TIME_OFFSET -> doc.timeOffsetSeconds, collection.RAINFALL -> doc.rainfall, collection.TIME_STAMP -> System.currentTimeMillis()))
 
         // If there is already an object ID (doesn't already exist)
-    if (objectID == "None") {
+    if (objectID.isEmpty) {
       TFLInsertPointToPointDurationSupervisor.dBCollection.update(newObj, pushUpdate, upsert = true)
       TFLInsertPointToPointDurationSupervisor.numberDBTransactionsExecuted += 1
     } else {
       val newObjWithID = MongoDBObject(
-        "_id" -> objectID
+        "_id" -> objectID.get
       )
 
       TFLInsertPointToPointDurationSupervisor.dBCollection.update(newObjWithID, pushUpdate, upsert = true)
       TFLInsertPointToPointDurationSupervisor.numberDBTransactionsExecuted += 1
     }
-
   }
 
 
@@ -80,7 +74,7 @@ class TFLInsertPointToPointDurationActor extends Actor {
    * @param rainfall The rainfall of the new record to be inserted
    * @return The objectID to insert
    */
-  def pruneExistingCollectionBeforeInsert(newObj: MongoDBObject, timeOffSet: Int, rainfall: Double): String = {
+  def pruneExistingCollectionBeforeInsert(newObj: MongoDBObject, timeOffSet: Int, rainfall: Double): Option[String] = {
     val cursor: MongoCursor = TFLGetPointToPointDocument.executeQuery(newObj)
     if (cursor.size > 0) {
       //If no entry in DB with route, direction, fromPoint and toPoint... do nothing
@@ -104,13 +98,12 @@ class TFLInsertPointToPointDurationActor extends Actor {
         val entryToDelete = prunedVector.minBy(_._3) //Gets the oldest record in the vector
         val updatePull = $pull(collection.DURATION_LIST -> MongoDBObject(collection.DURATION -> entryToDelete._1, collection.TIME_OFFSET -> entryToDelete._2, collection.TIME_STAMP -> entryToDelete._3, collection.RAINFALL -> entryToDelete._4))
 
-        writePullEntryToFile(newObjWithID, updatePull)
-
-         // TFLInsertPointToPointDurationSupervisor.dBCollection.update(newObjWithID, updatePull)
+          TFLInsertPointToPointDurationSupervisor.dBCollection.update(newObjWithID, updatePull)
+        TFLInsertPointToPointDurationSupervisor.numberDBPullTransactionsRequested += 1
 
       }
-      objectID
-    } else "None"
+      Some(objectID)
+    } else None
   }
 
 
@@ -129,30 +122,6 @@ class TFLInsertPointToPointDurationActor extends Actor {
       .toVector
   }
 
-  def writePullEntryToFile(newObjWithID:Imports.DBObject, updatePull:Imports.DBObject) = {
-    val fw = new FileWriter(pullFileName ,true)
-    try {
-      fw.write(newObjWithID.toString + ";" + updatePull.toString +"\n")
-    } finally {
-      fw.close()
-    }
-    TFLInsertPointToPointDurationSupervisor.numberDBPullTransactionsWrittenToFile += 1
-  }
-
-  def writePullEntriesToDB() = {
-    val pullSource = Source.fromFile(pullFileName)
-    pullSource.getLines().foreach(line => {
-      val splitLine = line.split(";")
-      val newObjWithID = JSON.parse(splitLine(0)).asInstanceOf[Imports.DBObject]
-      val updatePull = JSON.parse(splitLine(1)).asInstanceOf[Imports.DBObject]
-      TFLInsertPointToPointDurationSupervisor.dBCollection.update(newObjWithID, updatePull)
-      TFLInsertPointToPointDurationSupervisor.numberDBPullTransactionsWrittenToDB += 1
-
-    }
-    )
-    val fw = new File(pullFileName)
-    fw.delete()
-  }
 
 }
 
