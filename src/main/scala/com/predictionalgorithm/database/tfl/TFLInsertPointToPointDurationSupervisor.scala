@@ -1,33 +1,33 @@
 package com.predictionalgorithm.database.tfl
 
-import java.io.{File, FileWriter}
 
-import akka.actor.{ActorSystem, ActorRef, Props, Actor}
-import akka.routing.{RoundRobinPool, RoundRobinRouter}
-import com.mongodb.util.JSON
+import akka.actor.{ActorRef, Props, Actor}
+import akka.routing.RoundRobinPool
 import com.predictionalgorithm.database._
 import com.mongodb.casbah.MongoCursor
 import com.mongodb.casbah.commons.{Imports, MongoDBObject}
 import com.mongodb.casbah.Imports._
 
-import scala.io.Source
 
+case class PruneObject(mongoObj: Imports.DBObject, timeOffSet: Int, rainfall: Double)
 object TFLInsertPointToPointDurationSupervisor extends DatabaseInsert {
 
   @volatile var numberDBPullTransactionsRequested: Long = 0
+  @volatile var numberDBPullTransactionsExecuted: Long = 0
 
   override protected val collection: DatabaseCollections = POINT_TO_POINT_COLLECTION
- // override protected val dbTransactionActor: ActorRef = actorSystem.actorOf(Props[TFLInsertPointToPointDurationActor], "InsertPointToPointActor")
- //val a1 = actorSystem.actorOf(Props[TFLInsertPointToPointDurationActor], "actor1")
- // val a2 = actorSystem.actorOf(Props[TFLInsertPointToPointDurationActor], "actor2")
   val routerProps = actorSystem.actorOf(RoundRobinPool(10).props(Props[TFLInsertPointToPointDurationActor]), "InsertPointToPointRouter")
   override protected val dbTransactionActor: ActorRef = routerProps
+
+  def pruneDatabaseArray(pruneObj: PruneObject) = {
+    numberDBPullTransactionsRequested += 1
+    dbTransactionActor ! pruneObj
+  }
 }
 
 class TFLInsertPointToPointDurationActor extends Actor {
 
   val collection = POINT_TO_POINT_COLLECTION
-
 
   val PRUNE_THRESHOLD_K_LIMIT = 10
   val PRUNE_THRESHOLD_TIME_LIMIT = 1800
@@ -35,7 +35,8 @@ class TFLInsertPointToPointDurationActor extends Actor {
 
 
   override def receive: Receive = {
-    case doc1: POINT_TO_POINT_DOCUMENT =>  insertToDB(doc1)
+    case doc1: POINT_TO_POINT_DOCUMENT => insertToDB(doc1)
+    case pruneObj: PruneObject => pruneDBArray(pruneObj)
     case _ => throw new IllegalStateException("TFL Insert Point Actor received unknown message")
   }
 
@@ -49,63 +50,38 @@ class TFLInsertPointToPointDurationActor extends Actor {
       collection.TO_POINT_ID -> doc.to_Point_ID,
       collection.DAY -> doc.day_Of_Week)
 
-    val objectID = pruneExistingCollectionBeforeInsert(newObj, doc.timeOffsetSeconds, doc.rainfall)
     val pushUpdate = $push(collection.DURATION_LIST -> MongoDBObject(collection.DURATION -> doc.durationSeconds, collection.TIME_OFFSET -> doc.timeOffsetSeconds, collection.RAINFALL -> doc.rainfall, collection.TIME_STAMP -> System.currentTimeMillis()))
-
-        // If there is already an object ID (doesn't already exist)
-    if (objectID.isEmpty) {
-      TFLInsertPointToPointDurationSupervisor.dBCollection.update(newObj, pushUpdate, upsert = true)
-      TFLInsertPointToPointDurationSupervisor.numberDBTransactionsExecuted += 1
-    } else {
-      val newObjWithID = MongoDBObject(
-        "_id" -> objectID.get
-      )
-
-      TFLInsertPointToPointDurationSupervisor.dBCollection.update(newObjWithID, pushUpdate, upsert = true)
-      TFLInsertPointToPointDurationSupervisor.numberDBTransactionsExecuted += 1
+    val update = TFLInsertPointToPointDurationSupervisor.dBCollection.update(newObj, pushUpdate, upsert = true)
+    TFLInsertPointToPointDurationSupervisor.numberDBTransactionsExecuted += 1
+    if (update.isUpdateOfExisting) {
+      TFLInsertPointToPointDurationSupervisor.pruneDatabaseArray(new PruneObject(newObj, doc.timeOffsetSeconds, doc.rainfall))
     }
+
+
   }
 
+  private def pruneDBArray(pruneObj: PruneObject) = {
 
-  /**
-   * Prune existing records in collection before inserting a new record (ensures database does not grow infinitely)
-   * @param newObj The new object to be inserted
-   * @param timeOffSet The time offset of the new record to be inserted
-   * @param rainfall The rainfall of the new record to be inserted
-   * @return The objectID to insert
-   */
-  def pruneExistingCollectionBeforeInsert(newObj: MongoDBObject, timeOffSet: Int, rainfall: Double): Option[String] = {
-    val cursor: MongoCursor = TFLGetPointToPointDocument.executeQuery(newObj)
-    if (cursor.size > 0) {
-      //If no entry in DB with route, direction, fromPoint and toPoint... do nothing
-      assert(cursor.length == 1)
+    val cursor: MongoCursor = TFLGetPointToPointDocument.executeQuery(pruneObj.mongoObj)
+    assert(cursor.length == 1) //Should always exist, with just one record
+
       val record = cursor.next().asInstanceOf[Imports.BasicDBObject]
-
-      val objectID = record.getString("_id")
-
-      val newObjWithID = MongoDBObject(
-        "_id" -> objectID
-      )
 
       val durListVector = getDurListVectorFromCursor(record)
 
-      // This filters those within the PRUNE THRESHOLD LIMIT followed by those within the rainfall threshold
-      val prunedVector = durListVector.filter(x =>
-        math.abs(x._2 - timeOffSet) <= PRUNE_THRESHOLD_TIME_LIMIT &&
-          math.abs(x._4 - rainfall) <= PRUNE_THRESHOLD_RAINFALL_LIMIT)
+    // This filters those within the PRUNE THRESHOLD LIMIT followed by those within the rainfall threshold
+    val prunedVector = durListVector.filter(x =>
+      math.abs(x._2 - pruneObj.timeOffSet) <= PRUNE_THRESHOLD_TIME_LIMIT &&
+        math.abs(x._4 - pruneObj.rainfall) <= PRUNE_THRESHOLD_RAINFALL_LIMIT)
 
-      if (prunedVector.size > PRUNE_THRESHOLD_K_LIMIT) {
-        val entryToDelete = prunedVector.minBy(_._3) //Gets the oldest record in the vector
-        val updatePull = $pull(collection.DURATION_LIST -> MongoDBObject(collection.DURATION -> entryToDelete._1, collection.TIME_OFFSET -> entryToDelete._2, collection.TIME_STAMP -> entryToDelete._3, collection.RAINFALL -> entryToDelete._4))
+    if (prunedVector.size > PRUNE_THRESHOLD_K_LIMIT) {
+      val entryToDelete = prunedVector.minBy(_._3) //Gets the oldest record in the vector
+      val updatePull = $pull(collection.DURATION_LIST -> MongoDBObject(collection.DURATION -> entryToDelete._1, collection.TIME_OFFSET -> entryToDelete._2, collection.TIME_STAMP -> entryToDelete._3, collection.RAINFALL -> entryToDelete._4))
 
-          TFLInsertPointToPointDurationSupervisor.dBCollection.update(newObjWithID, updatePull)
-        TFLInsertPointToPointDurationSupervisor.numberDBPullTransactionsRequested += 1
-
-      }
-      Some(objectID)
-    } else None
+      TFLInsertPointToPointDurationSupervisor.dBCollection.update(pruneObj.mongoObj, updatePull)
+    }
+    TFLInsertPointToPointDurationSupervisor.numberDBPullTransactionsExecuted += 1
   }
-
 
   /*
    *
@@ -121,7 +97,4 @@ class TFLInsertPointToPointDurationActor extends Actor {
     })
       .toVector
   }
-
-
 }
-

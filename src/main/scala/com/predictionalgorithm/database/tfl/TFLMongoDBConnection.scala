@@ -2,7 +2,7 @@ package com.predictionalgorithm.database.tfl
 
 import com.predictionalgorithm.database.{DatabaseCollections, PREDICTION_DATABASE}
 import com.mongodb.casbah.commons.MongoDBObject
-import com.mongodb.casbah.{MongoCollection, MongoClient}
+import com.mongodb.casbah.{WriteConcern, MongoCollection, MongoClient}
 
 object TFLMongoDBConnection {
 

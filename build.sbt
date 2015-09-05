@@ -9,9 +9,9 @@ scalaVersion := "2.11.7"
 
 libraryDependencies += "org.apache.httpcomponents" % "httpclient" % "4.5"
 
-libraryDependencies += "org.mongodb" %% "casbah" % "2.8.1"
+libraryDependencies += "org.mongodb" %% "casbah" % "2.8.2"
 
-libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.3.12"
+libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.4-SNAPSHOT"
 
 libraryDependencies += "org.apache.commons" % "commons-math3" % "3.5"
 
