@@ -4,6 +4,7 @@ import akka.actor.{Props, ActorSystem}
 import com.predictionalgorithm.controlinterface.LiveStreamControlInterface
 import com.predictionalgorithm.datasource.tfl.TFLSourceLineImpl
 import com.predictionalgorithm.spray.WebServer.PushToChildren
+import com.predictionalgorithm.streaming.LiveStreamingCoordinatorImpl._
 
 
 trait LiveStreamingCoordinator {
@@ -11,15 +12,15 @@ trait LiveStreamingCoordinator {
 
   val vehicleSystem = ActorSystem("vehicles")
   val vehicleSupervisor = vehicleSystem.actorOf(Props[LiveVehicleSupervisor], "VehicleSupervisor")
-  var numberLiveActors = 0
-  var numberLiveChildren = 0
+  @volatile var numberLiveActors = 0
+  @volatile var numberLiveChildren = 0
 
-  implicit val timeout = 1000
-  val CACHE_HOLD_FOR_TIME = 600000
-  val IDLE_TIME_UNTIL_ACTOR_KILLED = 600000
+  //implicit val timeout = 1000
+  val CACHE_HOLD_FOR_TIME:Int
+  val IDLE_TIME_UNTIL_ACTOR_KILLED:Int
 
 
-  def processSourceLine(liveSourceLine: TFLSourceLineImpl)
+  def processSourceLine(liveSourceLine: TFLSourceLineImpl) = vehicleSupervisor ! liveSourceLine
 
   def getNumberLiveActors = numberLiveActors
 

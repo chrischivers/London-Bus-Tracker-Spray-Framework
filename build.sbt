@@ -3,13 +3,16 @@ import sbtassembly.AssemblyKeys
 
 name := "BbkProject"
 
-version := "2.08"
+version := "2.14"
 
 scalaVersion := "2.11.7"
+
+resolvers += "Akka Snapshot Repository" at "http://repo.akka.io/snapshots/"
 
 libraryDependencies += "org.apache.httpcomponents" % "httpclient" % "4.5"
 
 libraryDependencies += "org.mongodb" %% "casbah" % "2.8.2"
+
 
 libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.4-SNAPSHOT"
 

@@ -19,13 +19,11 @@ import scala.concurrent.duration._
  */
 case class PackagedStreamObject(reg: String, nextArrivalTime: String, markerMovementData: Array[(String, String, String, String)], route_ID: String, direction_ID: Int, towards: String, nextStopID: String, nextStopName: String)
 case class KillMessage(vehicleID: String, routeID: String)
-case class CleanUp()
-case class UpdateLiveActorsObj(reg: String, routeID: String, timeStamp: Long)
 
 object LiveStreamingCoordinatorImpl extends LiveStreamingCoordinator {
 
-  override def processSourceLine(liveSourceLine: TFLSourceLineImpl): Unit = vehicleSupervisor ! liveSourceLine
-
+  override val CACHE_HOLD_FOR_TIME: Int = 600000
+  override val IDLE_TIME_UNTIL_ACTOR_KILLED: Int = 600000
 }
 
 /**
@@ -33,20 +31,16 @@ object LiveStreamingCoordinatorImpl extends LiveStreamingCoordinator {
  */
 class LiveVehicleSupervisor extends Actor {
 
-  var TIME_OF_LAST_CLEANUP = System.currentTimeMillis()
-  val TIME_BETWEEN_CLEANUPS = 60000
 
   /**
    * The record of live actors. A Map of the VehicleID to the ActorRef, The Route, and the time last updated
    */
-  private val liveActors = scala.collection.mutable.Map[String, (ActorRef, String, Long)]()
+  @volatile var liveActors = Map[String, (ActorRef, String, Long)]()
 
   override def receive = {
     case liveSourceLine: TFLSourceLineImpl => processLine(liveSourceLine)
     case km: KillMessage => killActor(km)
-    case actor: Terminated => liveActors.remove(actor.getActor.path.name)
-    case CleanUp => cleanUpLiveActorsList()
-    case obj:UpdateLiveActorsObj => updateLiveActorTimestamp(obj)
+    case actor:Terminated => liveActors -= actor.getActor.path.name
   }
 
   override val supervisorStrategy =
@@ -66,41 +60,31 @@ class LiveVehicleSupervisor extends Actor {
   private def processLine(liveSourceLine: TFLSourceLineImpl) = {
     val vehicle_Reg = liveSourceLine.vehicle_Reg
     if (liveActors.contains(vehicle_Reg)) {
-      self ! new UpdateLiveActorsObj(vehicle_Reg, liveSourceLine.route_ID, System.currentTimeMillis())
-      liveActors(vehicle_Reg)._1 ! liveSourceLine
+      val currentVehicleActor = liveActors(vehicle_Reg)._1
+      // Update timestamp
+      liveActors += (vehicle_Reg -> (currentVehicleActor, liveSourceLine.route_ID,System.currentTimeMillis()))
+      currentVehicleActor ! liveSourceLine
     } else {
-      val newVehicleActor = context.actorOf(Props(new VehicleActor(vehicle_Reg)), vehicle_Reg)
+      val newVehicleActor = context.actorOf(Props[VehicleActor], vehicle_Reg)
       context.watch(newVehicleActor)
-      liveActors.put(vehicle_Reg, (newVehicleActor, liveSourceLine.route_ID,System.currentTimeMillis()))
+      liveActors += (vehicle_Reg -> (newVehicleActor, liveSourceLine.route_ID,System.currentTimeMillis()))
       newVehicleActor ! liveSourceLine
     }
+    cleanUpLiveActorsList()
     //Update variables
     numberLiveActors = liveActors.size
     numberLiveChildren = context.children.size
   }
-  
 
-
-  /**
-   * Update the live actor timestamp whenever there is activity for a vehicle.
-   * This indicates the vehicle is still in progress and does not need to be killed
-   * @param obj The Update Live Actors Objet
-   */
-  private def updateLiveActorTimestamp(obj: UpdateLiveActorsObj) = {
-    val currentValue = liveActors.get(obj.reg)
-    if (currentValue.isDefined) liveActors.put(obj.reg, (currentValue.get._1, obj.routeID, obj.timeStamp))
-    if (System.currentTimeMillis() - TIME_OF_LAST_CLEANUP > TIME_BETWEEN_CLEANUPS) self ! CleanUp
-  }
 
   /**
    * Periodically clean up the list of live actors to remove those that have not had activity recently (probably withdrawn)
    */
   private def cleanUpLiveActorsList() = {
-    TIME_OF_LAST_CLEANUP = System.currentTimeMillis()
     val cutOffThreshold = System.currentTimeMillis() - IDLE_TIME_UNTIL_ACTOR_KILLED
     val actorsToKill = liveActors.filter(x => x._2._3 < cutOffThreshold)
     actorsToKill.foreach(x => {
-      killActor(new KillMessage(x._1, x._2._2)) //Kill actor
+      self ! new KillMessage(x._1, x._2._2) //Kill actor
     })
   }
 

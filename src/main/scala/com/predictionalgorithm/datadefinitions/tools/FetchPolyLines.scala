@@ -143,7 +143,7 @@ object FetchPolyLines {
     private def addPolyLinetoIndexDBIfRequired(thisStopCode:String, nextStopCode:String, polyLine: String) = {
       if (!existingPolyLineIndex.contains(thisStopCode,nextStopCode)) {
         existingPolyLineIndex += (thisStopCode, nextStopCode) -> polyLine
-        TFLInsertPolyLineDefinition.insertDocument(new POLYLINE_INDEX_DOCUMENT(thisStopCode, nextStopCode, polyLine))
+        TFLInsertPolyLineDefinition.insertDoc(new POLYLINE_INDEX_DOCUMENT(thisStopCode, nextStopCode, polyLine))
       }
     }
 

@@ -21,9 +21,7 @@ import org.json4s.JsonDSL._
  */
 object WebServer {
 
-
   final case class Push(routeID: String, latitude:Double, longitude:Double, msg: String)
-
   final case class PushToChildren(pso: PackagedStreamObject)
 
   object WebSocketServer {
@@ -49,6 +47,7 @@ object WebServer {
         val firstLat = if (!pso.markerMovementData.isEmpty) pso.markerMovementData(0)._1.toDouble else 0
         val firstLng = if (!pso.markerMovementData.isEmpty) pso.markerMovementData(0)._2.toDouble else 0
         children.foreach(ref => ref ! Push(pso.route_ID, firstLat, firstLng, encoded))
+
     }
   }
 
@@ -74,7 +73,7 @@ object WebServer {
           mode = "ROUTELIST"
           val splitReceive = receivedStr.split(",").drop(1).toList
           routeList = routeList ++ splitReceive
-          println(routeList)
+          println("1 connection: " + routeList)
         } else if (receivedStr.startsWith("RADIUS")) {
           mode = "RADIUS"
           val temporaryStr = receivedStr.replaceAll("\\)","").replaceAll("\\(","").split(",").drop(1).map(_.toDouble) //Take out brackets
@@ -102,6 +101,8 @@ object WebServer {
         log.error("frame command failed", x)
 
       case x: HttpRequest => //Log this
+
+
     }
 
     def businessLogicNoUpgrade: Receive = {

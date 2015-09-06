@@ -11,10 +11,8 @@ import scala.util.{Failure, Success, Try}
  */
 trait DatabaseDelete extends DatabaseTransaction{
 
-  protected val dbTransactionActor:ActorRef
-
   def deleteDocument(docID: ObjectId): Unit = {
-    dbTransactionActor ! docID
+    supervisor ! docID
   }
 
 }

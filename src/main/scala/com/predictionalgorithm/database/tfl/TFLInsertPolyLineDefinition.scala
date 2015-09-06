@@ -8,10 +8,17 @@ import com.mongodb.casbah.Imports._
 
 object TFLInsertPolyLineDefinition extends DatabaseInsert{
 
-  @volatile var numberPolyLinesInserted = 0
 
-  override val dbTransactionActor: ActorRef = actorSystem.actorOf(Props[TFLInsertPolyLineDefinition], name = "TFLUpdatePolyLine")
   override protected val collection: DatabaseCollections = POLYLINE_INDEX_COLLECTION
+  override val supervisor: ActorRef = actorSystem.actorOf(Props[TFLInsertPolyLineDefinitionSupervisor], "TFLUpdatePolyLineSupervisor")
+}
+
+class TFLInsertPolyLineDefinitionSupervisor extends Actor {
+  val dbTransactionActor: ActorRef = context.actorOf(Props[TFLInsertPolyLineDefinition], name = "TFLUpdatePolyLineActor")
+
+  override def receive: Actor.Receive = {
+    case doc1: POLYLINE_INDEX_DOCUMENT => dbTransactionActor ! doc1
+  }
 }
 
 class TFLInsertPolyLineDefinition extends Actor {
@@ -25,6 +32,7 @@ class TFLInsertPolyLineDefinition extends Actor {
 
 
   private def insertToDB(doc: POLYLINE_INDEX_DOCUMENT) = {
+    TFLInsertPolyLineDefinition.numberDBTransactionsRequested += 1
 
     val query = MongoDBObject(
       collection.FROM_STOP_CODE -> doc.fromStopCode,
@@ -33,6 +41,6 @@ class TFLInsertPolyLineDefinition extends Actor {
     val update = $set(collection.POLYLINE -> doc.polyLine)
 
       TFLInsertPolyLineDefinition.dBCollection.update(query, update, upsert = true)
-     TFLInsertPolyLineDefinition.numberPolyLinesInserted += 1
+     TFLInsertPolyLineDefinition.numberDBTransactionsExecuted += 1
   }
 }

@@ -10,11 +10,19 @@ object TFLInsertStopDefinition extends DatabaseInsert{
   @volatile var numberDBUpdatesRequested = 0
   @volatile var numberDBInsertsRequested = 0
 
-  override val dbTransactionActor: ActorRef = actorSystem.actorOf(Props[TFLInsertStopDefinition], name = "TFLInsertStopDefinitionActor")
-
   override protected val collection: DatabaseCollections = STOP_DEFINITIONS_COLLECTION
-
+  override val supervisor: ActorRef = actorSystem.actorOf(Props[TFLInsertStopDefinitionSupervisor], name = "TFLInsertStopDefinitionSupervisor")
 }
+
+class TFLInsertStopDefinitionSupervisor extends Actor {
+
+  val dbTransactionActor: ActorRef = context.actorOf(Props[TFLInsertStopDefinition], name = "TFLInsertStopDefinitionActor")
+
+  override def receive: Actor.Receive = {
+    case doc1: STOP_DEFINITION_DOCUMENT => dbTransactionActor ! doc1
+  }
+}
+
 
 class TFLInsertStopDefinition extends Actor {
 

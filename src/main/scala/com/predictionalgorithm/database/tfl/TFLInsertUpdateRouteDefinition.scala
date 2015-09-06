@@ -14,13 +14,23 @@ object TFLInsertUpdateRouteDefinition extends DatabaseInsert{
   @volatile var numberDBInsertsRequested = 0
   @volatile var numberPolyLinesInserted = 0
 
-  override val dbTransactionActor: ActorRef = actorSystem.actorOf(Props[TFLInsertUpdateRouteDefinition], name = "TFLInsertRouteDefinitionActor")
+  override val supervisor: ActorRef = actorSystem.actorOf(Props[TFLInsertUpdateRouteDefinitionSupervisor], name = "TFLInsertRouteDefinitionSupervisor")
 
   override protected val collection: DatabaseCollections = ROUTE_DEFINITIONS_COLLECTION
 
-  def updateDocumentWithPolyLine (doc: DatabaseDocuments, polyLine:String): Unit = {
+  def updateDocumentWithPolyLine (doc: DatabaseDocument, polyLine:String): Unit = {
     numberPolyLinesInserted += 1
-    dbTransactionActor ! (doc, polyLine)
+    supervisor ! (doc, polyLine)
+  }
+}
+
+class TFLInsertUpdateRouteDefinitionSupervisor extends Actor {
+
+  val dbTransactionActor: ActorRef = context.actorOf(Props[TFLInsertUpdateRouteDefinition], name = "TFLInsertUpdateRouteDefinitionActor")
+
+  override def receive: Actor.Receive = {
+    case doc: ROUTE_DEFINITION_DOCUMENT => dbTransactionActor ! doc
+    case (doc: ROUTE_DEFINITION_DOCUMENT, polyline:String) => dbTransactionActor ! (doc,polyline)
   }
 }
 

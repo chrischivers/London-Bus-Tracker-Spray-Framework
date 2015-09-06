@@ -5,10 +5,12 @@ import com.predictionalgorithm.database.tfl.TFLMongoDBConnection
 
 import scala.util.{Failure, Success, Try}
 
+case class Completed()
 
 trait DatabaseTransaction {
 
   protected implicit val actorSystem = ActorSystem("DB_Actor_System")
+  val supervisor:ActorRef
   protected val collection:DatabaseCollections
 
   lazy val dBCollection =

@@ -9,5 +9,4 @@ object TFLGetPointToPointDocument extends  DatabaseQuery {
 
   override protected val collection: DatabaseCollections = POINT_TO_POINT_COLLECTION
 
-
 }

@@ -1,6 +1,8 @@
 package com.predictionalgorithm.processes.tfl
 
 
+import java.util.concurrent.TimeoutException
+
 import akka.actor.SupervisorStrategy._
 import akka.actor.{ OneForOneStrategy, Props, Actor}
 
@@ -30,9 +32,16 @@ class TFLIterateOverArrivalStream extends ProcessingInterface {
    */
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute, loggingEnabled = false) {
-      case _: Exception =>
-        println("Incoming Stream Exception. Restarting...")
+      case e: TimeoutException =>
+        println("Incoming Stream TimeOut Exception. Restarting...")
         Thread.sleep(5000)
+        TFLIterateOverArrivalStream.numberProcessedSinceRestart = 0
+        Restart
+      case e: Exception =>
+        println("Incoming Stream Exception. Restarting...")
+        println(e.getStackTrace)
+        Thread.sleep(5000)
+        TFLIterateOverArrivalStream.numberProcessedSinceRestart = 0
         Restart
       case t =>
         super.supervisorStrategy.decider.applyOrElse(t, (_: Any) => Escalate)
@@ -43,6 +52,7 @@ class TFLIterateOverArrivalStream extends ProcessingInterface {
 
 object TFLIterateOverArrivalStream {
   @volatile var numberProcessed:Long = 0
+  @volatile var numberProcessedSinceRestart:Long = 0
 
 }
 
@@ -66,9 +76,10 @@ class IteratingActor extends Actor {
       context.become(inactive)
     case "next" =>
         val lineFuture = Future(TFLSourceLineFormatterImpl(it.next()))
-        val line = Await.result(lineFuture, 3 seconds)
+        val line = Await.result(lineFuture, 6 seconds)
         TFLProcessSourceLines(line)
         TFLIterateOverArrivalStream.numberProcessed += 1
+      TFLIterateOverArrivalStream.numberProcessedSinceRestart += 1
         self ! "next"
       }
 

@@ -10,9 +10,8 @@ import scala.concurrent.duration._
 
 /**
  * The Vehicle Actor - One exists for each vehicle currently in motion
- * @param vehicle_ID The unique Vehicle ID
  */
-class VehicleActor(vehicle_ID: String) extends Actor {
+class VehicleActor extends Actor {
 
   import context.dispatcher
 
@@ -25,6 +24,7 @@ class VehicleActor(vehicle_ID: String) extends Actor {
   var speedUpNumber = 0
   var lastIndexSentForProcessing = -1
   var nextStopArrivalDueAt: Long = -1
+  var vehicleID:String = _
   var currentRouteID: String = _
   var currentDirectionID: Int = _
 
@@ -52,6 +52,7 @@ class VehicleActor(vehicle_ID: String) extends Actor {
     // If the first line for this vehicle has been received already (i.e. in progress)
     if (receivedFirstLine) {
       val indexOfStopCode = StopList.indexOf(sourceLine.stop_Code)
+        assert(sourceLine.vehicle_Reg == vehicleID)
       if (sourceLine.route_ID == currentRouteID && sourceLine.direction_ID == currentDirectionID) {
 
         // If the next line received is as expected
@@ -90,6 +91,7 @@ class VehicleActor(vehicle_ID: String) extends Actor {
       receivedFirstLine = true
       currentRouteID = sourceLine.route_ID
       currentDirectionID = sourceLine.direction_ID
+      vehicleID = sourceLine.vehicle_Reg
       buildStopList(currentRouteID, currentDirectionID)
       val indexOfStopCode = StopList.indexOf(sourceLine.stop_Code)
       if (indexOfStopCode != StopList.length - 1) true
@@ -116,7 +118,7 @@ class VehicleActor(vehicle_ID: String) extends Actor {
    * Vehicle at the end of route. Send a kill message to the supervisor, which will result in a Poison Pill
    */
   def endOfRouteKill() = {
-    context.parent ! new KillMessage(vehicle_ID, currentRouteID)
+    context.parent ! new KillMessage(vehicleID, currentRouteID)
   }
 
   /**
@@ -152,7 +154,7 @@ class VehicleActor(vehicle_ID: String) extends Actor {
 
 
       // Encodes as a package object and enqueues
-      val pso = new PackagedStreamObject(vehicle_ID, nextStopArrivalDueAt.toString, movementDataArray, routeID, directionID, TFLDefinitions.StopDefinitions(StopList.last).stopPointName, nextStopCode, TFLDefinitions.StopDefinitions(nextStopCode).stopPointName)
+      val pso = new PackagedStreamObject(vehicleID, nextStopArrivalDueAt.toString, movementDataArray, routeID, directionID, TFLDefinitions.StopDefinitions(StopList.last).stopPointName, nextStopCode, TFLDefinitions.StopDefinitions(nextStopCode).stopPointName)
       LiveStreamingCoordinatorImpl.pushToClients(pso)
 
       val relativeDuration = nextStopArrivalDueAt - System.currentTimeMillis()

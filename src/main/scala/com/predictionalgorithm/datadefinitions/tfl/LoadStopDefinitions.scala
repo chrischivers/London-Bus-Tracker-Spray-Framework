@@ -107,7 +107,7 @@ object LoadStopDefinitions {
     stopDefinitionMap.foreach {
       case ((stop_code), sdf: StopDefinitionFields) =>
         val newDoc = new STOP_DEFINITION_DOCUMENT(stop_code, sdf.stopPointName, sdf.stopPointType, sdf.towards, sdf.bearing, sdf.stopPointIndicator, sdf.stopPointState, sdf.latitude, sdf.longitude)
-        TFLInsertStopDefinition.insertDocument(newDoc)
+        TFLInsertStopDefinition.insertDoc(newDoc)
     }
     println("Stop Definitons loaded from web and persisted to DB")
 

@@ -37,12 +37,13 @@ object StreamProcessingControlInterface extends StartStopControlInterface {
    */
   override def getVariableArray: Array[String] = {
     val numberLinesRead = TFLIterateOverArrivalStream.numberProcessed.toString
+    val numberReadSinceRestart = TFLIterateOverArrivalStream.numberProcessedSinceRestart.toString
     val currentRainfall = Weather.getCurrentRainfall.toString
     val usedMemory = ((runtime.totalMemory - runtime.freeMemory) / mb).toString
     val freeMemory =  (runtime.freeMemory / mb).toString
     val totalMemory = (runtime.totalMemory / mb).toString
     val maxMemory =  (runtime.maxMemory / mb).toString
-    val array = Array(numberLinesRead, currentRainfall, usedMemory,freeMemory,totalMemory,maxMemory)
+    val array = Array(numberLinesRead, numberReadSinceRestart,currentRainfall, usedMemory,freeMemory,totalMemory,maxMemory)
     checkAndSendForEmailAlerting(array)
     array
   }

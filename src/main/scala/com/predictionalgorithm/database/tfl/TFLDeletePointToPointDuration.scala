@@ -10,8 +10,19 @@ import com.predictionalgorithm.database._
  */
 object TFLDeletePointToPointDuration extends DatabaseDelete {
 
-  override protected val collection: DatabaseCollections = POINT_TO_POINT_COLLECTION
-  override protected val dbTransactionActor: ActorRef = actorSystem.actorOf(Props[TFLDeletePointToPointDuration], name = "TFLDeletePointToPointDurationActor")
+  protected val collection: DatabaseCollections = POINT_TO_POINT_COLLECTION
+
+  override val supervisor: ActorRef = actorSystem.actorOf(Props[TFLDeletePointToPointDuration], "TFLDeletePointToPointDurationActor")
+}
+
+class TFLDeletePointToPointDurationSupervisor extends Actor {
+
+  val dbTransactionActor: ActorRef = context.actorOf(Props[TFLDeletePointToPointDuration], name = "TFLDeletePointToPointDurationActor")
+
+  override def receive: Actor.Receive = {
+    case docID: ObjectId => dbTransactionActor ! docID
+  }
+
 }
 
 class TFLDeletePointToPointDuration extends Actor {

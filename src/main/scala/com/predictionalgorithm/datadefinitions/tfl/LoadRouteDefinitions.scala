@@ -222,7 +222,7 @@ object LoadRouteDefinitions extends LoadResourceFromFile {
         list.foreach {
           case (sequence, stopCode, firstLast, polyLine) =>
             val newDoc = new ROUTE_DEFINITION_DOCUMENT(routeID, direction, sequence, stopCode, firstLast)
-            TFLInsertUpdateRouteDefinition.insertDocument(newDoc)
+            TFLInsertUpdateRouteDefinition.insertDoc(newDoc)
         }
     }
     println("Route Definitons loaded from web and persisted to DB")
