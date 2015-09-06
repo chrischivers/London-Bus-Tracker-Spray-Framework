@@ -2,6 +2,7 @@ package com.predictionalgorithm.streaming
 
 import akka.actor.SupervisorStrategy.Escalate
 import akka.actor._
+import com.predictionalgorithm.datadefinitions.tfl.TFLDefinitions
 import com.predictionalgorithm.datasource.tfl.TFLSourceLineImpl
 import com.predictionalgorithm.streaming.LiveStreamingCoordinatorImpl._
 import scala.concurrent.duration._
@@ -17,8 +18,9 @@ import scala.concurrent.duration._
  * @param nextStopID The next Stop ID
  * @param nextStopName the next Stop Name
  */
-case class PackagedStreamObject(reg: String, nextArrivalTime: String, markerMovementData: Array[(String, String, String, String)], route_ID: String, direction_ID: Int, towards: String, nextStopID: String, nextStopName: String)
-case class KillMessage(vehicleID: String, routeID: String)
+final case class PackagedStreamObject(reg: String, nextArrivalTime: String, markerMovementData: Array[(String, String, String, String)], route_ID: String, direction_ID: Int, towards: String, nextStopID: String, nextStopName: String)
+final case class LiveActorDetails(actorRef:ActorRef, routeID:String, lastLatitude:String, lastLongitude:String, lastUpdated:Long)
+final case class KillMessage(vehicleID: String, routeID: String, lastLatitude: String, lastLongitude: String)
 
 object LiveStreamingCoordinatorImpl extends LiveStreamingCoordinator {
 
@@ -35,7 +37,7 @@ class LiveVehicleSupervisor extends Actor {
   /**
    * The record of live actors. A Map of the VehicleID to the ActorRef, The Route, and the time last updated
    */
-  @volatile var liveActors = Map[String, (ActorRef, String, Long)]()
+  @volatile var liveActors = Map[String, LiveActorDetails]()
 
   override def receive = {
     case liveSourceLine: TFLSourceLineImpl => processLine(liveSourceLine)
@@ -59,15 +61,16 @@ class LiveVehicleSupervisor extends Actor {
    */
   private def processLine(liveSourceLine: TFLSourceLineImpl) = {
     val vehicle_Reg = liveSourceLine.vehicle_Reg
+    val currentStopDefinition = TFLDefinitions.StopDefinitions(liveSourceLine.stop_Code)
     if (liveActors.contains(vehicle_Reg)) {
-      val currentVehicleActor = liveActors(vehicle_Reg)._1
+      val currentVehicleActor = liveActors(vehicle_Reg).actorRef
       // Update timestamp
-      liveActors += (vehicle_Reg -> (currentVehicleActor, liveSourceLine.route_ID,System.currentTimeMillis()))
+      liveActors += (vehicle_Reg -> new LiveActorDetails(currentVehicleActor, liveSourceLine.route_ID, currentStopDefinition.latitude, currentStopDefinition.longitude, System.currentTimeMillis()))
       currentVehicleActor ! liveSourceLine
     } else {
       val newVehicleActor = context.actorOf(Props[VehicleActor], vehicle_Reg)
       context.watch(newVehicleActor)
-      liveActors += (vehicle_Reg -> (newVehicleActor, liveSourceLine.route_ID,System.currentTimeMillis()))
+      liveActors += (vehicle_Reg -> new LiveActorDetails(newVehicleActor, liveSourceLine.route_ID, currentStopDefinition.latitude, currentStopDefinition.longitude, System.currentTimeMillis()))
       newVehicleActor ! liveSourceLine
     }
     cleanUpLiveActorsList()
@@ -82,9 +85,9 @@ class LiveVehicleSupervisor extends Actor {
    */
   private def cleanUpLiveActorsList() = {
     val cutOffThreshold = System.currentTimeMillis() - IDLE_TIME_UNTIL_ACTOR_KILLED
-    val actorsToKill = liveActors.filter(x => x._2._3 < cutOffThreshold)
+    val actorsToKill = liveActors.filter(x => x._2.lastUpdated < cutOffThreshold)
     actorsToKill.foreach(x => {
-      self ! new KillMessage(x._1, x._2._2) //Kill actor
+      self ! new KillMessage(x._1, x._2.routeID, x._2.lastLatitude, x._2.lastLongitude) //Kill actor
     })
   }
 
@@ -94,8 +97,8 @@ class LiveVehicleSupervisor extends Actor {
    */
   private def killActor(km: KillMessage) = {
     val value = liveActors.get(km.vehicleID)
-    if (value.isDefined) value.get._1 ! PoisonPill
-    pushToClients(new PackagedStreamObject(km.vehicleID, "kill", Array(), km.routeID, 0, "0", "0", "0")) //Send kill to stream Queue so this is updated for clients
+    if (value.isDefined) value.get.actorRef ! PoisonPill
+    pushToClients(new PackagedStreamObject(km.vehicleID, "kill", Array((km.lastLatitude, km.lastLongitude, "0","0")), km.routeID, 0, "0", "0", "0")) //Send kill to stream Queue so this is updated for clients
   }
 
 }

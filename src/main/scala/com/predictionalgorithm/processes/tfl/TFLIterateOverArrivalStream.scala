@@ -76,7 +76,7 @@ class IteratingActor extends Actor {
       context.become(inactive)
     case "next" =>
         val lineFuture = Future(TFLSourceLineFormatterImpl(it.next()))
-        val line = Await.result(lineFuture, 6 seconds)
+        val line = Await.result(lineFuture, 10 seconds)
         TFLProcessSourceLines(line)
         TFLIterateOverArrivalStream.numberProcessed += 1
       TFLIterateOverArrivalStream.numberProcessedSinceRestart += 1

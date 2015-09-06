@@ -69,7 +69,7 @@ html, body, #map_canvas {
     vertical-align:middle;
 }
 #settings_canvas .row button {
-    height: 23px;
-    width: 100px;
+    height: 50px;
+    width: 200px;
     vertical-align:middle;
 }

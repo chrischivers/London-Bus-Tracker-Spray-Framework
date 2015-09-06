@@ -20,7 +20,7 @@ class VehicleActor extends Actor {
 
   var StopList: List[String] = List()
   var receivedFirstLine = false
-  var pauseAutoProcessing: Boolean = false
+  var pauseAutoProcessingUntil: Long = -1
   var speedUpNumber = 0
   var lastIndexSentForProcessing = -1
   var nextStopArrivalDueAt: Long = -1
@@ -32,9 +32,13 @@ class VehicleActor extends Actor {
     case sourceLine: TFLSourceLineImpl =>
       if (receivedLineValid(sourceLine)) {
         process(sourceLine.route_ID, sourceLine.direction_ID, sourceLine.arrival_TimeStamp, sourceLine.stop_Code)
-        pauseAutoProcessing = false
+        pauseAutoProcessingUntil = -1
       }
-    case indexOfNextStopToCalculate: Int => if (!pauseAutoProcessing) handleNextStopCalculation(indexOfNextStopToCalculate)
+    case indexOfNextStopToCalculate: Int =>
+      if (pauseAutoProcessingUntil == -1 || pauseAutoProcessingUntil - System.currentTimeMillis() <= 0) handleNextStopCalculation(indexOfNextStopToCalculate)
+      else  in(Duration(pauseAutoProcessingUntil - System.currentTimeMillis(), MILLISECONDS)) {
+        self ! indexOfNextStopToCalculate
+      }
   }
 
   def buildStopList(routeID: String, directionID: Int) = {
@@ -60,9 +64,12 @@ class VehicleActor extends Actor {
 
         // If the next line received is behind the auto processing - needs to pause to allow catch up
         else if (indexOfStopCode <= lastIndexSentForProcessing && indexOfStopCode != StopList.length - 1) {
-          pauseAutoProcessing = true
+          val predictionRequest = new PredictionRequest(currentRouteID, currentDirectionID, sourceLine.stop_Code, StopList(lastIndexSentForProcessing + 1), sourceLine.arrival_TimeStamp.getDayCode, sourceLine.arrival_TimeStamp.getTimeOffset)
+          val predictedDurtoNextStop_MS = KNNPredictionImpl.makePrediction(predictionRequest).getOrElse(DEFAULT_DURATION_WHERE_PREDICTION_NOT_AVAILABLE, 1)._1 * 1000
+          pauseAutoProcessingUntil = sourceLine.arrival_TimeStamp + predictedDurtoNextStop_MS.toLong
           false
         }
+
 
         // If the next line received is ahead of the auto processing - sends speed up request to allow the vehicle to smoothly catch up
         else if (indexOfStopCode > lastIndexSentForProcessing + 1 && indexOfStopCode != StopList.length - 1) {
@@ -118,7 +125,8 @@ class VehicleActor extends Actor {
    * Vehicle at the end of route. Send a kill message to the supervisor, which will result in a Poison Pill
    */
   def endOfRouteKill() = {
-    context.parent ! new KillMessage(vehicleID, currentRouteID)
+    val lastStopDefinition = TFLDefinitions.StopDefinitions(StopList.last)
+    LiveStreamingCoordinatorImpl.vehicleSupervisor ! new KillMessage(vehicleID, currentRouteID,lastStopDefinition.latitude, lastStopDefinition.longitude)
   }
 
   /**
