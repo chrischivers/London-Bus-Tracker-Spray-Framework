@@ -1,7 +1,7 @@
 package com.predictionalgorithm.controlinterface
 
 import akka.actor.{Props, ActorSystem}
-import com.predictionalgorithm.processes.tfl.TFLIterateOverArrivalStream
+import com.predictionalgorithm.processes.tfl.TFLIterateOverArrivalStreamSupervisor
 import com.predictionalgorithm.processes.weather.Weather
 
 /**
@@ -9,7 +9,6 @@ import com.predictionalgorithm.processes.weather.Weather
  */
 object StreamProcessingControlInterface extends StartStopControlInterface {
 
-  val streamActor = actorSystem.actorOf(Props[TFLIterateOverArrivalStream], name = "TFLArrivalStream")
   val mb = 1024*1024
   val runtime = Runtime.getRuntime
 
@@ -22,12 +21,12 @@ object StreamProcessingControlInterface extends StartStopControlInterface {
 
 
   override def start(): Unit = {
-    streamActor ! "start"
+    TFLIterateOverArrivalStreamSupervisor.start()
 
   }
 
   override def stop(): Unit = {
-    streamActor ! "stop"
+    TFLIterateOverArrivalStreamSupervisor.stop()
   }
 
   /**
@@ -36,8 +35,8 @@ object StreamProcessingControlInterface extends StartStopControlInterface {
    * @return An Array of variables as Strings
    */
   override def getVariableArray: Array[String] = {
-    val numberLinesRead = TFLIterateOverArrivalStream.numberProcessed.toString
-    val numberReadSinceRestart = TFLIterateOverArrivalStream.numberProcessedSinceRestart.toString
+    val numberLinesRead = TFLIterateOverArrivalStreamSupervisor.numberProcessed.toString
+    val numberReadSinceRestart = TFLIterateOverArrivalStreamSupervisor.numberProcessedSinceRestart.toString
     val currentRainfall = Weather.getCurrentRainfall.toString
     val usedMemory = ((runtime.totalMemory - runtime.freeMemory) / mb).toString
     val freeMemory =  (runtime.freeMemory / mb).toString

@@ -1,6 +1,8 @@
 package com.predictionalgorithm.datadefinitions.tfl
 
 import java.util.Date
+import com.predictionalgorithm.datadefinitions.DataDefinitions
+import com.predictionalgorithm.datadefinitions.tfl.loadresources._
 import com.predictionalgorithm.datadefinitions.tools.FetchPolyLines
 
 case class StopDefinitionFields(stopPointName:String, stopPointType:String, towards:String, bearing:Int, stopPointIndicator:String, stopPointState:Int, latitude:String, longitude:String)
@@ -8,10 +10,10 @@ case class StopDefinitionFields(stopPointName:String, stopPointType:String, towa
 /**
  * The reference for definitions files
  */
-object TFLDefinitions {
+object TFLDefinitions extends DataDefinitions{
 
-  lazy val RouteDefinitionMap:Map[(String, Int), List[(Int, String, Option[String], String)]] =  LoadRouteDefinitions.getRouteDefinitionMap
-  lazy val StopDefinitions: Map[String,StopDefinitionFields] = LoadStopDefinitions.getStopDefinitionMap
+  override lazy val RouteDefinitionMap:Map[(String, Int), List[(Int, String, Option[String], String)]] =  LoadRouteDefinitions.getRouteDefinitionMap
+  override  lazy val PointDefinitionsMap: Map[String,StopDefinitionFields] = LoadStopDefinitions.getStopDefinitionMap
   lazy val RouteIgnoreList: Set[String] = LoadRouteIgnoreList.routeIgnoreSet
   lazy val StopIgnoreList: Set[String] = LoadStopIgnoreList.stopIgnoreSet
   lazy val PublicHolidayList:List[Date] = LoadPublicHolidayList.publicHolidayList

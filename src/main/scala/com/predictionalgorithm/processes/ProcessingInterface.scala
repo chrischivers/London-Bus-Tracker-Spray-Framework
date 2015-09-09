@@ -1,14 +1,13 @@
 package com.predictionalgorithm.processes
 
 
-import akka.actor.Actor
+import akka.actor.{ActorSystem, Props, Actor}
 
-trait ProcessingInterface extends Actor{
+trait ProcessingInterface {
+
+  val actorProcessingSystem = ActorSystem("ProcessingSystem")
+
   def start()
   def stop()
 
-  def receive = {
-    case "start" => start()
-    case "stop" => stop()
-  }
 }

@@ -4,6 +4,7 @@ import akka.actor.{Actor, ActorRef, Props}
 import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.MongoDBObject
 import com.predictionalgorithm.database._
+import com.predictionalgorithm.database.tfl.TFLInsertStopDefinition._
 
 /**
  * Deletes a PointToPointDuration asyncronously
@@ -12,7 +13,7 @@ object TFLDeletePointToPointDuration extends DatabaseDelete {
 
   protected val collection: DatabaseCollections = POINT_TO_POINT_COLLECTION
 
-  override val supervisor: ActorRef = actorSystem.actorOf(Props[TFLDeletePointToPointDuration], "TFLDeletePointToPointDurationActor")
+  override val supervisor: ActorRef = actorDatabaseSystem.actorOf(Props[TFLDeletePointToPointDuration], "TFLDeletePointToPointDurationActor")
 }
 
 class TFLDeletePointToPointDurationSupervisor extends Actor {

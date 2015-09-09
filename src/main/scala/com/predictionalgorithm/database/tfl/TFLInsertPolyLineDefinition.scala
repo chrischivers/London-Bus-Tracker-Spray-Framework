@@ -10,7 +10,7 @@ object TFLInsertPolyLineDefinition extends DatabaseInsert{
 
 
   override protected val collection: DatabaseCollections = POLYLINE_INDEX_COLLECTION
-  override val supervisor: ActorRef = actorSystem.actorOf(Props[TFLInsertPolyLineDefinitionSupervisor], "TFLUpdatePolyLineSupervisor")
+  override val supervisor: ActorRef = actorDatabaseSystem.actorOf(Props[TFLInsertPolyLineDefinitionSupervisor], "TFLUpdatePolyLineSupervisor")
 }
 
 class TFLInsertPolyLineDefinitionSupervisor extends Actor {

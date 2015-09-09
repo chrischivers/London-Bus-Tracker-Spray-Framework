@@ -1,12 +1,12 @@
 package com.predictionalgorithm.controlinterface
 
 import akka.actor.ActorSystem
+import com.predictionalgorithm.Main
 
 /**
  * Interface for User Interfaces that use a Start/Stop Button
  */
 trait StartStopControlInterface  {
-  implicit val actorSystem = ActorSystem("ControlInterfaceActorSystem")
 
   def getVariableArray:Array[String]
  // def checkAndSendForEmailAlerting(variableArray: Array[String])

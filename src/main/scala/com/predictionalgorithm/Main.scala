@@ -1,6 +1,7 @@
 package com.predictionalgorithm
 
 import javax.swing.SwingUtilities
+import akka.actor.ActorSystem
 import com.predictionalgorithm.controlinterface._
 import com.predictionalgorithm.prediction.KNNPredictionImpl
 import com.predictionalgorithm.serverui.MonitoringUI

@@ -14,7 +14,7 @@ object TFLInsertUpdateRouteDefinition extends DatabaseInsert{
   @volatile var numberDBInsertsRequested = 0
   @volatile var numberPolyLinesInserted = 0
 
-  override val supervisor: ActorRef = actorSystem.actorOf(Props[TFLInsertUpdateRouteDefinitionSupervisor], name = "TFLInsertRouteDefinitionSupervisor")
+  override val supervisor: ActorRef = actorDatabaseSystem.actorOf(Props[TFLInsertUpdateRouteDefinitionSupervisor], name = "TFLInsertRouteDefinitionSupervisor")
 
   override protected val collection: DatabaseCollections = ROUTE_DEFINITIONS_COLLECTION
 

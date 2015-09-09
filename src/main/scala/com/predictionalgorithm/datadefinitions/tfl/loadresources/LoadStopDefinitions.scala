@@ -1,17 +1,17 @@
-package com.predictionalgorithm.datadefinitions.tfl
+package com.predictionalgorithm.datadefinitions.tfl.loadresources
 
 import java.io.IOException
 
-import akka.actor.{Props, Actor}
-import com.predictionalgorithm.controlinterface.StreamProcessingControlInterface._
-import com.predictionalgorithm.datadefinitions.LoadResourceFromFile
-import com.predictionalgorithm.database.{STOP_DEFINITIONS_COLLECTION, STOP_DEFINITION_DOCUMENT}
+import akka.actor.{Actor, Props}
 import com.predictionalgorithm.database.tfl.{TFLGetStopDefinitionDocument, TFLInsertStopDefinition}
+import com.predictionalgorithm.database.{STOP_DEFINITIONS_COLLECTION, STOP_DEFINITION_DOCUMENT}
+import com.predictionalgorithm.datadefinitions.ResourceOperations
+import com.predictionalgorithm.datadefinitions.tfl.StopDefinitionFields
 
-import scala.io.{BufferedSource, Source}
+import scala.io.Source
 
 
-object LoadStopDefinitions {
+object LoadStopDefinitions extends ResourceOperations {
 
   var percentageComplete = 0
 
@@ -51,7 +51,7 @@ object LoadStopDefinitions {
   }
 
   def updateFromWeb() = {
-    val streamActor = actorSystem.actorOf(Props[UpdateStopDefinitionsFromWeb], name = "UpdateStopeDefinitionsFromWeb")
+    val streamActor = actorResourcesSystem.actorOf(Props[UpdateStopDefinitionsFromWeb], name = "UpdateStopeDefinitionsFromWeb")
     streamActor ! "start"
   }
 

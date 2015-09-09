@@ -1,11 +1,13 @@
 package com.predictionalgorithm.datadefinitions
 
+import akka.actor.ActorSystem
+
 import scala.io.{BufferedSource, Source}
 
 
-trait LoadResourceFromFile {
+trait ResourceOperations {
 
-  val bufferedSource:BufferedSource
+  val actorResourcesSystem = ActorSystem("ResourcesActorSystem")
 
   val DEFAULT_ROUTE_LIST_FILE = Source.fromURL(getClass.getResource("/routeList.csv"))
   val DEFAULT_ROUTE_DEF_FILE = Source.fromURL(getClass.getResource("/busSequences.csv"))

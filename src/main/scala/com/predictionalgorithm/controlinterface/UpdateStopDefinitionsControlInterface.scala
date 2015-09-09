@@ -1,7 +1,8 @@
 package com.predictionalgorithm.controlinterface
 
-import com.predictionalgorithm.datadefinitions.tfl.{LoadStopDefinitions, TFLDefinitions}
+import com.predictionalgorithm.datadefinitions.tfl.TFLDefinitions
 import com.predictionalgorithm.database.tfl.TFLInsertStopDefinition
+import com.predictionalgorithm.datadefinitions.tfl.loadresources.LoadStopDefinitions
 
 /**
  * User Control Interface for Updating Stop Definitions

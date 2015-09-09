@@ -1,16 +1,13 @@
-package com.predictionalgorithm.datadefinitions.tfl
+package com.predictionalgorithm.datadefinitions.tfl.loadresources
 
-
-import akka.actor.{Props, Actor}
-import com.predictionalgorithm.controlinterface.StreamProcessingControlInterface._
-import com.predictionalgorithm.datadefinitions.LoadResourceFromFile
-import com.predictionalgorithm.database.{ROUTE_DEFINITION_DOCUMENT, ROUTE_DEFINITIONS_COLLECTION}
-import com.predictionalgorithm.database.tfl.{TFLInsertUpdateRouteDefinition, TFLGetRouteDefinitionDocument}
-
+import akka.actor.{Actor, Props}
+import com.predictionalgorithm.database.tfl.{TFLGetRouteDefinitionDocument, TFLInsertUpdateRouteDefinition}
+import com.predictionalgorithm.database.{ROUTE_DEFINITIONS_COLLECTION, ROUTE_DEFINITION_DOCUMENT}
+import com.predictionalgorithm.datadefinitions.LoadResourceFromSource
 
 import scala.io.{BufferedSource, Source}
 
-object LoadRouteDefinitions extends LoadResourceFromFile {
+object LoadRouteDefinitions extends LoadResourceFromSource {
 
   override val bufferedSource: BufferedSource = DEFAULT_ROUTE_DEF_FILE
 
@@ -56,7 +53,7 @@ object LoadRouteDefinitions extends LoadResourceFromFile {
   }
 
   def updateFromWeb() = {
-    val streamActor = actorSystem.actorOf(Props[UpdateRouteDefinitionsFromWeb], name = "UpdateRouteDefinitionsFromWeb")
+    val streamActor = actorResourcesSystem.actorOf(Props[UpdateRouteDefinitionsFromWeb], name = "UpdateRouteDefinitionsFromWeb")
     streamActor ! "start"
   }
 

@@ -35,8 +35,9 @@ class VehicleActor extends Actor {
         pauseAutoProcessingUntil = -1
       }
     case indexOfNextStopToCalculate: Int =>
-      if (pauseAutoProcessingUntil == -1 || pauseAutoProcessingUntil - System.currentTimeMillis() <= 0) handleNextStopCalculation(indexOfNextStopToCalculate)
-      else  in(Duration(pauseAutoProcessingUntil - System.currentTimeMillis(), MILLISECONDS)) {
+      val timeToPause = pauseAutoProcessingUntil - System.currentTimeMillis()
+      if (pauseAutoProcessingUntil == -1 || timeToPause <= 0) handleNextStopCalculation(indexOfNextStopToCalculate)
+      else  in(Duration(timeToPause, MILLISECONDS)) {
         self ! indexOfNextStopToCalculate
       }
   }
@@ -56,7 +57,7 @@ class VehicleActor extends Actor {
     // If the first line for this vehicle has been received already (i.e. in progress)
     if (receivedFirstLine) {
       val indexOfStopCode = StopList.indexOf(sourceLine.stop_Code)
-        assert(sourceLine.vehicle_Reg == vehicleID)
+      assert(sourceLine.vehicle_Reg == vehicleID)
       if (sourceLine.route_ID == currentRouteID && sourceLine.direction_ID == currentDirectionID) {
 
         // If the next line received is as expected
@@ -73,11 +74,14 @@ class VehicleActor extends Actor {
 
         // If the next line received is ahead of the auto processing - sends speed up request to allow the vehicle to smoothly catch up
         else if (indexOfStopCode > lastIndexSentForProcessing + 1 && indexOfStopCode != StopList.length - 1) {
-          // Auto processing behind, needs to speed up to allow catch up
           val stopsDifference = indexOfStopCode - (lastIndexSentForProcessing + 1)
-          for (i <- 1 to stopsDifference) {
-            speedUpNumber = speedUpNumber + 1
-            self ! lastIndexSentForProcessing + i
+
+          val predictionRequest = new PredictionRequest(currentRouteID, currentDirectionID, sourceLine.stop_Code, StopList(indexOfStopCode + 1), sourceLine.arrival_TimeStamp.getDayCode, sourceLine.arrival_TimeStamp.getTimeOffset)
+          val durationToNextStop = KNNPredictionImpl.makePrediction(predictionRequest).getOrElse(DEFAULT_DURATION_WHERE_PREDICTION_NOT_AVAILABLE, 1)._1 * 1000
+          val durationPerStop = durationToNextStop / (stopsDifference + 1)
+
+          for (i <- 0 to stopsDifference) {
+            process(currentRouteID, currentDirectionID, nextStopArrivalDueAt + (i * durationPerStop).toLong, StopList(lastIndexSentForProcessing + 1))
           }
           true
         }
@@ -125,7 +129,7 @@ class VehicleActor extends Actor {
    * Vehicle at the end of route. Send a kill message to the supervisor, which will result in a Poison Pill
    */
   def endOfRouteKill() = {
-    val lastStopDefinition = TFLDefinitions.StopDefinitions(StopList.last)
+    val lastStopDefinition = TFLDefinitions.PointDefinitionsMap(StopList.last)
     LiveStreamingCoordinatorImpl.vehicleSupervisor ! new KillMessage(vehicleID, currentRouteID,lastStopDefinition.latitude, lastStopDefinition.longitude)
   }
 
@@ -162,7 +166,7 @@ class VehicleActor extends Actor {
 
 
       // Encodes as a package object and enqueues
-      val pso = new PackagedStreamObject(vehicleID, nextStopArrivalDueAt.toString, movementDataArray, routeID, directionID, TFLDefinitions.StopDefinitions(StopList.last).stopPointName, nextStopCode, TFLDefinitions.StopDefinitions(nextStopCode).stopPointName)
+      val pso = new PackagedStreamObject(vehicleID, nextStopArrivalDueAt.toString, movementDataArray, routeID, directionID, TFLDefinitions.PointDefinitionsMap(StopList.last).stopPointName, nextStopCode, TFLDefinitions.PointDefinitionsMap(nextStopCode).stopPointName)
       LiveStreamingCoordinatorImpl.pushToClients(pso)
 
       val relativeDuration = nextStopArrivalDueAt - System.currentTimeMillis()
@@ -179,6 +183,6 @@ class VehicleActor extends Actor {
   }
 
   def in[U](duration: FiniteDuration)(body: => U): Unit =
-    LiveStreamingCoordinatorImpl.vehicleSystem.scheduler.scheduleOnce(duration)(body)
+    LiveStreamingCoordinatorImpl.actorVehicleSystem.scheduler.scheduleOnce(duration)(body)
 
 }

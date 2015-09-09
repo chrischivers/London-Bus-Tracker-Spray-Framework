@@ -110,7 +110,6 @@ object WebServer {
     }
 
     val thisRoute = {
-
       pathPrefix("css") {
         get {
           getFromResourceDirectory("css")
@@ -182,6 +181,9 @@ object WebServer {
               }
             }
           }
+        }~
+        path("") {
+          getFromResource("html/livemap.html")
         }
     }
   }
@@ -194,14 +196,14 @@ object WebServer {
   }
 
   private def getDirectionList(routeID: String): String = {
-    val outwardDirection = TFLDefinitions.StopDefinitions(TFLDefinitions.RouteDefinitionMap.get(routeID, 1).get.last._2).stopPointName
-    val returnDirection = TFLDefinitions.StopDefinitions(TFLDefinitions.RouteDefinitionMap.get(routeID, 2).get.last._2).stopPointName
+    val outwardDirection = TFLDefinitions.PointDefinitionsMap(TFLDefinitions.RouteDefinitionMap.get(routeID, 1).get.last._2).stopPointName
+    val returnDirection = TFLDefinitions.PointDefinitionsMap(TFLDefinitions.RouteDefinitionMap.get(routeID, 2).get.last._2).stopPointName
     val jsonMap = Map("directionList" -> List("1," + outwardDirection, "2," + returnDirection))
     compact(render(jsonMap))
   }
 
   private def getStopList(routeID: String, directionID: Int): String = {
-    val stopList = TFLDefinitions.RouteDefinitionMap(routeID, directionID).map(x => x._2 + "," + TFLDefinitions.StopDefinitions(x._2).stopPointName)
+    val stopList = TFLDefinitions.RouteDefinitionMap(routeID, directionID).map(x => x._2 + "," + TFLDefinitions.PointDefinitionsMap(x._2).stopPointName)
     val jsonMap = Map("stopList" -> stopList)
     compact(render(jsonMap))
   }

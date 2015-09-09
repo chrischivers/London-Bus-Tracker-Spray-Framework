@@ -1,7 +1,8 @@
 package com.predictionalgorithm.controlinterface
 
-import com.predictionalgorithm.datadefinitions.tfl.{LoadRouteDefinitions, TFLDefinitions}
+import com.predictionalgorithm.datadefinitions.tfl.TFLDefinitions
 import com.predictionalgorithm.database.tfl.TFLInsertUpdateRouteDefinition
+import com.predictionalgorithm.datadefinitions.tfl.loadresources.LoadRouteDefinitions
 
 
 /**

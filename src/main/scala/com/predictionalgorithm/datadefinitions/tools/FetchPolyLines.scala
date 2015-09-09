@@ -1,7 +1,8 @@
 package com.predictionalgorithm.datadefinitions.tools
 
-import akka.actor.{Actor, Props}
+import akka.actor.{ActorSystem, Actor, Props}
 import com.predictionalgorithm.controlinterface.StreamProcessingControlInterface._
+import com.predictionalgorithm.datadefinitions.ResourceOperations
 import com.predictionalgorithm.datadefinitions.tfl.TFLDefinitions
 import com.predictionalgorithm.database.tfl._
 import com.predictionalgorithm.database.{POLYLINE_INDEX_COLLECTION, POLYLINE_INDEX_DOCUMENT, ROUTE_DEFINITIONS_COLLECTION, ROUTE_DEFINITION_DOCUMENT}
@@ -9,7 +10,7 @@ import com.mongodb.casbah.Imports
 
 import scala.io.{BufferedSource, Source}
 
-object FetchPolyLines {
+object FetchPolyLines extends ResourceOperations{
 
   val TIME_BETWEEN_POLYLINE_QUERIES = 250
   var numberLinesProcessed = 0
@@ -30,17 +31,17 @@ object FetchPolyLines {
 
 
   def updateAll() = {
-    val streamActor = actorSystem.actorOf(Props[UpdateAllPolyLinesActor], name = "AddPolyLinesActor")
+    val streamActor = actorResourcesSystem.actorOf(Props[UpdateAllPolyLinesActor], name = "AddPolyLinesActor")
     streamActor ! "updateAll"
   }
 
   def getPolyLineForTwoPoints(fromStopCode: String, toStopCode: String): String = {
 
-    val thisStopCodeLat = TFLDefinitions.StopDefinitions(toStopCode).latitude
-    val thisStopCodeLng = TFLDefinitions.StopDefinitions(toStopCode).longitude
+    val thisStopCodeLat = TFLDefinitions.PointDefinitionsMap(toStopCode).latitude
+    val thisStopCodeLng = TFLDefinitions.PointDefinitionsMap(toStopCode).longitude
 
-    val lastStopCodeLat = TFLDefinitions.StopDefinitions(fromStopCode).latitude
-    val lastStopCodeLng = TFLDefinitions.StopDefinitions(fromStopCode).longitude
+    val lastStopCodeLat = TFLDefinitions.PointDefinitionsMap(fromStopCode).latitude
+    val lastStopCodeLng = TFLDefinitions.PointDefinitionsMap(fromStopCode).longitude
 
     if (existingPolyLineIndex.contains((fromStopCode, toStopCode))) {
       val polyLine = existingPolyLineIndex((fromStopCode, toStopCode))

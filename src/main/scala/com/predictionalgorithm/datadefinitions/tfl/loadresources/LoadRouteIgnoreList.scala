@@ -1,9 +1,8 @@
-package com.predictionalgorithm.datadefinitions.tfl
+package com.predictionalgorithm.datadefinitions.tfl.loadresources
 
+import com.predictionalgorithm.datadefinitions.LoadResourceFromSource
 
-import com.predictionalgorithm.datadefinitions.LoadResourceFromFile
-
-object LoadRouteIgnoreList extends LoadResourceFromFile{
+object LoadRouteIgnoreList extends LoadResourceFromSource {
 
   override val bufferedSource = DEFAULT_ROUTE_IGNORE_LIST_FILE
 

@@ -61,7 +61,7 @@ class LiveVehicleSupervisor extends Actor {
    */
   private def processLine(liveSourceLine: TFLSourceLineImpl) = {
     val vehicle_Reg = liveSourceLine.vehicle_Reg
-    val currentStopDefinition = TFLDefinitions.StopDefinitions(liveSourceLine.stop_Code)
+    val currentStopDefinition = TFLDefinitions.PointDefinitionsMap(liveSourceLine.stop_Code)
     if (liveActors.contains(vehicle_Reg)) {
       val currentVehicleActor = liveActors(vehicle_Reg).actorRef
       // Update timestamp

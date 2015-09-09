@@ -13,18 +13,19 @@ import scala.concurrent.{ExecutionContext, Await, Future}
 import scala.concurrent.duration._
 import ExecutionContext.Implicits.global
 
+final case class Start()
+final case class Stop()
+final case class Next()
 
-class TFLIterateOverArrivalStream extends ProcessingInterface {
+class TFLIterateOverArrivalStreamSupervisor extends Actor {
 
   val iteratingActor = context.actorOf(Props[IteratingActor])
 
-  override def start() = {
-      iteratingActor ! "start"
-      iteratingActor ! "next"
-  }
-
-  override def stop() = {
-    iteratingActor ! "stop"
+  def receive = {
+    case  Start=>
+      iteratingActor ! Start
+      iteratingActor ! Next
+    case Stop => iteratingActor ! Stop
   }
 
   /**
@@ -35,13 +36,13 @@ class TFLIterateOverArrivalStream extends ProcessingInterface {
       case e: TimeoutException =>
         println("Incoming Stream TimeOut Exception. Restarting...")
         Thread.sleep(5000)
-        TFLIterateOverArrivalStream.numberProcessedSinceRestart = 0
+        TFLIterateOverArrivalStreamSupervisor.numberProcessedSinceRestart = 0
         Restart
       case e: Exception =>
         println("Incoming Stream Exception. Restarting...")
         println(e.getStackTrace)
         Thread.sleep(5000)
-        TFLIterateOverArrivalStream.numberProcessedSinceRestart = 0
+        TFLIterateOverArrivalStreamSupervisor.numberProcessedSinceRestart = 0
         Restart
       case t =>
         super.supervisorStrategy.decider.applyOrElse(t, (_: Any) => Escalate)
@@ -50,9 +51,21 @@ class TFLIterateOverArrivalStream extends ProcessingInterface {
 }
 
 
-object TFLIterateOverArrivalStream {
+object TFLIterateOverArrivalStreamSupervisor extends ProcessingInterface{
   @volatile var numberProcessed:Long = 0
   @volatile var numberProcessedSinceRestart:Long = 0
+
+  val supervisor = actorProcessingSystem.actorOf(Props[TFLIterateOverArrivalStreamSupervisor], name = "TFLIterateOverArrivalStreamSupervisor")
+
+
+  override def start(): Unit = {
+    supervisor ! Start
+
+  }
+
+  override def stop(): Unit = {
+    supervisor ! Stop
+  }
 
 }
 
@@ -67,25 +80,25 @@ class IteratingActor extends Actor {
   override def receive: Receive = inactive // Start out as inactive
 
   def inactive: Receive = { // This is the behavior when inactive
-    case "start" =>
+    case Start =>
       context.become(active)
   }
 
   def active: Receive = { // This is the behavior when it's active
-    case "stop" =>
+    case Stop =>
       context.become(inactive)
-    case "next" =>
+    case Next =>
         val lineFuture = Future(TFLSourceLineFormatterImpl(it.next()))
         val line = Await.result(lineFuture, 10 seconds)
         TFLProcessSourceLines(line)
-        TFLIterateOverArrivalStream.numberProcessed += 1
-      TFLIterateOverArrivalStream.numberProcessedSinceRestart += 1
-        self ! "next"
+        TFLIterateOverArrivalStreamSupervisor.numberProcessed += 1
+      TFLIterateOverArrivalStreamSupervisor.numberProcessedSinceRestart += 1
+        self ! Next
       }
 
   override def postRestart(reason: Throwable): Unit = {
-    self ! "start"
-    self ! "next"
+    self ! Start
+    self ! Next
   }
 
   def getSourceIterator = new SourceIterator(new HttpDataStreamImpl(TFLDataSourceImpl)).iterator

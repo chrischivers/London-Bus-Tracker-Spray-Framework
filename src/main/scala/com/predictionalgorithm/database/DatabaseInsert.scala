@@ -1,7 +1,7 @@
 package com.predictionalgorithm.database
 
 import akka.actor.{ActorRef, ActorSystem}
-import com.predictionalgorithm.database.tfl.{TFLInsertPointToPointDurationSupervisor$, TFLMongoDBConnection}
+import com.predictionalgorithm.database.tfl.{TFLMongoDBConnection}
 
 import scala.util.{Failure, Success, Try}
 

@@ -1,7 +1,8 @@
 package com.predictionalgorithm.datadefinitions.tools
 
-import akka.actor.{PoisonPill, Props, Actor}
+import akka.actor.{ActorSystem, PoisonPill, Props, Actor}
 import com.predictionalgorithm.controlinterface.StreamProcessingControlInterface._
+import com.predictionalgorithm.datadefinitions.ResourceOperations
 import com.predictionalgorithm.datadefinitions.tfl.TFLDefinitions
 import com.predictionalgorithm.database.POINT_TO_POINT_COLLECTION
 import com.predictionalgorithm.database.tfl.{TFLDeletePointToPointDuration, TFLGetPointToPointDocument}
@@ -11,9 +12,9 @@ import org.bson.types.ObjectId
 /**
  * Tool to look through PoinToPoint collection and remove any entries that no longer correspond to entries in the definition file
  */
-object CleanPointToPointData  {
+object CleanPointToPointData  extends ResourceOperations {
 
-  private val streamActor = actorSystem.actorOf(Props[CleanPointToPointData], name = "CleanPointToPointDataActor")
+  private val streamActor = actorResourcesSystem.actorOf(Props[CleanPointToPointData], name = "CleanPointToPointDataActor")
   @volatile var numberDocumentsRead = 0
   @volatile var numberDocumentsDeleted = 0
 

@@ -1,11 +1,11 @@
-package com.predictionalgorithm.datadefinitions.tfl
+package com.predictionalgorithm.datadefinitions.tfl.loadresources
 
-import com.predictionalgorithm.datadefinitions.LoadResourceFromFile
+import com.predictionalgorithm.datadefinitions.LoadResourceFromSource
 
 import scala.io.BufferedSource
 
 
-object LoadStopIgnoreList extends LoadResourceFromFile{
+object LoadStopIgnoreList extends LoadResourceFromSource{
 
   override val bufferedSource: BufferedSource = DEFAULT_STOP_IGNORE_LIST_FILE
 

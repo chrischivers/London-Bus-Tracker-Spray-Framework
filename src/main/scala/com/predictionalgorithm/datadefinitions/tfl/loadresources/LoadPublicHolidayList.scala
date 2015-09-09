@@ -1,13 +1,13 @@
-package com.predictionalgorithm.datadefinitions.tfl
+package com.predictionalgorithm.datadefinitions.tfl.loadresources
 
 import java.text.SimpleDateFormat
-import java.util.{Locale, Date}
+import java.util.{Date, Locale}
 
-import com.predictionalgorithm.datadefinitions.LoadResourceFromFile
+import com.predictionalgorithm.datadefinitions.LoadResourceFromSource
 
 import scala.io.BufferedSource
 
-object LoadPublicHolidayList extends LoadResourceFromFile{
+object LoadPublicHolidayList extends LoadResourceFromSource{
 
   override val bufferedSource: BufferedSource = DEFAULT_PUBLIC_HOLIDAY_LIST_FILE
 

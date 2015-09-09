@@ -14,7 +14,7 @@ case class PruneCompleted()
 
 object TFLInsertPointToPointDurationSupervisor extends DatabaseInsert {
   val collection = POINT_TO_POINT_COLLECTION
-  override val supervisor = actorSystem.actorOf(Props[TFLInsertPointToPointDurationSupervisor], "InsertPointToPointSupervisor")
+  override val supervisor = actorDatabaseSystem.actorOf(Props[TFLInsertPointToPointDurationSupervisor], "InsertPointToPointSupervisor")
 
   @volatile var numberDBPullTransactionsRequested: Long = 0
   @volatile var numberDBPullTransactionsExecuted: Long = 0
@@ -24,8 +24,8 @@ object TFLInsertPointToPointDurationSupervisor extends DatabaseInsert {
 class  TFLInsertPointToPointDurationSupervisor extends Actor {
 
 
-  val insertRouter = context.actorOf(RoundRobinPool(15).props(Props[TFLInsertPointToPointDurationActor]), "InsertPointToPointRouter")
-  val pruneRouter = context.actorOf(RoundRobinPool(15).props(Props[TFLPrunePointToPointActor]), "PrunePointToPointRouter")
+  val insertRouter = context.actorOf(RoundRobinPool(2).props(Props[TFLInsertPointToPointDurationActor]), "InsertPointToPointRouter")
+  val pruneRouter = context.actorOf(RoundRobinPool(2).props(Props[TFLPrunePointToPointActor]), "PrunePointToPointRouter")
 
 
   override def receive = {

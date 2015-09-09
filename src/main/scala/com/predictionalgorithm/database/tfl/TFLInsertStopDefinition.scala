@@ -11,7 +11,7 @@ object TFLInsertStopDefinition extends DatabaseInsert{
   @volatile var numberDBInsertsRequested = 0
 
   override protected val collection: DatabaseCollections = STOP_DEFINITIONS_COLLECTION
-  override val supervisor: ActorRef = actorSystem.actorOf(Props[TFLInsertStopDefinitionSupervisor], name = "TFLInsertStopDefinitionSupervisor")
+  override val supervisor: ActorRef = actorDatabaseSystem.actorOf(Props[TFLInsertStopDefinitionSupervisor], name = "TFLInsertStopDefinitionSupervisor")
 }
 
 class TFLInsertStopDefinitionSupervisor extends Actor {
