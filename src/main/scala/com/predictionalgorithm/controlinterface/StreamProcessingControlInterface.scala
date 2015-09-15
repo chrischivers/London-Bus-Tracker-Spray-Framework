@@ -51,6 +51,7 @@ object StreamProcessingControlInterface extends StartStopControlInterface {
     val linesRead = variableArray(0).toLong
     if (System.currentTimeMillis() - periodToCheck > timeStampLastChecked) {
       if (linesRead - linesReadOnLastCheck < MIN_LINES_TOREAD_IN_PERIOD && linesRead != 0) {
+        println("No lines being read")
         EmailAlertInterface.sendAlert(linesNotBeingReadAlertText)
       }
       timeStampLastChecked = System.currentTimeMillis()
