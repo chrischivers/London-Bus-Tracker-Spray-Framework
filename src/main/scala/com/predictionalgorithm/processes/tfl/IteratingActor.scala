@@ -35,10 +35,19 @@ class IteratingActor extends Actor {
       }
 
   override def postRestart(reason: Throwable): Unit = {
-    it = getSourceIterator
     self ! Start
     self ! Next
   }
 
-  def getSourceIterator = new SourceIterator(new HttpDataStreamImpl(TFLDataSourceImpl)).iterator
+  def getSourceIterator: Iterator[String] = {
+    while (true) {
+      try {
+        println("Getting HTTP Source")
+        return new SourceIterator(new HttpDataStreamImpl(TFLDataSourceImpl)).iterator
+      } catch {
+        case e: Exception => Thread.sleep(5000)
+      }
+    }
+    throw new IllegalStateException
+  }
 }

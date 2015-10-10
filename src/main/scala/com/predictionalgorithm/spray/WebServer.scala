@@ -190,7 +190,7 @@ object WebServer {
 
 
   private def getRouteList: String = {
-    val routeList: List[String] = TFLDefinitions.RouteDefinitionMap.map(x => x._1._1).toSet.toList.sorted
+    val routeList = TFLDefinitions.RouteList
     val jsonMap = Map("routeList" -> routeList)
     compact(render(jsonMap))
   }

@@ -8,9 +8,6 @@ object EmailAlertInterface extends StartStopControlInterface{
   var alertsEnabled = false
   var numberEmailsSent = 0
 
-  def setEnabled(enabled:Boolean) = {
-    
-  }
 
   def sendAlert(alertText:String) = {
     if (alertsEnabled) {
