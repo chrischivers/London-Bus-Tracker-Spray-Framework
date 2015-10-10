@@ -5,10 +5,11 @@ import akka.actor.ActorSystem
 import com.predictionalgorithm.controlinterface._
 import com.predictionalgorithm.prediction.KNNPredictionImpl
 import com.predictionalgorithm.serverui.MonitoringUI
+import grizzled.slf4j.Logger
 
 
 object Main extends App {
-
+  val logger = Logger[this.type]
   /**
    * How frequently the server UI refreshes
    */
@@ -20,6 +21,8 @@ object Main extends App {
    */
   SwingUtilities.invokeLater(new Runnable() {
     def run() {
+
+      logger.info("Starting")
       val ui = new MonitoringUI(UI_REFRESH_INTERVAL)
       ui.setStreamProcessing(StreamProcessingControlInterface)
       ui.setHistoricalDataCollection(HistoricalDataCollectionControlInterface)

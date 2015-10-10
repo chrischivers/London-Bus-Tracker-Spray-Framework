@@ -2,10 +2,14 @@ package com.predictionalgorithm.processes.weather
 
 import java.util.Calendar
 
+import grizzled.slf4j.Logger
+
 import scala.io.Source
 
 
 object Weather {
+
+  val logger = Logger[this.type]
 
   private val WEATHER_API_URL = "http://api.openweathermap.org/data/2.5/forecast/city?id=2643743&mode=xml&APPID=e236bab1ce50fe2b7c7fd581b2e467f1"
   private val DEFAULT_IF_UNAVAILABLE = 0.0
@@ -19,11 +23,11 @@ object Weather {
         loadCurrentRainFallFromWeb()
       } catch {
         case e: Exception =>
-          println("weather exception, using default")
+          logger.debug("weather exception, using default")
           lastRainfall = DEFAULT_IF_UNAVAILABLE
           lastValidTo = System.currentTimeMillis() + DEFAULT_VALID_TO_IF_UNAVAILABLE
       }
-      println("weather fetched: " + lastRainfall)
+      logger.info("weather fetched: " + lastRainfall)
       lastRainfall
     } else lastRainfall
   }
@@ -43,8 +47,6 @@ object Weather {
         val day = line.substring(timeToStartPoint + 8, timeToStartPoint + 10).toInt
         val hour = line.substring(timeToStartPoint + 11, timeToStartPoint + 13).toInt
 
-        println(timeFromStartPoint + ", " + timeToStartPoint + ", " + year + ", " + month + ", " + day + ", " + hour)
-
         val cal = Calendar.getInstance()
 
         cal.set(Calendar.YEAR, year)
@@ -58,7 +60,7 @@ object Weather {
         if (cal.getTimeInMillis - System.currentTimeMillis() < 0) helper(timeToStartPoint)
         else {
           if (line.indexOf("<precipitation></precipitation>", timeToStartPoint) != -1 && line.indexOf("<precipitation></precipitation>", timeToStartPoint) < line.indexOf("<precipitation unit", timeToStartPoint)) {
-            println("No rainfall")
+            logger.info("No rainfall")
             lastRainfall = DEFAULT_IF_UNAVAILABLE
             lastValidTo = cal.getTimeInMillis
           } else {
@@ -77,7 +79,7 @@ object Weather {
     }
     catch {
       case e: Exception =>
-        println("Rainfall exception, using default value")
+        logger.debug("Rainfall exception, using default value")
         lastRainfall = DEFAULT_IF_UNAVAILABLE
         lastValidTo = System.currentTimeMillis() + DEFAULT_VALID_TO_IF_UNAVAILABLE
     }

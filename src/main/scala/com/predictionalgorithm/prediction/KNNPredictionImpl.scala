@@ -119,8 +119,6 @@ object KNNPredictionImpl extends PredictionInterface {
     val currentRainFallNormalised = normaliseDouble(currentRainFall, minRainfall, maxRainfall)
     val currentTimeNormalised = normaliseLong(currentTime, minTimeDifference, maxTimeDifference)
 
-    //println("raw valuea array: "+ rawValueArrayAllDays)
-
     val normalisedArray = rawValueArrayAllDays.map { case (duration, timeOffset, day, rainfall, timeStamp) =>
       (duration,
         normaliseInt(timeOffset, minTimeOffset, maxTimeOffset),
@@ -128,7 +126,6 @@ object KNNPredictionImpl extends PredictionInterface {
         normaliseDouble(rainfall, minDayOfWeek, maxDayOfWeek),
         normaliseLong(timeStamp, minTimeDifference, maxTimeDifference))
     }
-    // println("normalised array: " + normalisedArray)
 
     val durationWeightedDistanceArray = normalisedArray.map { case (duration, timeOffset, day, rainfall, timeStamp) =>
       (duration, math.sqrt(
@@ -139,8 +136,6 @@ object KNNPredictionImpl extends PredictionInterface {
     }
 
     val sortedDurationWeightedDistanceArray = durationWeightedDistanceArray.sortBy(_._2)
-
-    //  println("sortedDurationWeightedDistanceArray array: " + sortedDurationWeightedDistanceArray)
 
     sortedDurationWeightedDistanceArray
   }

@@ -4,6 +4,7 @@ import akka.actor.{Actor, Props}
 import com.predictionalgorithm.database.tfl.{TFLGetRouteDefinitionDocument, TFLInsertUpdateRouteDefinition}
 import com.predictionalgorithm.database.{ROUTE_DEFINITIONS_COLLECTION, ROUTE_DEFINITION_DOCUMENT}
 import com.predictionalgorithm.datadefinitions.LoadResourceFromSource
+import grizzled.slf4j.Logger
 
 import scala.io.{BufferedSource, Source}
 
@@ -13,6 +14,7 @@ object LoadRouteDefinitions extends LoadResourceFromSource {
 
   var percentageComplete = 0
   private val collection = ROUTE_DEFINITIONS_COLLECTION
+  val logger = Logger[this.type]
 
   //Route definition Map (RouteID Direction -> List of Point Sequence, Stop Code, FirstLast, PolyLine
   private var routeDefinitionMap: Map[(String, Int), List[(Int, String, Option[String], String)]] = Map()
@@ -49,7 +51,7 @@ object LoadRouteDefinitions extends LoadResourceFromSource {
       }
     }
     routeDefinitionMap = tempMap
-    println("Number route definitions fetched from DB: " + routeDefinitionMap.size)
+    logger.info("Number route definitions fetched from DB: " + routeDefinitionMap.size)
   }
 
   def updateFromWeb() = {
@@ -60,13 +62,14 @@ object LoadRouteDefinitions extends LoadResourceFromSource {
 
   class UpdateRouteDefinitionsFromWeb extends Actor {
 
+    val logger = Logger[this.type]
     override def receive: Receive = {
       case "start" => updateFromWebFile()
     }
 
 
     def updateFromWebFile() = {
-      println("Loading Route Definitions From CSV file...")
+      logger.info("Loading Route Definitions From CSV file...")
       var tempMap: Map[(String, Int), Map[Int, (String, Option[String], String)]] = Map()
 
       var numberLinesProcessed = 0
@@ -113,17 +116,19 @@ object LoadRouteDefinitions extends LoadResourceFromSource {
         }
 
         catch {
-          case e: ArrayIndexOutOfBoundsException => if (line != "\u001A") throw new ArrayIndexOutOfBoundsException("Error reading route list file. Error on line: " + line)
-          case nfe: NumberFormatException => println("number format exception for line: " + line + ". Moving on...")
+          case e: ArrayIndexOutOfBoundsException => if (line != "\u001A") {
+            logger.error("Error reading route list file. Error on line: " + line)
+            throw new ArrayIndexOutOfBoundsException("Error reading route list file. Error on line: " + line)
+          }
+          case nfe: NumberFormatException => logger.debug("number format exception for line: " + line + ". Moving on...")
         }
       })
 
 
-      println("Route Definitions from CSV loaded")
+      logger.info("Route Definitions from CSV loaded")
       val mapforHTMLFetches = fetchUsingHTMLMethod()
       tempMap = tempMap ++ mapforHTMLFetches
       routeDefinitionMap = tempMap.map { case ((route, dir), mapValue) => ((route, dir), mapValue.map { case (seq, (stopCode, firstLast, polyLine)) => (seq, stopCode, firstLast, polyLine) }.toList.sortBy(_._1)) }
-      println(routeDefinitionMap)
       persistToDB()
       percentageComplete = 100
     }
@@ -222,7 +227,7 @@ object LoadRouteDefinitions extends LoadResourceFromSource {
             TFLInsertUpdateRouteDefinition.insertDoc(newDoc)
         }
     }
-    println("Route Definitons loaded from web and persisted to DB")
+    logger.info("Route Definitons loaded from web and persisted to DB")
   }
 /*
   private def updateFromWebOLDMETHOD() = {

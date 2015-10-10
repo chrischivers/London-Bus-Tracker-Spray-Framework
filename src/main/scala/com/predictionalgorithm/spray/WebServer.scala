@@ -8,6 +8,7 @@ import com.predictionalgorithm.commons.Commons._
 import com.predictionalgorithm.datadefinitions.tfl.TFLDefinitions
 import com.predictionalgorithm.prediction.{KNNPredictionImpl, PredictionRequest}
 import com.predictionalgorithm.streaming.PackagedStreamObject
+import grizzled.slf4j.Logger
 import spray.can.websocket.FrameCommandFailed
 import spray.can.websocket.frame.{TextFrameStream, TextFrame}
 import spray.can.{websocket, Http}
@@ -57,6 +58,8 @@ object WebServer {
 
   class WebSocketWorker(val serverConnection: ActorRef) extends HttpServiceActor with websocket.WebSocketServerWorker {
 
+    val logger = Logger[this.type]
+
     // Escalates to web socket
     override def receive = handshaking orElse businessLogicNoUpgrade orElse closeLogic
 
@@ -73,11 +76,12 @@ object WebServer {
           mode = "ROUTELIST"
           val splitReceive = receivedStr.split(",").drop(1).toList
           routeList = routeList ++ splitReceive
-          println("1 connection: " + routeList)
+          logger.info("1 connection made. Route List: " + routeList)
         } else if (receivedStr.startsWith("RADIUS")) {
           mode = "RADIUS"
           val temporaryStr = receivedStr.replaceAll("\\)","").replaceAll("\\(","").split(",").drop(1).map(_.toDouble) //Take out brackets
           selectedRadius = temporaryStr.head //Sets the radius
+          logger.info("1 connection made. Radius " + selectedRadius)
           centrePoint = temporaryStr.drop(1) // Sets the centre Point
         }
 
@@ -172,7 +176,6 @@ object WebServer {
               parameters("direction") { (direction) =>
                 parameters("fromStop") { (fromStop) =>
                   parameters("toStop") { (toStop) =>
-                    println(route + "," + direction + "," + fromStop + "," + toStop)
                     complete {
                       makePrediction(route, direction.toInt, fromStop, toStop)
                     }

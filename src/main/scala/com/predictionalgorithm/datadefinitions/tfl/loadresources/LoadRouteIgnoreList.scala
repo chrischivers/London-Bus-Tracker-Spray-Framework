@@ -1,10 +1,12 @@
 package com.predictionalgorithm.datadefinitions.tfl.loadresources
 
 import com.predictionalgorithm.datadefinitions.LoadResourceFromSource
+import grizzled.slf4j.Logger
 
 object LoadRouteIgnoreList extends LoadResourceFromSource {
 
   override val bufferedSource = DEFAULT_ROUTE_IGNORE_LIST_FILE
+  val logger = Logger[this.type]
 
   lazy val routeIgnoreSet:Set[String] = {
     var routeIgnoreSet:Set[String] = Set()
@@ -15,10 +17,12 @@ object LoadRouteIgnoreList extends LoadResourceFromSource {
         routeIgnoreSet += splitLine(0)
       }
       catch {
-        case e: Exception => throw new Exception("Error reading route ignore list file. Error on line: " + line)
+        case e: Exception =>
+          logger.error("Error reading route ignore list file. Error on line: " + line)
+          throw new Exception("Error reading route ignore list file. Error on line: " + line)
       }
     })
-    println("Route Ignore List Loaded")
+    logger.info("Route Ignore List Loaded")
     routeIgnoreSet
   }
 }

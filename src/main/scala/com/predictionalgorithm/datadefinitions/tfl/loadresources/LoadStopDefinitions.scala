@@ -7,6 +7,7 @@ import com.predictionalgorithm.database.tfl.{TFLGetStopDefinitionDocument, TFLIn
 import com.predictionalgorithm.database.{STOP_DEFINITIONS_COLLECTION, STOP_DEFINITION_DOCUMENT}
 import com.predictionalgorithm.datadefinitions.ResourceOperations
 import com.predictionalgorithm.datadefinitions.tfl.StopDefinitionFields
+import grizzled.slf4j.Logger
 
 import scala.io.Source
 
@@ -16,6 +17,7 @@ object LoadStopDefinitions extends ResourceOperations {
   var percentageComplete = 0
 
   private val collection = STOP_DEFINITIONS_COLLECTION
+  val logger = Logger[this.type]
 
 
   // Maps StopCode -> (StopPointName;StopPointType;Towards;Bearing;StopPointIndicator;StopPointState;Latitude;Longitude)
@@ -47,7 +49,7 @@ object LoadStopDefinitions extends ResourceOperations {
       tempMap += (stopCode -> new StopDefinitionFields(stopName, stopType, towards, bearing, indicator, state, lat, lng))
     }
     stopDefinitionMap = tempMap
-    println("Number stop definitions fetched from DB: " + stopDefinitionMap.size)
+    logger.info("Number stop definitions fetched from DB: " + stopDefinitionMap.size)
   }
 
   def updateFromWeb() = {
@@ -65,12 +67,12 @@ object LoadStopDefinitions extends ResourceOperations {
 
     lazy val stopList: Set[String] = TFLGetStopDefinitionDocument.getDistinctStopCodes
     val totalNumberOfStops = stopList.size
-    println("Number of stops: " + stopList.size)
+    logger.info("Number of stops: " + stopList.size)
     var numberLinesProcessed = 0
     var tempMap: Map[String, StopDefinitionFields] = Map()
     def tflURL(stopCode: String): String = "http://countdown.api.tfl.gov.uk/interfaces/ura/instant_V1?StopCode1=" + stopCode + "&ReturnList=StopPointName,StopPointType,Towards,Bearing,StopPointIndicator,StopPointState,Latitude,Longitude"
 
-    println("Loading Stop Definitions From Web...")
+    logger.info("Loading Stop Definitions From Web...")
 
     stopList.foreach { x =>
       try {
@@ -85,11 +87,11 @@ object LoadStopDefinitions extends ResourceOperations {
         }
         )
       } catch {
-        case ioe:IOException => println("No stop information for stop " + x + ". Moving on...")//Skip and move on
+        case ioe:IOException => logger.debug("No stop information for stop " + x + ". Moving on...")//Skip and move on
       }
     }
     percentageComplete = 100
-    println("Stop definitons from web loaded")
+    logger.info("Stop definitons from web loaded")
     stopDefinitionMap = tempMap
     persistToDB()
   }
@@ -109,7 +111,7 @@ object LoadStopDefinitions extends ResourceOperations {
         val newDoc = new STOP_DEFINITION_DOCUMENT(stop_code, sdf.stopPointName, sdf.stopPointType, sdf.towards, sdf.bearing, sdf.stopPointIndicator, sdf.stopPointState, sdf.latitude, sdf.longitude)
         TFLInsertStopDefinition.insertDoc(newDoc)
     }
-    println("Stop Definitons loaded from web and persisted to DB")
+    logger.info("Stop Definitons loaded from web and persisted to DB")
 
   }
 

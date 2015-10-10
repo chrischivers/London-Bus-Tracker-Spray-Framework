@@ -3,6 +3,7 @@ package com.predictionalgorithm.database.tfl
 import akka.actor.{Actor, Props, ActorRef}
 import com.predictionalgorithm.database._
 import com.mongodb.casbah.commons.MongoDBObject
+import grizzled.slf4j.Logger
 
 
 object TFLInsertStopDefinition extends DatabaseInsert{
@@ -27,10 +28,13 @@ class TFLInsertStopDefinitionSupervisor extends Actor {
 class TFLInsertStopDefinition extends Actor {
 
   val collection = STOP_DEFINITIONS_COLLECTION
+  val logger = Logger[this.type]
 
   override def receive: Receive = {
     case doc1: STOP_DEFINITION_DOCUMENT => insertToDB(doc1)
-    case _ => throw new IllegalStateException("TFL Stop Definition Actor received unknown message")
+    case _ =>
+      logger.error("TFL Stop Definition Actor received unknown message")
+      throw new IllegalStateException("TFL Stop Definition Actor received unknown message")
   }
 
 
@@ -52,7 +56,6 @@ class TFLInsertStopDefinition extends Actor {
     if(cursor.length == 1) {
       val dbObject = cursor.next()
       if (dbObject.equals(newObj)) {
-        println("stop def same")
       } else {
         val query = MongoDBObject(
           collection.STOP_CODE -> doc.stopCode)

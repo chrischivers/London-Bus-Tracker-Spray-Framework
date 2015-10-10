@@ -7,6 +7,7 @@ import com.predictionalgorithm.datadefinitions.tfl.TFLDefinitions
 import com.predictionalgorithm.database.POINT_TO_POINT_COLLECTION
 import com.predictionalgorithm.database.tfl.{TFLDeletePointToPointDuration, TFLGetPointToPointDocument}
 import com.mongodb.casbah.Imports
+import grizzled.slf4j.Logger
 import org.bson.types.ObjectId
 
 /**
@@ -33,6 +34,8 @@ class CleanPointToPointData extends Actor {
   val collection = POINT_TO_POINT_COLLECTION
   val routeDefinitions = TFLDefinitions.RouteDefinitionMap
   val cursor = TFLGetPointToPointDocument.fetchAll()
+  val logger = Logger[this.type]
+
 
   override def receive: Receive = {
     case "start" => self ! cursor.next()
@@ -50,7 +53,7 @@ class CleanPointToPointData extends Actor {
 
     if (canDelete(routeID,direction,fromStop,toStop))  {
       CleanPointToPointData.numberDocumentsDeleted += 1
-      println("Deleting the following: Route: " + routeID + ". Direction: " + direction + ". From Stop: " + fromStop + ". To Stop: " + toStop)
+      logger.info("Deleting the following: Route: " + routeID + ". Direction: " + direction + ". From Stop: " + fromStop + ". To Stop: " + toStop)
       TFLDeletePointToPointDuration.deleteDocument(id)
     }
 

@@ -7,11 +7,13 @@ import com.predictionalgorithm.datadefinitions.tfl.TFLDefinitions
 import com.predictionalgorithm.database.tfl._
 import com.predictionalgorithm.database.{POLYLINE_INDEX_COLLECTION, POLYLINE_INDEX_DOCUMENT, ROUTE_DEFINITIONS_COLLECTION, ROUTE_DEFINITION_DOCUMENT}
 import com.mongodb.casbah.Imports
+import grizzled.slf4j.Logger
 
 import scala.io.{BufferedSource, Source}
 
 object FetchPolyLines extends ResourceOperations{
 
+  val logger = Logger[this.type]
   val TIME_BETWEEN_POLYLINE_QUERIES = 250
   var numberLinesProcessed = 0
   var numberPolyLinesUpdatedFromWeb = 0
@@ -27,7 +29,7 @@ object FetchPolyLines extends ResourceOperations{
     }
     polyLineIndexMap
   }
-  println("Polyline cache size: " + existingPolyLineIndex.size)
+  logger.info("Polyline cache size: " + existingPolyLineIndex.size)
 
 
   def updateAll() = {
@@ -55,7 +57,8 @@ object FetchPolyLines extends ResourceOperations{
       for (line <- s) {
         if (line.contains("OVER_QUERY_LIMIT")) {
           APICurrentIndex += 1
-          println("Over limit - new API being selected. APi Index: " + APICurrentIndex)
+          logger.info("" +
+            "Over limit - new API being selected. APi Index: " + APICurrentIndex)
           if (getAPIKeys.isDefined) return getPolyLineForTwoPoints(fromStopCode,toStopCode)
           else {
             throw new IllegalStateException("Out of API Keys. URL: " + url)
@@ -70,6 +73,7 @@ object FetchPolyLines extends ResourceOperations{
 
         }
       }
+      logger.error("Cannot get polyline between stops " + fromStopCode + " and " + toStopCode + ". URL: " + url)
       throw new IllegalStateException("Cannot get polyline between stops " + fromStopCode + " and " + toStopCode + ". URL: " + url)
     }
 
@@ -97,11 +101,11 @@ object FetchPolyLines extends ResourceOperations{
 
   class UpdateAllPolyLinesActor extends Actor {
 
+    val logger = Logger[this.type]
 
     override def receive: Receive = {
       case "updateAll" => updatePolyLines()
     }
-
 
     val collection = ROUTE_DEFINITIONS_COLLECTION
 
@@ -133,10 +137,10 @@ object FetchPolyLines extends ResourceOperations{
             }
             numberLinesProcessed += 1
         } else {
-          println("No more API keys available")
+          logger.info("No more API keys available")
         }
       }
-      println("Finished PolyLineProcessing")
+      logger.info("Finished PolyLineProcessing")
     }
 
 

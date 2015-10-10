@@ -1,9 +1,12 @@
 package com.predictionalgorithm.datasource.tfl
 
 import com.predictionalgorithm.datasource.SourceLineFormatter
+import grizzled.slf4j.Logger
 
 
 object TFLSourceLineFormatterImpl extends SourceLineFormatter{
+  val logger = Logger[this.type]
+
   override def apply(sourceLineString: String): TFLSourceLineImpl = {
     val x = splitLine(sourceLineString)
     checkArrayCorrectLength(x)
@@ -19,6 +22,7 @@ object TFLSourceLineFormatterImpl extends SourceLineFormatter{
 
   def checkArrayCorrectLength(array: Array[String]) = {
     if (array.length != TFLDataSourceImpl.fieldVector.length) {
+      logger.debug("Source array has incorrect number of elements. Or invalid web page retrieved \n " + array)
       throw new IllegalArgumentException("Source array has incorrect number of elements. Or invalid web page retrieved \n " + array)
     }
   }

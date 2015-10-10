@@ -8,6 +8,7 @@ import akka.actor.{ OneForOneStrategy, Props, Actor}
 
 import com.predictionalgorithm.datasource._
 import com.predictionalgorithm.processes.ProcessingInterface
+import grizzled.slf4j.Logger
 
 
 final case class Start()
@@ -15,11 +16,13 @@ final case class Stop()
 final case class Next()
 
 class TFLIterateOverArrivalStreamSupervisor extends Actor {
+  val logger = Logger[this.type]
 
   val iteratingActor = context.actorOf(Props[IteratingActor])
 
   def receive = {
     case  Start=>
+      logger.info("Supervisor starting the iterating actor")
       iteratingActor ! Start
       iteratingActor ! Next
     case Stop => iteratingActor ! Stop
@@ -31,13 +34,12 @@ class TFLIterateOverArrivalStreamSupervisor extends Actor {
   override val supervisorStrategy =
     OneForOneStrategy(loggingEnabled = false) {
       case e: TimeoutException =>
-        println("Incoming Stream TimeOut Exception. Restarting...")
+        logger.debug("Incoming Stream TimeOut Exception. Restarting...")
         Thread.sleep(5000)
         TFLIterateOverArrivalStreamSupervisor.numberProcessedSinceRestart = 0
         Restart
       case e: Exception =>
-        println("Incoming Stream Exception. Restarting...")
-        println(e.printStackTrace())
+        logger.debug("Exception. Incoming Stream Exception. Restarting...")
         Thread.sleep(5000)
         TFLIterateOverArrivalStreamSupervisor.numberProcessedSinceRestart = 0
         Restart

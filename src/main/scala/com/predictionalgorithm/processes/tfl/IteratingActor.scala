@@ -3,6 +3,8 @@ package com.predictionalgorithm.processes.tfl
 import akka.actor.Actor
 import com.predictionalgorithm.datasource.{HttpDataStreamImpl, SourceIterator}
 import com.predictionalgorithm.datasource.tfl.{TFLDataSourceImpl, TFLSourceLineFormatterImpl}
+import grizzled.slf4j.Logger
+import org.slf4j.LoggerFactory
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Await, Future}
 import ExecutionContext.Implicits.global
@@ -11,6 +13,9 @@ import ExecutionContext.Implicits.global
  * Actor that iterates over live stream sending lines to be processed. On crash, the supervisor strategy restarts it
  */
 class IteratingActor extends Actor {
+
+  val logger = Logger[this.type]
+
   var it = getSourceIterator
 
   // Iterating pattern for this actor based on code snippet posted on StackOverflow
@@ -20,6 +25,7 @@ class IteratingActor extends Actor {
   def inactive: Receive = { // This is the behavior when inactive
     case Start =>
       context.become(active)
+      logger.info("Iterating Actor becoming active")
   }
 
   def active: Receive = { // This is the behavior when it's active
@@ -35,6 +41,7 @@ class IteratingActor extends Actor {
       }
 
   override def postRestart(reason: Throwable): Unit = {
+    logger.debug("Iterating Actor Restarting")
     self ! Start
     self ! Next
   }
@@ -42,10 +49,12 @@ class IteratingActor extends Actor {
   def getSourceIterator: Iterator[String] = {
     while (true) {
       try {
-        println("Getting HTTP Source")
+        logger.debug("Iterating Actor getting HTTP Source")
         return new SourceIterator(new HttpDataStreamImpl(TFLDataSourceImpl)).iterator
       } catch {
-        case e: Exception => Thread.sleep(5000)
+        case e: Exception =>
+          logger.debug("Iterating Actor error getting HTTP Source. Sleeping before retry")
+          Thread.sleep(5000)
       }
     }
     throw new IllegalStateException

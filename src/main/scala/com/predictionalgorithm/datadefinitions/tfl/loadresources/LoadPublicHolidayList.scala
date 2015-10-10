@@ -4,12 +4,14 @@ import java.text.SimpleDateFormat
 import java.util.{Date, Locale}
 
 import com.predictionalgorithm.datadefinitions.LoadResourceFromSource
+import grizzled.slf4j.Logger
 
 import scala.io.BufferedSource
 
 object LoadPublicHolidayList extends LoadResourceFromSource{
 
   override val bufferedSource: BufferedSource = DEFAULT_PUBLIC_HOLIDAY_LIST_FILE
+  val logger = Logger[this.type]
 
   lazy val publicHolidayList:List[Date] = {
     var publicHolidayList:List[Date] = List()
@@ -21,10 +23,12 @@ object LoadPublicHolidayList extends LoadResourceFromSource{
         publicHolidayList = publicHolidayList :+ date
       }
       catch {
-        case e: Exception => throw new Exception("Error reading public holiday list file. Error on line: " + line)
+        case e: Exception =>
+          logger.error("Error reading public holiday list file. Error on line: " + line)
+          throw new Exception("Error reading public holiday list file. Error on line: " + line)
       }
     })
-    println("Public holiday List Loaded")
+    logger.info("Public holiday List Loaded")
     publicHolidayList
   }
 

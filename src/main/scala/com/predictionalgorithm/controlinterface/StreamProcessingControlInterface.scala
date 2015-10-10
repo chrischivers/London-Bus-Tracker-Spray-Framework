@@ -3,11 +3,14 @@ package com.predictionalgorithm.controlinterface
 import akka.actor.{Props, ActorSystem}
 import com.predictionalgorithm.processes.tfl.TFLIterateOverArrivalStreamSupervisor
 import com.predictionalgorithm.processes.weather.Weather
+import grizzled.slf4j.Logger
 
 /**
  * User Control Interface for Stream Processing Control
  */
 object StreamProcessingControlInterface extends StartStopControlInterface {
+
+  val logger = Logger[this.type]
 
   val mb = 1024*1024
   val runtime = Runtime.getRuntime
@@ -51,7 +54,7 @@ object StreamProcessingControlInterface extends StartStopControlInterface {
     val linesRead = variableArray(0).toLong
     if (System.currentTimeMillis() - periodToCheck > timeStampLastChecked) {
       if (linesRead - linesReadOnLastCheck < MIN_LINES_TOREAD_IN_PERIOD && linesRead != 0) {
-        println("No lines being read")
+        logger.error("No lines being read")
         EmailAlertInterface.sendAlert(linesNotBeingReadAlertText)
       }
       timeStampLastChecked = System.currentTimeMillis()

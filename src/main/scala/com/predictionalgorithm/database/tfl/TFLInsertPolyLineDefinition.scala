@@ -4,10 +4,10 @@ import akka.actor.{Actor, Props, ActorRef}
 import com.predictionalgorithm.database._
 import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.Imports._
+import grizzled.slf4j.Logger
 
 
 object TFLInsertPolyLineDefinition extends DatabaseInsert{
-
 
   override protected val collection: DatabaseCollections = POLYLINE_INDEX_COLLECTION
   override val supervisor: ActorRef = actorDatabaseSystem.actorOf(Props[TFLInsertPolyLineDefinitionSupervisor], "TFLUpdatePolyLineSupervisor")
@@ -23,11 +23,14 @@ class TFLInsertPolyLineDefinitionSupervisor extends Actor {
 
 class TFLInsertPolyLineDefinition extends Actor {
 
+  val logger = Logger[this.type]
   val collection = POLYLINE_INDEX_COLLECTION
 
   override def receive: Receive = {
     case doc1: POLYLINE_INDEX_DOCUMENT => insertToDB(doc1)
-    case _ => throw new IllegalStateException("TFL PolyLine Definition Actor received unknown message")
+    case _ =>
+      logger.error("TFL PolyLine Definition Actor received unknown message")
+      throw new IllegalStateException("TFL PolyLine Definition Actor received unknown message")
   }
 
 

@@ -6,6 +6,7 @@ import com.predictionalgorithm.database._
 import com.mongodb.casbah.Imports._
 
 import com.mongodb.casbah.commons.MongoDBObject
+import grizzled.slf4j.Logger
 
 
 object TFLInsertUpdateRouteDefinition extends DatabaseInsert{
@@ -37,11 +38,14 @@ class TFLInsertUpdateRouteDefinitionSupervisor extends Actor {
 class TFLInsertUpdateRouteDefinition extends Actor {
 
   val collection = ROUTE_DEFINITIONS_COLLECTION
+  val logger = Logger[this.type]
 
   override def receive: Receive = {
     case doc: ROUTE_DEFINITION_DOCUMENT => insertToDB(doc)
     case (doc: ROUTE_DEFINITION_DOCUMENT, polyline:String) => updateDbWithPolyline(doc,polyline)
-    case _ => throw new IllegalStateException("TFL Route Definition Actor received unknown message")
+    case _ =>
+      logger.error("TFL Route Definition Actor received unknown message")
+      throw new IllegalStateException("TFL Route Definition Actor received unknown message")
   }
 
 
@@ -59,7 +63,6 @@ class TFLInsertUpdateRouteDefinition extends Actor {
     if(cursor.length == 1) {
       val dbObject = cursor.next()
       if (dbObject.equals(newObj)) {
-        println("route def same")
       } else {
         val query = MongoDBObject(
           collection.ROUTE_ID -> doc.route_ID,

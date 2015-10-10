@@ -41,6 +41,13 @@ libraryDependencies += "org.json4s" %% "json4s-native" % "3.2.10"
 
 libraryDependencies += "org.codehaus.mojo" % "ideauidesigner-maven-plugin" % "1.0-beta-1"
 
+
+
+libraryDependencies += "org.clapper" %% "grizzled-slf4j" % "1.0.2"
+
+libraryDependencies += "org.slf4j" % "slf4j-simple" % "1.7.12"
+
+
 libraryDependencies += "me.lessis" %% "courier" % "0.1.3"
 
 mainClass in assembly := Some("com.predictionalgorithm.Main")

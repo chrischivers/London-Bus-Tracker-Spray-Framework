@@ -3,11 +3,13 @@ package com.predictionalgorithm.controlinterface
 
 import com.predictionalgorithm.datadefinitions.tfl.TFLDefinitions
 import com.predictionalgorithm.datadefinitions.tools.FetchPolyLines
+import grizzled.slf4j.Logger
 
 /**
  * User Control Interface for the Adding Polylines Function
  */
 object AddPolyLinesControlInterface extends StartStopControlInterface {
+  val logger = Logger[this.type]
 
   /**
    * Gets the variable array for displaying on the User Interface
@@ -20,7 +22,7 @@ object AddPolyLinesControlInterface extends StartStopControlInterface {
     Array(numberLinesRead, numberPolyLinesUpdatedFromWeb,numberPolyLinesUpdatedFromCache)
   }
 
-  override def stop(): Unit = throw new IllegalArgumentException("Unable to stop Add PolyLines (will leave with incomplete data)")
+  override def stop(): Unit = throw new IllegalStateException("Unable to stop Add PolyLines (will leave with incomplete data)")
 
   override def start(): Unit = {
     TFLDefinitions.addPolyLinesFromWeb()

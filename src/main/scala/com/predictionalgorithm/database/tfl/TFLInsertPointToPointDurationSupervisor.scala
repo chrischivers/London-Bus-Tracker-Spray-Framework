@@ -86,8 +86,8 @@ class TFLPrunePointToPointActor extends Actor {
   val collection = POINT_TO_POINT_COLLECTION
   
   val PRUNE_THRESHOLD_K_LIMIT = 10
-  val PRUNE_THRESHOLD_TIME_LIMIT = 1800
-  val PRUNE_THRESHOLD_RAINFALL_LIMIT = 0.5
+  val PRUNE_THRESHOLD_TIME_LIMIT = 3600
+  val PRUNE_THRESHOLD_RAINFALL_LIMIT = 1
 
   override def receive: Actor.Receive = {
     case pruneObj: PruneRequest => pruneDBArray(pruneObj) 

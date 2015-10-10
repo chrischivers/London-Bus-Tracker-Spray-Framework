@@ -1,6 +1,7 @@
 package com.predictionalgorithm.datadefinitions.tfl.loadresources
 
 import com.predictionalgorithm.datadefinitions.LoadResourceFromSource
+import grizzled.slf4j.Logger
 
 import scala.io.BufferedSource
 
@@ -8,6 +9,7 @@ import scala.io.BufferedSource
 object LoadStopIgnoreList extends LoadResourceFromSource{
 
   override val bufferedSource: BufferedSource = DEFAULT_STOP_IGNORE_LIST_FILE
+  val logger = Logger[this.type]
 
   lazy val stopIgnoreSet:Set[String] = {
    var stopIgnoreSet:Set[String] = Set()
@@ -18,10 +20,12 @@ object LoadStopIgnoreList extends LoadResourceFromSource{
         stopIgnoreSet += splitLine(0)
       }
       catch {
-        case e: Exception => throw new Exception("Error reading stop ignore listfile. Error on line: " + line)
+        case e: Exception =>
+          logger.error("Error reading stop ignore listfile. Error on line: " + line)
+          throw new Exception("Error reading stop ignore listfile. Error on line: " + line)
       }
     })
-    println("Stop Ignore List Loaded")
+    logger.info("Stop Ignore List Loaded")
     stopIgnoreSet
   }
 

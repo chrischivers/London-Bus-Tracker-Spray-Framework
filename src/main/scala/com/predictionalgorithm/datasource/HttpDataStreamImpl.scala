@@ -1,6 +1,7 @@
 package com.predictionalgorithm.datasource
 
 import java.io.{BufferedReader, InputStreamReader}
+import grizzled.slf4j.Logger
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpGet
@@ -10,7 +11,9 @@ import org.apache.http.impl.client.{BasicCredentialsProvider, HttpClientBuilder}
  * Code adapted from Stack Overflow: http://stackoverflow.com/questions/6024376/apache-httpcomponents-httpclient-timeout
  * @param ds The DataSource
  */
+
 class HttpDataStreamImpl(ds: DataSource) extends DataStream{
+  val logger = Logger[this.type]
 
   def getStream: Stream[String] = {
 
@@ -37,6 +40,7 @@ class HttpDataStreamImpl(ds: DataSource) extends DataStream{
       val br = new BufferedReader(new InputStreamReader(response.getEntity.getContent))
       Stream.continually(br.readLine()).takeWhile(_ != null)
     } else {
+      logger.debug("HTTP status not 200. Unable to retrieve input stream")
       throw new IllegalStateException("Unable to retrieve input stream (http status not 200")
     }
   }

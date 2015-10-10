@@ -5,11 +5,14 @@ import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.MongoDBObject
 import com.predictionalgorithm.database._
 import com.predictionalgorithm.database.tfl.TFLInsertStopDefinition._
+import grizzled.slf4j.Logger
 
 /**
  * Deletes a PointToPointDuration asyncronously
  */
 object TFLDeletePointToPointDuration extends DatabaseDelete {
+
+
 
   protected val collection: DatabaseCollections = POINT_TO_POINT_COLLECTION
 
@@ -28,9 +31,13 @@ class TFLDeletePointToPointDurationSupervisor extends Actor {
 
 class TFLDeletePointToPointDuration extends Actor {
 
+  val logger = Logger[this.type]
+
   override def receive: Receive = {
     case docID: ObjectId => deleteFromDB(docID)
-    case _ => throw new IllegalStateException("TFL Delete Point Actor received unknown message")
+    case _ =>
+      logger.error("TFL Delete Point Actor received unknown message")
+      throw new IllegalStateException("TFL Delete Point Actor received unknown message")
   }
 
 

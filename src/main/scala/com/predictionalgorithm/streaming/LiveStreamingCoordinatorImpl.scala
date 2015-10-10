@@ -5,6 +5,7 @@ import akka.actor._
 import com.predictionalgorithm.datadefinitions.tfl.TFLDefinitions
 import com.predictionalgorithm.datasource.tfl.TFLSourceLineImpl
 import com.predictionalgorithm.streaming.LiveStreamingCoordinatorImpl._
+import grizzled.slf4j.Logger
 import scala.concurrent.duration._
 
 /**
@@ -23,6 +24,8 @@ final case class LiveActorDetails(actorRef:ActorRef, routeID:String, lastLatitud
 final case class KillMessage(vehicleID: String, routeID: String, lastLatitude: String, lastLongitude: String)
 
 object LiveStreamingCoordinatorImpl extends LiveStreamingCoordinator {
+
+  val logger = Logger[this.type]
 
   override val CACHE_HOLD_FOR_TIME: Int = 600000
   override val IDLE_TIME_UNTIL_ACTOR_KILLED: Int = 600000
@@ -48,7 +51,7 @@ class LiveVehicleSupervisor extends Actor {
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
       case _: Exception =>
-        println("Vehicle actor exception")
+        logger.debug("Vehicle actor exception")
         Escalate
       case t =>
         super.supervisorStrategy.decider.applyOrElse(t, (_: Any) => Escalate)
