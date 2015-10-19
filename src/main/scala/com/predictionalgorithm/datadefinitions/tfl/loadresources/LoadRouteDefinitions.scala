@@ -4,18 +4,16 @@ import akka.actor.{Actor, Props}
 import com.predictionalgorithm.database.tfl.{TFLGetRouteDefinitionDocument, TFLInsertUpdateRouteDefinition}
 import com.predictionalgorithm.database.{ROUTE_DEFINITIONS_COLLECTION, ROUTE_DEFINITION_DOCUMENT}
 import com.predictionalgorithm.datadefinitions.LoadResourceFromSource
-import grizzled.slf4j.Logger
+import com.typesafe.scalalogging.LazyLogging
 
 import scala.io.{BufferedSource, Source}
 
-object LoadRouteDefinitions extends LoadResourceFromSource {
+object LoadRouteDefinitions extends LoadResourceFromSource with LazyLogging {
 
   override val bufferedSource: BufferedSource = DEFAULT_ROUTE_DEF_FILE
 
   var percentageComplete = 0
   private val collection = ROUTE_DEFINITIONS_COLLECTION
-  val logger = Logger[this.type]
-
   //Route definition Map (RouteID Direction -> List of Point Sequence, Stop Code, FirstLast, PolyLine
   private var routeDefinitionMap: Map[(String, Int), List[(Int, String, Option[String], String)]] = Map()
   private val routesToFetchByHTML = getRoutesToFetchByHtml
@@ -60,9 +58,8 @@ object LoadRouteDefinitions extends LoadResourceFromSource {
   }
 
 
-  class UpdateRouteDefinitionsFromWeb extends Actor {
+  class UpdateRouteDefinitionsFromWeb extends Actor with LazyLogging{
 
-    val logger = Logger[this.type]
     override def receive: Receive = {
       case "start" => updateFromWebFile()
     }

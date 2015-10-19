@@ -6,7 +6,7 @@ import com.predictionalgorithm.database._
 import com.mongodb.casbah.Imports._
 
 import com.mongodb.casbah.commons.MongoDBObject
-import grizzled.slf4j.Logger
+import com.typesafe.scalalogging.LazyLogging
 
 
 object TFLInsertUpdateRouteDefinition extends DatabaseInsert{
@@ -35,10 +35,9 @@ class TFLInsertUpdateRouteDefinitionSupervisor extends Actor {
   }
 }
 
-class TFLInsertUpdateRouteDefinition extends Actor {
+class TFLInsertUpdateRouteDefinition extends Actor with LazyLogging {
 
   val collection = ROUTE_DEFINITIONS_COLLECTION
-  val logger = Logger[this.type]
 
   override def receive: Receive = {
     case doc: ROUTE_DEFINITION_DOCUMENT => insertToDB(doc)

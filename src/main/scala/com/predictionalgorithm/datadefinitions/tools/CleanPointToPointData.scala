@@ -7,7 +7,7 @@ import com.predictionalgorithm.datadefinitions.tfl.TFLDefinitions
 import com.predictionalgorithm.database.POINT_TO_POINT_COLLECTION
 import com.predictionalgorithm.database.tfl.{TFLDeletePointToPointDuration, TFLGetPointToPointDocument}
 import com.mongodb.casbah.Imports
-import grizzled.slf4j.Logger
+import com.typesafe.scalalogging.LazyLogging
 import org.bson.types.ObjectId
 
 /**
@@ -29,12 +29,11 @@ object CleanPointToPointData  extends ResourceOperations {
 
 }
 
-class CleanPointToPointData extends Actor {
+class CleanPointToPointData extends Actor with LazyLogging {
 
   val collection = POINT_TO_POINT_COLLECTION
   val routeDefinitions = TFLDefinitions.RouteDefinitionMap
   val cursor = TFLGetPointToPointDocument.fetchAll()
-  val logger = Logger[this.type]
 
 
   override def receive: Receive = {

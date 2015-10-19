@@ -39,6 +39,16 @@ html, body, #map_canvas {
 
 }
 
+#settings_canvas .title {
+    font-family: "Lucida Grande", "Arial", sans-serif;
+    font-size: 30px;
+}
+
+#settings_canvas .subtitle {
+    font-family: "Lucida Grande", "Arial", sans-serif;
+    font-size: 15px;
+}
+
 #settings_canvas .content {
     display:table-row;
     margin-left: auto ;

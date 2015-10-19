@@ -4,7 +4,7 @@ import akka.actor.{Actor, Props, ActorRef}
 import com.predictionalgorithm.database._
 import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.Imports._
-import grizzled.slf4j.Logger
+import com.typesafe.scalalogging.LazyLogging
 
 
 object TFLInsertPolyLineDefinition extends DatabaseInsert{
@@ -21,9 +21,8 @@ class TFLInsertPolyLineDefinitionSupervisor extends Actor {
   }
 }
 
-class TFLInsertPolyLineDefinition extends Actor {
+class TFLInsertPolyLineDefinition extends Actor with LazyLogging  {
 
-  val logger = Logger[this.type]
   val collection = POLYLINE_INDEX_COLLECTION
 
   override def receive: Receive = {

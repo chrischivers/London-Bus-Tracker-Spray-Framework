@@ -3,10 +3,9 @@ package com.predictionalgorithm.database.tfl
 import com.predictionalgorithm.database.{DatabaseCollections, PREDICTION_DATABASE}
 import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.{WriteConcern, MongoCollection, MongoClient}
-import grizzled.slf4j.Logger
+import com.typesafe.scalalogging.LazyLogging
 
-object TFLMongoDBConnection {
-  val logger = Logger[this.type]
+object TFLMongoDBConnection extends LazyLogging {
   lazy val mc: MongoClient = MongoClient()
 
   lazy val getDatabase = mc(PREDICTION_DATABASE.name)

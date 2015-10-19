@@ -3,10 +3,10 @@ package com.predictionalgorithm.database.tfl
 import akka.actor.{Actor, Props, ActorRef}
 import com.predictionalgorithm.database._
 import com.mongodb.casbah.commons.MongoDBObject
-import grizzled.slf4j.Logger
+import com.typesafe.scalalogging.LazyLogging
 
 
-object TFLInsertStopDefinition extends DatabaseInsert{
+object TFLInsertStopDefinition extends DatabaseInsert {
 
   @volatile var numberDBUpdatesRequested = 0
   @volatile var numberDBInsertsRequested = 0
@@ -25,10 +25,9 @@ class TFLInsertStopDefinitionSupervisor extends Actor {
 }
 
 
-class TFLInsertStopDefinition extends Actor {
+class TFLInsertStopDefinition extends Actor with LazyLogging {
 
   val collection = STOP_DEFINITIONS_COLLECTION
-  val logger = Logger[this.type]
 
   override def receive: Receive = {
     case doc1: STOP_DEFINITION_DOCUMENT => insertToDB(doc1)

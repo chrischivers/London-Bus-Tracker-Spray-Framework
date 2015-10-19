@@ -4,14 +4,13 @@ import java.text.SimpleDateFormat
 import java.util.{Date, Locale}
 
 import com.predictionalgorithm.datadefinitions.LoadResourceFromSource
-import grizzled.slf4j.Logger
+import com.typesafe.scalalogging.LazyLogging
 
 import scala.io.BufferedSource
 
-object LoadPublicHolidayList extends LoadResourceFromSource{
+object LoadPublicHolidayList extends LoadResourceFromSource with LazyLogging {
 
   override val bufferedSource: BufferedSource = DEFAULT_PUBLIC_HOLIDAY_LIST_FILE
-  val logger = Logger[this.type]
 
   lazy val publicHolidayList:List[Date] = {
     var publicHolidayList:List[Date] = List()

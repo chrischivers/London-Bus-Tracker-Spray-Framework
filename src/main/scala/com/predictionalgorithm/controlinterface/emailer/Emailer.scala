@@ -2,13 +2,11 @@ package com.predictionalgorithm.controlinterface.emailer
 
 import javax.mail.internet.InternetAddress
 
+import com.typesafe.scalalogging.LazyLogging
 import courier.{Text, Mailer, Envelope}
-import grizzled.slf4j.Logger
 import scala.concurrent.ExecutionContext.Implicits.global
 
-object Emailer{
-
-  val logger = Logger[this.type]
+object Emailer extends LazyLogging {
 
   val mailer = Mailer("smtp.gmail.com", 587)
     .auth(true)

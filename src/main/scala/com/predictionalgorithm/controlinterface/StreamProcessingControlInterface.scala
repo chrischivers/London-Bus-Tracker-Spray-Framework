@@ -3,14 +3,12 @@ package com.predictionalgorithm.controlinterface
 import akka.actor.{Props, ActorSystem}
 import com.predictionalgorithm.processes.tfl.TFLIterateOverArrivalStreamSupervisor
 import com.predictionalgorithm.processes.weather.Weather
-import grizzled.slf4j.Logger
+import com.typesafe.scalalogging.LazyLogging
 
 /**
  * User Control Interface for Stream Processing Control
  */
-object StreamProcessingControlInterface extends StartStopControlInterface {
-
-  val logger = Logger[this.type]
+object StreamProcessingControlInterface extends StartStopControlInterface with LazyLogging {
 
   val mb = 1024*1024
   val runtime = Runtime.getRuntime

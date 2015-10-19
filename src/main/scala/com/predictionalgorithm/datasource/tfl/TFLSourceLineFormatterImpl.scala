@@ -1,11 +1,10 @@
 package com.predictionalgorithm.datasource.tfl
 
 import com.predictionalgorithm.datasource.SourceLineFormatter
-import grizzled.slf4j.Logger
+import com.typesafe.scalalogging.LazyLogging
 
 
-object TFLSourceLineFormatterImpl extends SourceLineFormatter{
-  val logger = Logger[this.type]
+object TFLSourceLineFormatterImpl extends SourceLineFormatter with LazyLogging {
 
   override def apply(sourceLineString: String): TFLSourceLineImpl = {
     val x = splitLine(sourceLineString)

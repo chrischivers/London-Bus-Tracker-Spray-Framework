@@ -3,13 +3,11 @@ package com.predictionalgorithm.controlinterface
 
 import com.predictionalgorithm.datadefinitions.tfl.TFLDefinitions
 import com.predictionalgorithm.datadefinitions.tools.FetchPolyLines
-import grizzled.slf4j.Logger
-
+import com.typesafe.scalalogging.LazyLogging
 /**
  * User Control Interface for the Adding Polylines Function
  */
-object AddPolyLinesControlInterface extends StartStopControlInterface {
-  val logger = Logger[this.type]
+object AddPolyLinesControlInterface extends StartStopControlInterface with LazyLogging {
 
   /**
    * Gets the variable array for displaying on the User Interface

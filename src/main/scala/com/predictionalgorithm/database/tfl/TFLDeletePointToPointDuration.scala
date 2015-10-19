@@ -5,7 +5,7 @@ import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.MongoDBObject
 import com.predictionalgorithm.database._
 import com.predictionalgorithm.database.tfl.TFLInsertStopDefinition._
-import grizzled.slf4j.Logger
+import com.typesafe.scalalogging.LazyLogging
 
 /**
  * Deletes a PointToPointDuration asyncronously
@@ -29,9 +29,7 @@ class TFLDeletePointToPointDurationSupervisor extends Actor {
 
 }
 
-class TFLDeletePointToPointDuration extends Actor {
-
-  val logger = Logger[this.type]
+class TFLDeletePointToPointDuration extends Actor with LazyLogging {
 
   override def receive: Receive = {
     case docID: ObjectId => deleteFromDB(docID)

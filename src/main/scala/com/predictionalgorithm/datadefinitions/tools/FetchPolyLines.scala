@@ -7,13 +7,12 @@ import com.predictionalgorithm.datadefinitions.tfl.TFLDefinitions
 import com.predictionalgorithm.database.tfl._
 import com.predictionalgorithm.database.{POLYLINE_INDEX_COLLECTION, POLYLINE_INDEX_DOCUMENT, ROUTE_DEFINITIONS_COLLECTION, ROUTE_DEFINITION_DOCUMENT}
 import com.mongodb.casbah.Imports
-import grizzled.slf4j.Logger
+import com.typesafe.scalalogging.LazyLogging
 
 import scala.io.{BufferedSource, Source}
 
-object FetchPolyLines extends ResourceOperations{
+object FetchPolyLines extends ResourceOperations with LazyLogging {
 
-  val logger = Logger[this.type]
   val TIME_BETWEEN_POLYLINE_QUERIES = 250
   var numberLinesProcessed = 0
   var numberPolyLinesUpdatedFromWeb = 0
@@ -99,9 +98,8 @@ object FetchPolyLines extends ResourceOperations{
   }
 
 
-  class UpdateAllPolyLinesActor extends Actor {
+  class UpdateAllPolyLinesActor extends Actor with LazyLogging {
 
-    val logger = Logger[this.type]
 
     override def receive: Receive = {
       case "updateAll" => updatePolyLines()

@@ -1,12 +1,11 @@
 package com.predictionalgorithm.datadefinitions.tfl.loadresources
 
 import com.predictionalgorithm.datadefinitions.LoadResourceFromSource
-import grizzled.slf4j.Logger
+import com.typesafe.scalalogging.LazyLogging
 
-object LoadRouteIgnoreList extends LoadResourceFromSource {
+object LoadRouteIgnoreList extends LoadResourceFromSource with LazyLogging {
 
   override val bufferedSource = DEFAULT_ROUTE_IGNORE_LIST_FILE
-  val logger = Logger[this.type]
 
   lazy val routeIgnoreSet:Set[String] = {
     var routeIgnoreSet:Set[String] = Set()

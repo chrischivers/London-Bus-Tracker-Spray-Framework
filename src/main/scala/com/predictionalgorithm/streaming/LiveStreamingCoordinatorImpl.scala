@@ -5,7 +5,7 @@ import akka.actor._
 import com.predictionalgorithm.datadefinitions.tfl.TFLDefinitions
 import com.predictionalgorithm.datasource.tfl.TFLSourceLineImpl
 import com.predictionalgorithm.streaming.LiveStreamingCoordinatorImpl._
-import grizzled.slf4j.Logger
+import com.typesafe.scalalogging.LazyLogging
 import scala.concurrent.duration._
 
 /**
@@ -23,9 +23,9 @@ final case class PackagedStreamObject(reg: String, nextArrivalTime: String, mark
 final case class LiveActorDetails(actorRef:ActorRef, routeID:String, lastLatitude:String, lastLongitude:String, lastUpdated:Long)
 final case class KillMessage(vehicleID: String, routeID: String, lastLatitude: String, lastLongitude: String)
 
-object LiveStreamingCoordinatorImpl extends LiveStreamingCoordinator {
+object LiveStreamingCoordinatorImpl extends LiveStreamingCoordinator{
 
-  val logger = Logger[this.type]
+  //val logger = Logger[this.type]
 
   override val CACHE_HOLD_FOR_TIME: Int = 600000
   override val IDLE_TIME_UNTIL_ACTOR_KILLED: Int = 600000
@@ -34,7 +34,7 @@ object LiveStreamingCoordinatorImpl extends LiveStreamingCoordinator {
 /**
  * The Supervising Actor
  */
-class LiveVehicleSupervisor extends Actor {
+class LiveVehicleSupervisor extends Actor  with LazyLogging {
 
 
   /**

@@ -3,7 +3,7 @@ import sbtassembly.AssemblyKeys
 
 name := "BbkProject"
 
-version := "2.25"
+version := "2.26"
 
 scalaVersion := "2.11.7"
 
@@ -43,9 +43,12 @@ libraryDependencies += "org.codehaus.mojo" % "ideauidesigner-maven-plugin" % "1.
 
 
 
-libraryDependencies += "org.clapper" %% "grizzled-slf4j" % "1.0.2"
+//libraryDependencies += "org.clapper" %% "grizzled-slf4j" % "1.0.2"
 
-libraryDependencies += "org.slf4j" % "slf4j-simple" % "1.7.12"
+//libraryDependencies += "org.slf4j" % "slf4j-simple" % "1.7.12"
+
+libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0"
+libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.1.2"
 
 
 libraryDependencies += "me.lessis" %% "courier" % "0.1.3"

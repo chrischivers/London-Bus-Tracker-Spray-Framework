@@ -1,10 +1,10 @@
 package com.predictionalgorithm.datasource
 
 import java.io.{BufferedReader, InputStreamReader}
-import grizzled.slf4j.Logger
+import com.typesafe.scalalogging.LazyLogging
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.config.RequestConfig
-import org.apache.http.client.methods.HttpGet
+import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet}
 import org.apache.http.impl.client.{BasicCredentialsProvider, HttpClientBuilder}
 
 /**
@@ -12,32 +12,18 @@ import org.apache.http.impl.client.{BasicCredentialsProvider, HttpClientBuilder}
  * @param ds The DataSource
  */
 
-class HttpDataStreamImpl(ds: DataSource) extends DataStream{
-  val logger = Logger[this.type]
+class HttpDataStreamImpl(ds: DataSource) extends DataStream with LazyLogging {
+  var response: Option[CloseableHttpResponse] = None
+  @volatile var streamOpened = false
 
   def getStream: Stream[String] = {
+    if (streamOpened) closeStream
+    response = Option(getResponse)
+    streamOpened = true
+    logger.debug("Opening Stream")
 
-    def getCredentialsProvider = {
-      val credentialsProvider = new BasicCredentialsProvider()
-      val authScope = ds.AUTHSCOPE
-      val credentials = new UsernamePasswordCredentials(ds.USERNAME,ds.PASSWORD)
-      credentialsProvider.setCredentials(authScope,credentials)
-      credentialsProvider
-    }
-
-    def getRequestBuilder = {
-      val requestBuilder = RequestConfig.custom()
-      requestBuilder.setConnectionRequestTimeout(ds.CONNECTION_TIMEOUT)
-      requestBuilder.setConnectTimeout(ds.CONNECTION_TIMEOUT)
-    }
-
-    val client = HttpClientBuilder.create()
-    client.setDefaultRequestConfig(getRequestBuilder.build())
-    client.setDefaultCredentialsProvider(getCredentialsProvider)
-    val httpGet = new HttpGet(ds.URL)
-    val response = client.build().execute(httpGet)
-    if (checkHttpStatusValid(response.getStatusLine.getStatusCode)) {
-      val br = new BufferedReader(new InputStreamReader(response.getEntity.getContent))
+    if (checkHttpStatusValid(response.get.getStatusLine.getStatusCode)) {
+      val br = new BufferedReader(new InputStreamReader(response.get.getEntity.getContent))
       Stream.continually(br.readLine()).takeWhile(_ != null)
     } else {
       logger.debug("HTTP status not 200. Unable to retrieve input stream")
@@ -45,11 +31,38 @@ class HttpDataStreamImpl(ds: DataSource) extends DataStream{
     }
   }
 
+  private def getResponse: CloseableHttpResponse = {
+
+    val client = HttpClientBuilder.create()
+    client.setDefaultRequestConfig(getRequestBuilder.build())
+    client.setDefaultCredentialsProvider(getCredentialsProvider)
+    val httpGet = new HttpGet(ds.URL)
+    val response = client.build().execute(httpGet)
+    response
+  }
+
+  private def getCredentialsProvider = {
+    val credentialsProvider = new BasicCredentialsProvider()
+    val authScope = ds.AUTHSCOPE
+    val credentials = new UsernamePasswordCredentials(ds.USERNAME, ds.PASSWORD)
+    credentialsProvider.setCredentials(authScope, credentials)
+    credentialsProvider
+  }
+
+  private def getRequestBuilder = {
+    val requestBuilder = RequestConfig.custom()
+    requestBuilder.setConnectionRequestTimeout(ds.CONNECTION_TIMEOUT)
+    requestBuilder.setConnectTimeout(ds.CONNECTION_TIMEOUT)
+  }
+
+  def closeStream() = {
+    logger.debug("Closing Stream")
+    response.get.close()
+    response = None
+    streamOpened = false
+  }
+
   private def checkHttpStatusValid(httpStatusCode: Int): Boolean = httpStatusCode == 200
 
   override def getNumberLinesToDisregard: Int = ds.NUMBER_LINES_TO_DISREGARD
 }
-
-
-
-

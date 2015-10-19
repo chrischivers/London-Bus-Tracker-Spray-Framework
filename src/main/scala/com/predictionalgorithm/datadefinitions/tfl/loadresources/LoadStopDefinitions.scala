@@ -7,17 +7,16 @@ import com.predictionalgorithm.database.tfl.{TFLGetStopDefinitionDocument, TFLIn
 import com.predictionalgorithm.database.{STOP_DEFINITIONS_COLLECTION, STOP_DEFINITION_DOCUMENT}
 import com.predictionalgorithm.datadefinitions.ResourceOperations
 import com.predictionalgorithm.datadefinitions.tfl.StopDefinitionFields
-import grizzled.slf4j.Logger
+import com.typesafe.scalalogging.LazyLogging
 
 import scala.io.Source
 
 
-object LoadStopDefinitions extends ResourceOperations {
+object LoadStopDefinitions extends ResourceOperations with LazyLogging  {
 
   var percentageComplete = 0
 
   private val collection = STOP_DEFINITIONS_COLLECTION
-  val logger = Logger[this.type]
 
 
   // Maps StopCode -> (StopPointName;StopPointType;Towards;Bearing;StopPointIndicator;StopPointState;Latitude;Longitude)

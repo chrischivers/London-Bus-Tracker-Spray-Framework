@@ -7,16 +7,16 @@ import akka.actor.SupervisorStrategy._
 import akka.actor.{ OneForOneStrategy, Props, Actor}
 
 import com.predictionalgorithm.datasource._
+import com.predictionalgorithm.datasource.tfl.TFLDataSourceImpl
 import com.predictionalgorithm.processes.ProcessingInterface
-import grizzled.slf4j.Logger
+import com.typesafe.scalalogging.LazyLogging
 
 
 final case class Start()
 final case class Stop()
 final case class Next()
 
-class TFLIterateOverArrivalStreamSupervisor extends Actor {
-  val logger = Logger[this.type]
+class TFLIterateOverArrivalStreamSupervisor extends Actor with LazyLogging {
 
   val iteratingActor = context.actorOf(Props[IteratingActor])
 
@@ -50,9 +50,11 @@ class TFLIterateOverArrivalStreamSupervisor extends Actor {
 }
 
 
-object TFLIterateOverArrivalStreamSupervisor extends ProcessingInterface{
+object TFLIterateOverArrivalStreamSupervisor extends ProcessingInterface with LazyLogging {
   @volatile var numberProcessed:Long = 0
   @volatile var numberProcessedSinceRestart:Long = 0
+  val httpDataStream = new HttpDataStreamImpl(TFLDataSourceImpl)
+  val sourceIterator = new SourceIterator(httpDataStream)
 
   val supervisor = actorProcessingSystem.actorOf(Props[TFLIterateOverArrivalStreamSupervisor], name = "TFLIterateOverArrivalStreamSupervisor")
 
@@ -64,6 +66,12 @@ object TFLIterateOverArrivalStreamSupervisor extends ProcessingInterface{
 
   override def stop(): Unit = {
     supervisor ! Stop
+  }
+
+  def getSourceIterator: Iterator[String] = {
+        logger.debug("Getting HTTP Source Iterator")
+        sourceIterator.iterator
+
   }
 
 }

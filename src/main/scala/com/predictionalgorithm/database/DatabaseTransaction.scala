@@ -3,14 +3,13 @@ package com.predictionalgorithm.database
 import akka.actor.{Actor, ActorRef, ActorSystem}
 import com.predictionalgorithm.Main
 import com.predictionalgorithm.database.tfl.TFLMongoDBConnection
-import grizzled.slf4j.Logger
+import com.typesafe.scalalogging.LazyLogging
 
 import scala.util.{Failure, Success, Try}
 
 case class Completed()
 
-trait DatabaseTransaction {
-  val logger = Logger[this.type]
+trait DatabaseTransaction extends LazyLogging {
 
   protected val actorDatabaseSystem = ActorSystem("DatabaseSystem")
   val supervisor:ActorRef

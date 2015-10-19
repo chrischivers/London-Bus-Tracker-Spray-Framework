@@ -2,14 +2,12 @@ package com.predictionalgorithm.processes.weather
 
 import java.util.Calendar
 
-import grizzled.slf4j.Logger
+import com.typesafe.scalalogging.LazyLogging
 
 import scala.io.Source
 
 
-object Weather {
-
-  val logger = Logger[this.type]
+object Weather extends LazyLogging  {
 
   private val WEATHER_API_URL = "http://api.openweathermap.org/data/2.5/forecast/city?id=2643743&mode=xml&APPID=e236bab1ce50fe2b7c7fd581b2e467f1"
   private val DEFAULT_IF_UNAVAILABLE = 0.0

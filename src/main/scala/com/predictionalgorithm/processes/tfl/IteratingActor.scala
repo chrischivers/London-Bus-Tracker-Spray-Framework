@@ -3,8 +3,7 @@ package com.predictionalgorithm.processes.tfl
 import akka.actor.Actor
 import com.predictionalgorithm.datasource.{HttpDataStreamImpl, SourceIterator}
 import com.predictionalgorithm.datasource.tfl.{TFLDataSourceImpl, TFLSourceLineFormatterImpl}
-import grizzled.slf4j.Logger
-import org.slf4j.LoggerFactory
+import com.typesafe.scalalogging.{LazyLogging, Logger}
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Await, Future}
 import ExecutionContext.Implicits.global
@@ -12,11 +11,9 @@ import ExecutionContext.Implicits.global
 /**
  * Actor that iterates over live stream sending lines to be processed. On crash, the supervisor strategy restarts it
  */
-class IteratingActor extends Actor {
+class IteratingActor extends Actor with LazyLogging {
 
-  val logger = Logger[this.type]
-
-  var it = getSourceIterator
+  val it = TFLIterateOverArrivalStreamSupervisor.getSourceIterator
 
   // Iterating pattern for this actor based on code snippet posted on StackOverflow
   //http://stackoverflow.com/questions/5626285/pattern-for-interruptible-loops-using-actors
@@ -46,17 +43,5 @@ class IteratingActor extends Actor {
     self ! Next
   }
 
-  def getSourceIterator: Iterator[String] = {
-    while (true) {
-      try {
-        logger.debug("Iterating Actor getting HTTP Source")
-        return new SourceIterator(new HttpDataStreamImpl(TFLDataSourceImpl)).iterator
-      } catch {
-        case e: Exception =>
-          logger.debug("Iterating Actor error getting HTTP Source. Sleeping before retry")
-          Thread.sleep(5000)
-      }
-    }
-    throw new IllegalStateException
-  }
+
 }

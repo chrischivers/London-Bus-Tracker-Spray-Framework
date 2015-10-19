@@ -8,7 +8,7 @@ import com.predictionalgorithm.commons.Commons._
 import com.predictionalgorithm.datadefinitions.tfl.TFLDefinitions
 import com.predictionalgorithm.prediction.{KNNPredictionImpl, PredictionRequest}
 import com.predictionalgorithm.streaming.PackagedStreamObject
-import grizzled.slf4j.Logger
+import com.typesafe.scalalogging.LazyLogging
 import spray.can.websocket.FrameCommandFailed
 import spray.can.websocket.frame.{TextFrameStream, TextFrame}
 import spray.can.{websocket, Http}
@@ -56,9 +56,7 @@ object WebServer {
     def props(serverConnection: ActorRef) = Props(classOf[WebSocketWorker], serverConnection)
   }
 
-  class WebSocketWorker(val serverConnection: ActorRef) extends HttpServiceActor with websocket.WebSocketServerWorker {
-
-    val logger = Logger[this.type]
+  class WebSocketWorker(val serverConnection: ActorRef) extends HttpServiceActor with websocket.WebSocketServerWorker with LazyLogging {
 
     // Escalates to web socket
     override def receive = handshaking orElse businessLogicNoUpgrade orElse closeLogic

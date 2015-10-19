@@ -5,11 +5,10 @@ import akka.actor.ActorSystem
 import com.predictionalgorithm.controlinterface._
 import com.predictionalgorithm.prediction.KNNPredictionImpl
 import com.predictionalgorithm.serverui.MonitoringUI
-import grizzled.slf4j.Logger
+import com.typesafe.scalalogging.LazyLogging
 
 
-object Main extends App {
-  val logger = Logger[this.type]
+object Main extends App with LazyLogging {
   /**
    * How frequently the server UI refreshes
    */
