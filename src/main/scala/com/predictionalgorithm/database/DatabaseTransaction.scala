@@ -7,8 +7,6 @@ import com.typesafe.scalalogging.LazyLogging
 
 import scala.util.{Failure, Success, Try}
 
-case class Completed()
-
 trait DatabaseTransaction extends LazyLogging {
 
   protected val actorDatabaseSystem = ActorSystem("DatabaseSystem")

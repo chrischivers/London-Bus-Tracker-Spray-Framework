@@ -348,7 +348,7 @@ public class MonitoringUI {
         dBPullTransactionsRequested.setText("0");
         DataProcessingPanel.add(dBPullTransactionsRequested, new GridConstraints(7, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JLabel label10 = new JLabel();
-        label10.setText("Database Pull Transactions Requested");
+        label10.setText("Number records pulled from DB requested");
         DataProcessingPanel.add(label10, new GridConstraints(7, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         startStopHistoricalDataCollectionButton = new JButton();
         startStopHistoricalDataCollectionButton.setText("Enable Historical Data Collection");
@@ -378,7 +378,7 @@ public class MonitoringUI {
         dBPullTransactionsExecuted.setText("0");
         DataProcessingPanel.add(dBPullTransactionsExecuted, new GridConstraints(8, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JLabel label14 = new JLabel();
-        label14.setText("Database Pull Transactions Executed");
+        label14.setText("Number records pulled from DB executed");
         DataProcessingPanel.add(label14, new GridConstraints(8, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         dbTransactionsDroppedValue = new JLabel();
         dbTransactionsDroppedValue.setText("0");

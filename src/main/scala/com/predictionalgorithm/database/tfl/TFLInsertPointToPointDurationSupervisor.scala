@@ -10,14 +10,13 @@ import com.mongodb.casbah.Imports._
 
 
 case class PruneRequest(mongoObj: Imports.DBObject, timeOffSet: Int, rainfall: Double)
-case class PruneCompleted()
 
 object TFLInsertPointToPointDurationSupervisor extends DatabaseInsert {
   val collection = POINT_TO_POINT_COLLECTION
   override val supervisor = actorDatabaseSystem.actorOf(Props[TFLInsertPointToPointDurationSupervisor], "InsertPointToPointSupervisor")
 
-  @volatile var numberDBPullTransactionsRequested: Long = 0
-  @volatile var numberDBPullTransactionsExecuted: Long = 0
+  @volatile var numberRecordsPulledFromDbRequested: Long = 0
+  @volatile var numberRecordsPulledFromDbExecuted: Long = 0
 
 }
 
@@ -31,8 +30,6 @@ class  TFLInsertPointToPointDurationSupervisor extends Actor {
   override def receive = {
     case doc: DatabaseDocument => insertDoc(doc)
     case po: PruneRequest => pruneDatabaseArray(po)
-    case Completed => TFLInsertPointToPointDurationSupervisor.numberDBTransactionsExecuted += 1
-    case PruneCompleted => TFLInsertPointToPointDurationSupervisor.numberDBPullTransactionsExecuted += 1
   }
 
 
@@ -45,7 +42,6 @@ class  TFLInsertPointToPointDurationSupervisor extends Actor {
   }
 
   def pruneDatabaseArray(pruneObj: PruneRequest) = {
-    TFLInsertPointToPointDurationSupervisor.numberDBPullTransactionsRequested += 1
     pruneRouter ! pruneObj
   }
 
@@ -73,7 +69,7 @@ class TFLInsertPointToPointDurationActor extends Actor {
 
     val pushUpdate = $push(collection.DURATION_LIST -> MongoDBObject(collection.DURATION -> doc.durationSeconds, collection.TIME_OFFSET -> doc.timeOffsetSeconds, collection.RAINFALL -> doc.rainfall, collection.TIME_STAMP -> System.currentTimeMillis()))
     val update = dbCollection.update(newObj, pushUpdate, upsert = true)
-    TFLInsertPointToPointDurationSupervisor.supervisor ! Completed
+    TFLInsertPointToPointDurationSupervisor.numberDBTransactionsExecuted += 1
     if (update.isUpdateOfExisting) {
       TFLInsertPointToPointDurationSupervisor.supervisor ! new PruneRequest(newObj, doc.timeOffsetSeconds, doc.rainfall)
     }
@@ -107,14 +103,20 @@ class TFLPrunePointToPointActor extends Actor {
       val prunedVector = durListVector.filter(x =>
         math.abs(x._2 - pruneObj.timeOffSet) <= PRUNE_THRESHOLD_TIME_LIMIT &&
           math.abs(x._4 - pruneObj.rainfall) <= PRUNE_THRESHOLD_RAINFALL_LIMIT)
+      val excessRecords = prunedVector.size - PRUNE_THRESHOLD_K_LIMIT
 
-      if (prunedVector.size > PRUNE_THRESHOLD_K_LIMIT) {
-        val entryToDelete = prunedVector.minBy(_._3) //Gets the oldest record in the vector
-        val updatePull = $pull(collection.DURATION_LIST -> MongoDBObject(collection.DURATION -> entryToDelete._1, collection.TIME_OFFSET -> entryToDelete._2, collection.TIME_STAMP -> entryToDelete._3, collection.RAINFALL -> entryToDelete._4))
 
-        TFLInsertPointToPointDurationSupervisor.dBCollection.update(pruneObj.mongoObj, updatePull)
+      if (excessRecords > 0) {
+        TFLInsertPointToPointDurationSupervisor.numberRecordsPulledFromDbRequested += excessRecords
+        // Delete all records above the K Threshold
+        val recordsToDelete = prunedVector.sortBy(_._3).take(excessRecords)
+        recordsToDelete.foreach(x=> {
+          val updatePull = $pull(collection.DURATION_LIST -> MongoDBObject(collection.DURATION -> x._1, collection.TIME_OFFSET -> x._2, collection.TIME_STAMP -> x._3, collection.RAINFALL -> x._4))
+          TFLInsertPointToPointDurationSupervisor.dBCollection.update(pruneObj.mongoObj, updatePull)
+          TFLInsertPointToPointDurationSupervisor.numberRecordsPulledFromDbExecuted += 1
+        })
       }
-      TFLInsertPointToPointDurationSupervisor.supervisor ! PruneCompleted
+
     }
   }
 

@@ -25,9 +25,9 @@ TFLProcessSourceLines.setHistoricalDataStoring(true)
     val numberDBTransactionsExecuted = TFLInsertPointToPointDurationSupervisor.numberDBTransactionsExecuted.toString
     val numberDBTransactionsOutstanding = (TFLInsertPointToPointDurationSupervisor.numberDBTransactionsRequested - TFLInsertPointToPointDurationSupervisor.numberDBTransactionsExecuted).toString
     val numberDBTransactionsDroppedDueToOverflow = TFLInsertPointToPointDurationSupervisor.numberDBTransactionsDroppedDueToOverflow.toString
-    val numberDBPullTransactionsRequested = TFLInsertPointToPointDurationSupervisor.numberDBPullTransactionsRequested.toString
-    val numberDBPullTransactionsExecuted = TFLInsertPointToPointDurationSupervisor.numberDBPullTransactionsExecuted.toString
-    Array(numberInHoldingBuffer, numberNonMatches, numberDBTransactionsRequested, numberDBTransactionsExecuted, numberDBTransactionsOutstanding, numberDBTransactionsDroppedDueToOverflow, numberDBPullTransactionsRequested, numberDBPullTransactionsExecuted)
+    val numberRecordsPulledFromDBRequested = TFLInsertPointToPointDurationSupervisor.numberRecordsPulledFromDbRequested.toString
+    val numberRecordsPulledFromDBExecuted = TFLInsertPointToPointDurationSupervisor.numberRecordsPulledFromDbExecuted.toString
+    Array(numberInHoldingBuffer, numberNonMatches, numberDBTransactionsRequested, numberDBTransactionsExecuted, numberDBTransactionsOutstanding, numberDBTransactionsDroppedDueToOverflow, numberRecordsPulledFromDBRequested, numberRecordsPulledFromDBExecuted)
   }
 
 

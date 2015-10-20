@@ -14,10 +14,11 @@ import org.apache.http.impl.client.{BasicCredentialsProvider, HttpClientBuilder}
 
 class HttpDataStreamImpl(ds: DataSource) extends DataStream with LazyLogging {
   var response: Option[CloseableHttpResponse] = None
-  @volatile var streamOpened = false
+  override val WAIT_TIME_AFTER_CLOSE: Int = 10000
+
 
   def getStream: Stream[String] = {
-    if (streamOpened) closeStream
+    if (streamOpened) closeStream()
     response = Option(getResponse)
     streamOpened = true
     logger.debug("Opening Stream")
@@ -60,6 +61,7 @@ class HttpDataStreamImpl(ds: DataSource) extends DataStream with LazyLogging {
     response.get.close()
     response = None
     streamOpened = false
+    Thread.sleep(WAIT_TIME_AFTER_CLOSE)
   }
 
   private def checkHttpStatusValid(httpStatusCode: Int): Boolean = httpStatusCode == 200
