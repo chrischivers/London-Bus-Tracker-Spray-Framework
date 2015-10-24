@@ -25,7 +25,6 @@ object Weather extends LazyLogging  {
           lastRainfall = DEFAULT_IF_UNAVAILABLE
           lastValidTo = System.currentTimeMillis() + DEFAULT_VALID_TO_IF_UNAVAILABLE
       }
-      logger.info("weather fetched: " + lastRainfall)
       lastRainfall
     } else lastRainfall
   }

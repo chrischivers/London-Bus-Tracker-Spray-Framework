@@ -10,7 +10,8 @@ import com.mongodb.casbah.Imports._
 
 
 case class PruneRequest(mongoObj: Imports.DBObject, timeOffSet: Int, rainfall: Double)
-case class Completed()
+case class PruneNumberDeletesRequested(n:Int)
+case class InsertCompleted()
 case class PruneCompleted()
 
 object TFLInsertPointToPointDurationSupervisor extends DatabaseInsert {
@@ -31,9 +32,10 @@ class  TFLInsertPointToPointDurationSupervisor extends Actor {
 
   override def receive = {
     case doc: DatabaseDocument => insertDoc(doc)
+    case InsertCompleted =>   TFLInsertPointToPointDurationSupervisor.numberDBTransactionsExecuted += 1
     case po: PruneRequest => pruneDatabaseArray(po)
-    case Completed =>   TFLInsertPointToPointDurationSupervisor.numberDBTransactionsExecuted += 1
     case PruneCompleted =>TFLInsertPointToPointDurationSupervisor.numberRecordsPulledFromDbExecuted += 1
+    case pndr: PruneNumberDeletesRequested =>  TFLInsertPointToPointDurationSupervisor.numberRecordsPulledFromDbRequested += pndr.n
   }
 
 
@@ -73,7 +75,7 @@ class TFLInsertPointToPointDurationActor extends Actor {
 
     val pushUpdate = $push(collection.DURATION_LIST -> MongoDBObject(collection.DURATION -> doc.durationSeconds, collection.TIME_OFFSET -> doc.timeOffsetSeconds, collection.RAINFALL -> doc.rainfall, collection.TIME_STAMP -> System.currentTimeMillis()))
     val update = dbCollection.update(newObj, pushUpdate, upsert = true)
-    TFLInsertPointToPointDurationSupervisor.supervisor ! Completed
+    TFLInsertPointToPointDurationSupervisor.supervisor ! InsertCompleted
     if (update.isUpdateOfExisting) {
       TFLInsertPointToPointDurationSupervisor.supervisor ! new PruneRequest(newObj, doc.timeOffsetSeconds, doc.rainfall)
     }
@@ -109,7 +111,7 @@ class TFLPrunePointToPointActor extends Actor {
 
 
       if (excessRecords > 0) {
-        TFLInsertPointToPointDurationSupervisor.numberRecordsPulledFromDbRequested += excessRecords
+        TFLInsertPointToPointDurationSupervisor.supervisor ! PruneNumberDeletesRequested(excessRecords)
         // Delete all records above the K Threshold
         val recordsToDelete = prunedVector.sortBy(_._3).take(excessRecords)
         recordsToDelete.foreach(x=> {

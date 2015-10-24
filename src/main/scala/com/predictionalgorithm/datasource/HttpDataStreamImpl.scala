@@ -18,7 +18,11 @@ class HttpDataStreamImpl(ds: DataSource) extends DataStream with LazyLogging {
 
 
   def getStream: Stream[String] = {
-    if (streamOpened) closeStream()
+    if (streamOpened) {
+      logger.info("Closing opened stream")
+      closeStream()
+      Thread.sleep(WAIT_TIME_AFTER_CLOSE)
+    }
     response = Option(getResponse)
     streamOpened = true
     logger.debug("Opening Stream")
@@ -61,7 +65,6 @@ class HttpDataStreamImpl(ds: DataSource) extends DataStream with LazyLogging {
     response.get.close()
     response = None
     streamOpened = false
-    Thread.sleep(WAIT_TIME_AFTER_CLOSE)
   }
 
   private def checkHttpStatusValid(httpStatusCode: Int): Boolean = httpStatusCode == 200

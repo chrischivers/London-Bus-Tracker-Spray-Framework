@@ -13,21 +13,23 @@ import ExecutionContext.Implicits.global
  */
 class IteratingActor extends Actor with LazyLogging {
 
-  val it = TFLIterateOverArrivalStreamSupervisor.getSourceIterator
-
   // Iterating pattern for this actor based on code snippet posted on StackOverflow
   //http://stackoverflow.com/questions/5626285/pattern-for-interruptible-loops-using-actors
   override def receive: Receive = inactive // Start out as inactive
 
   def inactive: Receive = { // This is the behavior when inactive
     case Start =>
-      context.become(active)
+      val x = TFLIterateOverArrivalStreamSupervisor.getSourceIterator
       logger.info("Iterating Actor becoming active")
+      context.become(active(x))
+
   }
 
-  def active: Receive = { // This is the behavior when it's active
+  def active(it: Iterator[String]): Receive = { // This is the behavior when it's active
     case Stop =>
       context.become(inactive)
+      TFLIterateOverArrivalStreamSupervisor.closeDataStream
+      logger.info("Closing data stream")
     case Next =>
         val lineFuture = Future(TFLSourceLineFormatterImpl(it.next()))
         val line = Await.result(lineFuture, 10 seconds)

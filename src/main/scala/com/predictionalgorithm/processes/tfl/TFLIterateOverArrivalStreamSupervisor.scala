@@ -40,6 +40,7 @@ class TFLIterateOverArrivalStreamSupervisor extends Actor with LazyLogging {
         Restart
       case e: Exception =>
         logger.debug("Exception. Incoming Stream Exception. Restarting...")
+        e.printStackTrace()
         Thread.sleep(5000)
         TFLIterateOverArrivalStreamSupervisor.numberProcessedSinceRestart = 0
         Restart
@@ -53,8 +54,8 @@ class TFLIterateOverArrivalStreamSupervisor extends Actor with LazyLogging {
 object TFLIterateOverArrivalStreamSupervisor extends ProcessingInterface with LazyLogging {
   @volatile var numberProcessed:Long = 0
   @volatile var numberProcessedSinceRestart:Long = 0
-  val httpDataStream = new HttpDataStreamImpl(TFLDataSourceImpl)
-  val sourceIterator = new SourceIterator(httpDataStream)
+  private val httpDataStream = new HttpDataStreamImpl(TFLDataSourceImpl)
+  private val sourceIterator = new SourceIterator(httpDataStream)
 
   val supervisor = actorProcessingSystem.actorOf(Props[TFLIterateOverArrivalStreamSupervisor], name = "TFLIterateOverArrivalStreamSupervisor")
 
@@ -72,6 +73,10 @@ object TFLIterateOverArrivalStreamSupervisor extends ProcessingInterface with La
         logger.debug("Getting HTTP Source Iterator")
         sourceIterator.iterator
 
+  }
+
+  def closeDataStream() = {
+    httpDataStream.closeStream()
   }
 
 }
