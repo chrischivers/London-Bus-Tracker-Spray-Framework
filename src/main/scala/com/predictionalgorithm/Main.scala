@@ -2,6 +2,7 @@ package com.predictionalgorithm
 
 import javax.swing.SwingUtilities
 import akka.actor.ActorSystem
+import com.predictionalgorithm.commons.ReadProperties
 import com.predictionalgorithm.controlinterface._
 import com.predictionalgorithm.prediction.KNNPredictionImpl
 import com.predictionalgorithm.serverui.MonitoringUI
@@ -13,7 +14,6 @@ object Main extends App with LazyLogging {
    * How frequently the server UI refreshes
    */
   val UI_REFRESH_INTERVAL:Int = 1000
-
 
   /**
    * Starts the Server UI using Swing Framework

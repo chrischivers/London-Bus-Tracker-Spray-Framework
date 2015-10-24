@@ -20,6 +20,7 @@ object TFLDefinitions extends DataDefinitions{
   lazy val PublicHolidayList:List[Date] = LoadPublicHolidayList.publicHolidayList
 
   lazy val RouteList = getRouteList
+  lazy val RouteListWithFirstLaststop = getRouteListWithFirstLastStops
 
   def updateRouteDefinitionsFromWeb() = {
     LoadRouteDefinitions.updateFromWeb()
@@ -43,5 +44,14 @@ object TFLDefinitions extends DataDefinitions{
     val sortedIntList = partitionedList._1.map(_.toInt).sorted
     val sortedStringList = partitionedList._2.sorted
     sortedIntList.map(_.toString) ++ sortedStringList
+  }
+
+  private def getRouteListWithFirstLastStops:List[(String, String, String)] = {
+    val list = TFLDefinitions.RouteDefinitionMap.map(x => x._1._1).toSet.toList
+    val partitionedList = list.partition(x => !x.charAt(0).isLetter)
+    val sortedIntList = partitionedList._1.map(_.toInt).sorted
+    val sortedStringList = partitionedList._2.sorted
+    val fullSortedList = sortedIntList.map(_.toString) ++ sortedStringList
+    fullSortedList.map(x => (x, PointDefinitionsMap.get(RouteDefinitionMap.get(x,1).get.minBy(_._1)._2).get.stopPointName, PointDefinitionsMap.get(RouteDefinitionMap.get(x,1).get.maxBy(_._1)._2).get.stopPointName))
   }
 }

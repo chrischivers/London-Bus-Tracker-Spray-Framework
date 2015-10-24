@@ -10,6 +10,8 @@ import com.mongodb.casbah.Imports._
 
 
 case class PruneRequest(mongoObj: Imports.DBObject, timeOffSet: Int, rainfall: Double)
+case class Completed()
+case class PruneCompleted()
 
 object TFLInsertPointToPointDurationSupervisor extends DatabaseInsert {
   val collection = POINT_TO_POINT_COLLECTION
@@ -30,6 +32,8 @@ class  TFLInsertPointToPointDurationSupervisor extends Actor {
   override def receive = {
     case doc: DatabaseDocument => insertDoc(doc)
     case po: PruneRequest => pruneDatabaseArray(po)
+    case Completed =>   TFLInsertPointToPointDurationSupervisor.numberDBTransactionsExecuted += 1
+    case PruneCompleted =>TFLInsertPointToPointDurationSupervisor.numberRecordsPulledFromDbExecuted += 1
   }
 
 
@@ -69,12 +73,10 @@ class TFLInsertPointToPointDurationActor extends Actor {
 
     val pushUpdate = $push(collection.DURATION_LIST -> MongoDBObject(collection.DURATION -> doc.durationSeconds, collection.TIME_OFFSET -> doc.timeOffsetSeconds, collection.RAINFALL -> doc.rainfall, collection.TIME_STAMP -> System.currentTimeMillis()))
     val update = dbCollection.update(newObj, pushUpdate, upsert = true)
-    TFLInsertPointToPointDurationSupervisor.numberDBTransactionsExecuted += 1
+    TFLInsertPointToPointDurationSupervisor.supervisor ! Completed
     if (update.isUpdateOfExisting) {
       TFLInsertPointToPointDurationSupervisor.supervisor ! new PruneRequest(newObj, doc.timeOffsetSeconds, doc.rainfall)
     }
-
-
   }
 }
 class TFLPrunePointToPointActor extends Actor {
@@ -113,7 +115,7 @@ class TFLPrunePointToPointActor extends Actor {
         recordsToDelete.foreach(x=> {
           val updatePull = $pull(collection.DURATION_LIST -> MongoDBObject(collection.DURATION -> x._1, collection.TIME_OFFSET -> x._2, collection.TIME_STAMP -> x._3, collection.RAINFALL -> x._4))
           TFLInsertPointToPointDurationSupervisor.dBCollection.update(pruneObj.mongoObj, updatePull)
-          TFLInsertPointToPointDurationSupervisor.numberRecordsPulledFromDbExecuted += 1
+          TFLInsertPointToPointDurationSupervisor.supervisor ! PruneCompleted
         })
       }
 

@@ -56,7 +56,7 @@ object WebServer {
     def props(serverConnection: ActorRef) = Props(classOf[WebSocketWorker], serverConnection)
   }
 
-  class WebSocketWorker(val serverConnection: ActorRef) extends HttpServiceActor with websocket.WebSocketServerWorker with LazyLogging {
+  class WebSocketWorker(val serverConnection: ActorRef) extends HttpServiceActor with websocket.WebSocketServerWorker {
 
     // Escalates to web socket
     override def receive = handshaking orElse businessLogicNoUpgrade orElse closeLogic
@@ -74,12 +74,12 @@ object WebServer {
           mode = "ROUTELIST"
           val splitReceive = receivedStr.split(",").drop(1).toList
           routeList = routeList ++ splitReceive
-          logger.info("1 connection made. Route List: " + routeList)
+          //logger.info("1 connection made. Route List: " + routeList)
         } else if (receivedStr.startsWith("RADIUS")) {
           mode = "RADIUS"
           val temporaryStr = receivedStr.replaceAll("\\)","").replaceAll("\\(","").split(",").drop(1).map(_.toDouble) //Take out brackets
           selectedRadius = temporaryStr.head //Sets the radius
-          logger.info("1 connection made. Radius " + selectedRadius)
+         // logger.info("1 connection made. Radius " + selectedRadius)
           centrePoint = temporaryStr.drop(1) // Sets the centre Point
         }
 
@@ -148,6 +148,13 @@ object WebServer {
             }
           }
         } ~
+        path("route_list_with_first_last_stops_request.asp") {
+          get {
+            complete {
+              getRouteListWithFirstLastStops
+            }
+          }
+        } ~
         path("direction_list_request.asp") {
           get {
             parameters("route") { route =>
@@ -193,6 +200,12 @@ object WebServer {
   private def getRouteList: String = {
     val routeList = TFLDefinitions.RouteList
     val jsonMap = Map("routeList" -> routeList)
+    compact(render(jsonMap))
+  }
+
+  private def getRouteListWithFirstLastStops: String = {
+    val routeList = TFLDefinitions.RouteListWithFirstLaststop
+    val jsonMap = Map("routeList" -> routeList.map(x=> x._1 + ";" + x._2 + ";" + x._3))
     compact(render(jsonMap))
   }
 
