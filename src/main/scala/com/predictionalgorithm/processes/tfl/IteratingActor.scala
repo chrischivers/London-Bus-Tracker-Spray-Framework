@@ -28,7 +28,7 @@ class IteratingActor extends Actor with LazyLogging {
   def active(it: Iterator[String]): Receive = { // This is the behavior when it's active
     case Stop =>
       context.become(inactive)
-      TFLIterateOverArrivalStreamSupervisor.closeDataStream
+      TFLIterateOverArrivalStreamSupervisor.closeDataStream()
       logger.info("Closing data stream")
     case Next =>
         val lineFuture = Future(TFLSourceLineFormatterImpl(it.next()))

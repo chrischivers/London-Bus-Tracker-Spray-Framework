@@ -20,9 +20,9 @@
     <script src="js/markerwithlabel.terikon.js"></script>
 
     <script>
-       //var wsUri = "ws://localhost:8080/";
+       var wsUri = "ws://localhost:8080/";
        // var wsUri = "ws://londonbustracker.co.uk/";
-        var wsUri = "ws://23.92.71.114/";
+       // var wsUri = "ws://23.92.71.114/";
         var map;
         var markerArray = {};
         var iconArray = {};
@@ -123,9 +123,21 @@
 
 
             var parsedmovementDataArray = JSON.parse(movementData);
+            var lastLatLng;
             for (var i = 0; i < parsedmovementDataArray.length; i++) {
                 var splitArray = parsedmovementDataArray[i].split(",");
-                latLngArray[i] = new google.maps.LatLng(splitArray[0], splitArray[1]);
+                if (typeof lastLatLng === 'undefined'){
+                    // For the first point
+                    var origLatLng = new google.maps.LatLng(splitArray[0], splitArray[1]);
+                    latLngArray[i] = origLatLng;
+                    lastLatLng = origLatLng;
+                } else {
+                    //For subsequent points perform the addition
+                    var latLngPoint = new google.maps.LatLng(lastLatLng.lat() - (splitArray[0] / 100000), lastLatLng.lng() - (splitArray[1]/100000));
+                    latLngArray[i] = latLngPoint;
+                    lastLatLng = latLngPoint;
+                }
+
                 rotationArray[i] = parseInt(splitArray[2]);
                 proportionalDurationArray[i] = splitArray[3];
             }

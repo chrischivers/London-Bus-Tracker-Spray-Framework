@@ -51,8 +51,8 @@ trait LiveStreamingCoordinator {
    * Binds server
    */
   def start(): Unit = {
-    IO(UHttp) ! Http.Bind(server, interface = "0.0.0.0", port = 80)
-    //IO(UHttp) ! Http.Bind(server, interface = "0.0.0.0", port = 8080)
+   // IO(UHttp) ! Http.Bind(server, interface = "0.0.0.0", port = 80)
+    IO(UHttp) ! Http.Bind(server, interface = "0.0.0.0", port = 8080)
     TFLProcessSourceLines.setLiveStreamCollection(true)
   }
 
